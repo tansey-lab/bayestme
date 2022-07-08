@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description='Deconvolve data')
 parser.add_argument('--stdata', type=str,
                     help='Input file, SpatialExpressionDataset in h5 format')
 parser.add_argument('--fold-idx', type=int,
-                    help='Run only this fold index.')
+                    help='Run only this fold index, suitable for running the sampling in parallel across many machines')
 parser.add_argument('--n-fold', type=int, default=5)
 parser.add_argument('--n-splits', type=int, default=15)
 parser.add_argument('--n-samples', type=int, default=100)
@@ -18,26 +18,26 @@ parser.add_argument('--n-components-min', type=int, default=2)
 parser.add_argument('--n-components-max', type=int, default=12)
 parser.add_argument('--lambda-values',
                     type=float,
-                    action='append',
-                    default=(1, 1e1, 1e2, 1e3, 1e4, 1e5))
+                    action='append')
 parser.add_argument('--max-ncell', type=int, default=120)
 parser.add_argument('--background-noise', default=False, action='store_true')
 parser.add_argument('--lda-initialization', default=False, action='store_true')
 parser.add_argument('--output-dir', type=str,
                     help='Output directory')
+DEFAULT_LAMBDAS = (1, 1e1, 1e2, 1e3, 1e4, 1e5)
 
 
 def main():
     args = parser.parse_args()
 
-    stdata = data.SpatialExpressionDataset.read_h5(args.input)
+    stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
 
     result: data.PhenotypeSelectionResult = phenotype_selection.run_phenotype_selection_single_fold(
         fold_idx=args.fold_idx,
         stdata=stdata,
         n_fold=args.n_fold,
         n_splits=args.n_splits,
-        lams=args.lamda_values,
+        lams=DEFAULT_LAMBDAS if not args.lambda_values else args.lambda_values,
         n_components_min=args.n_components_min,
         n_components_max=args.n_components_max,
         n_samples=args.n_samples,

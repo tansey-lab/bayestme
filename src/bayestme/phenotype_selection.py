@@ -1,11 +1,13 @@
 import logging
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 from sklearn.model_selection import KFold
 from typing import Iterable
 from scipy.stats import multinomial
 
-from bayestme import utils, data
+from bayestme import utils, data, bayestme_plot
 from bayestme.model_bkg import GraphFusedMultinomial
 
 logger = logging.getLogger(__name__)
@@ -43,10 +45,18 @@ def create_folds(stdata: data.SpatialExpressionDataset,
             [i in np.arange(stdata.n_spot_in)[n_neighbours > edge_threshold][heldout] for i in range(stdata.n_spot_in)])
         yield mask
 
-def plot_folds(stdata: data.SpatialExpressionDataset,
-                 n_fold=5,
-                 n_splits=15):
-    pass
+
+def plot_folds(stdata, folds, output_dir: str):
+    n_neighbours = get_n_neighbors(stdata)
+    fig, ax = plt.subplots(1, len(folds), figsize=(6 * (len(folds) + 1), 6))
+    if len(folds) == 1:
+        ax = [ax]
+
+    for k, (lam, n_components, mask, fold_number) in enumerate(folds):
+        bayestme_plot.plot_spots(ax[k], n_neighbours, stdata.positions_tissue, s=5, cmap='viridis')
+        ax[k].scatter(stdata.positions_tissue[0, mask], stdata.positions_tissue[1, mask], s=5, c='r')
+    plt.savefig(os.path.join(output_dir, 'k_fold_masks.pdf'))
+    plt.close()
 
 
 def get_phenotype_selection_parameters_for_folds(stdata: data.SpatialExpressionDataset,
@@ -162,6 +172,10 @@ def run_phenotype_selection_single_fold(
     test[~mask] = 0
 
     n_gene = min(n_gene, stdata.n_gene)
+
+    stddev_ordering = utils.get_stddev_ordering(train)
+    train = train[:, stddev_ordering[:n_gene]]
+    test = test[:, stddev_ordering[:n_gene]]
 
     (
         cell_prob_trace,
