@@ -1,4 +1,4 @@
-# BayesTME: A reference-free Bayesian method for analyzing spatial transcriptomics data
+# BayesTME: A unified statistical framework for spatial transcriptomics
 
 This package implements BayesTME, a fully Bayesian method for analyzing ST data without needing single-cell RNA-seq (scRNA) reference data.
 
