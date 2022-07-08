@@ -1,0 +1,17 @@
+raw_data:
+  class: File
+  path: "/work/tansey/quinnj2/ST_mel1_rep2_counts.tsv"
+data_dir:
+  class: Directory
+  path: "/work/tansey/quinnj2/2022-06-02T143105-0400"
+docker_image: "docker://jeffquinnmsk/bayestme:latest"
+n_gene: "100"
+filter_type: "spots"
+deconvolve_lam2: "10000"
+deconvolve_n_samples: "100"
+deconvolve_n_burnin: "100"
+deconvolve_n_thin: "5"
+spatial_expression_n_samples: "100"
+spatial_expression_n_burnin: "100"
+spatial_expression_n_thin: "5"
+n_spatial_patterns: "10"

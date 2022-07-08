@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.out
+*.aux
+*.fdb_latexmk
+*.log
+*.synctex.gz
+*.bbl
+*.blg
+*.fls
+*.ipynb
+*.npy
+.DS_Store
+*_data/
+*_results/
+plots/
+condor/
+data/
+talks/
+results/
+experiments/data/
+.Rapp.history
+python/.ipynb_checkpoints
+python/cell_counting
+python/plot
+pyhton/fig
+python/__pycache__
+python/checkpoint
+python/saved_model
+# C extensions
+*.so
+# Data
+*.zip
+A1_spaceranger_output
+zebrafish_A1_data
+.idea
+wheels_osx11_m1*
+.ipynb_checkpoints
+src/bayestme.egg-info
+build
+dist

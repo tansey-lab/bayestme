@@ -1,0 +1,65 @@
+import shutil
+
+import numpy as np
+import tempfile
+import os
+from unittest import mock
+
+from bayestme import data
+
+from bayestme.cli import filter_genes
+
+
+def test_filter_genes():
+    raw_counts = np.array(
+        [[199, 200, 1],
+         [10000, 10001, 2],
+         [0, 1, 3]], dtype=np.int64
+    )
+
+    locations = np.array([
+        (x, 0) for x in range(3)
+    ])
+
+    tissue_mask = np.array([True for _ in range(3)])
+
+    gene_names = np.array(['keep_me',
+                           'filter1',
+                           'filter2'])
+
+    dataset = data.SpatialExpressionDataset(
+        raw_counts=raw_counts,
+        tissue_mask=tissue_mask,
+        positions=locations.T,
+        gene_names=gene_names,
+        layout=data.Layout.SQUARE
+    )
+
+    tmpdir = tempfile.mkdtemp()
+
+    input_path = os.path.join(tmpdir, 'data.h5')
+    output_path = os.path.join(tmpdir, 'result.h5')
+
+    command_line_arguments = [
+        'filter_genes',
+        '--input',
+        input_path,
+        '--output',
+        output_path,
+        '--n-top-by-standard-deviation',
+        '2',
+        '--spot-threshold',
+        '0.95',
+        '--filter-ribosomal-genes']
+
+    try:
+        dataset.save(os.path.join(tmpdir, 'data.h5'))
+
+        with mock.patch('sys.argv', command_line_arguments):
+            filter_genes.main()
+
+        result = data.SpatialExpressionDataset.read_h5(output_path)
+
+        np.testing.assert_equal(result.gene_names, np.array([]))
+    finally:
+        shutil.rmtree(tmpdir)
