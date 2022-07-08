@@ -6,19 +6,23 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import glob
 
+from bayestme import data
+
 logger = logging.getLogger(__name__)
 
 
-def load_likelihoods(likelihood_path):
+def load_likelihoods(output_dir):
+    results = []
     fold_nums = []
     lam_vals = []
     k_vals = []
+    for fn in glob.glob(os.path.join(output_dir, "fold_*.h5ad")):
+        result = data.PhenotypeSelectionResult.read_h5(fn)
+        fold_nums.append(result.fold_number)
+        lam_vals.append(result.lam)
+        k_vals.append(result.n_components)
 
-    for p in glob.glob(os.path.join(likelihood_path, '*.npy')):
-        p, _ = os.path.splitext(p)
-        fold_nums.append(int(p.split('_')[-1]))
-        lam_vals.append(float(p.split('_')[-2]))
-        k_vals.append(int(p.split('_')[-3]))
+        results.append(data.PhenotypeSelectionResult.read_h5(fn))
 
     fold_nums = sorted(set(fold_nums))
     lam_vals = sorted(set(lam_vals))
@@ -28,24 +32,17 @@ def load_likelihoods(likelihood_path):
     logger.info(f'Lambdas: {lam_vals}')
     logger.info(f'Ks: {k_vals}')
 
-    if len(fold_nums) == 0:
-        logger.info(f'No results found in {likelihood_path}')
-        return None
-
     likelihoods = np.full((2, len(k_vals), len(lam_vals), len(fold_nums)), np.nan)
-    for tidx, traintest in enumerate(['train', 'test']):
-        for kidx, k in enumerate(k_vals):
-            for lamidx, lam in enumerate(lam_vals):
-                for foldidx, fold in enumerate(fold_nums):
-                    file_path = glob.glob(
-                        os.path.join(likelihood_path, f'*_{traintest}_likelihood_{k}_{lam:.1f}_{fold}.npy')).pop()
-                    if not os.path.exists(file_path):
-                        continue
-                    likelihood = np.load(file_path)
-                    if len(likelihood) == 0 or np.all(likelihood == 0):
-                        continue
-                    likelihoods[tidx, kidx, lamidx, foldidx] = np.nanmean(likelihood)
+    for result in results:
+        kidx = k_vals.index(result.n_components)
+        lamidx = lam_vals.index(result.lam)
+        foldidx = fold_nums.index(result.fold_number)
+
+        likelihoods[0, kidx, lamidx, foldidx] = np.nanmean(result.log_lh_train_trace)
+        likelihoods[1, kidx, lamidx, foldidx] = np.nanmean(result.log_lh_test_trace)
+
     logger.info(f'{(~np.isnan(likelihoods)).sum()} non-missing')
+
     return likelihoods, fold_nums, lam_vals, k_vals
 
 
