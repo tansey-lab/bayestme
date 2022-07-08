@@ -26,6 +26,9 @@ jobs:
 
   build-singularity:
     needs: build-docker
+    permissions:
+      actions: read
+      packages: write
     runs-on: ubuntu-latest
     container:
       image: quay.io/singularity/singularity:v3.10.0
