@@ -693,7 +693,7 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
 
 def clean_bleed(dataset: data.SpatialExpressionDataset,
                 n_top: int,
-                local_weight: Optional[int],
+                local_weight: Optional[int] = None,
                 max_steps: int = 5) -> (data.SpatialExpressionDataset, data.BleedCorrectionResult):
     """
     :param dataset: SpatialExpressionDataset
@@ -749,7 +749,8 @@ def create_top_n_gene_bleeding_plots(
         corrected_dataset: data.SpatialExpressionDataset,
         bleed_result: data.BleedCorrectionResult,
         output_dir: str,
-        n_genes: int = 10):
+        n_genes: int = 10,
+        output_format: str = 'pdf'):
     top_gene_names = utils.get_top_gene_names_by_stddev(
         reads=corrected_dataset.reads,
         gene_names=corrected_dataset.gene_names,

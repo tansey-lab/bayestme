@@ -2,10 +2,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from bayestme import data
 
-def st_plot(data, pos, cmap='BuPu', v_min=None, v_max=None, norm=None, layout='s', unit_dist=10, x_y_swap=False,
+
+def st_plot(data,
+            pos,
+            cmap='BuPu',
+            v_min=None,
+            v_max=None,
+            norm=None,
+            layout='s',
+            unit_dist=10,
+            x_y_swap=False,
             invert=[0, 0],
-            name='st_plot', colorbar=True, subtitles=None, fontsize=20, show=True, save='.'):
+            name='st_plot',
+            colorbar=True,
+            subtitles=None,
+            show=True,
+            save='.',
+            plot_format='pdf'):
     if x_y_swap:
         pos = pos[::-1]
     n_plots = data.shape[0]
@@ -68,13 +83,24 @@ def st_plot(data, pos, cmap='BuPu', v_min=None, v_max=None, norm=None, layout='s
         if invert[1]:
             stframe.invert_yaxis()
 
-    print('Plot saved in {}'.format(save))
-    plt.savefig(os.path.join(save, '{}.pdf'.format(name)))
+    print(f'Plot saved as {save}/{name}.{plot_format}')
+    plt.savefig(os.path.join(save, f'{name}.{plot_format}'))
     plt.close()
 
 
-def st_plot_with_room_for_legend(data, pos, cmap='BuPu', v_min=None, v_max=None, norm=None, layout='s', unit_dist=10,
-                                 x_y_swap=False, invert=[0, 0], colorbar=True, subtitles=None):
+def st_plot_with_room_for_legend(
+        data,
+        pos,
+        cmap='BuPu',
+        v_min=None,
+        v_max=None,
+        norm=None,
+        layout='s',
+        unit_dist=10,
+        x_y_swap=False,
+        invert=[0, 0],
+        colorbar=True,
+        subtitles=None):
     """
     Same as st_plot but with an extra subfigure on the far left where a legend can be placed.
     @return: subfigures reference
@@ -180,3 +206,16 @@ def scatter_pie(dist, pos, size, ax=None):
             xy = np.column_stack([x, y])
             ax.scatter(x_pos, y_pos, marker=xy, s=size, facecolor='C{}'.format(i))
     return ax
+
+
+def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
+                         gene: str,
+                         output_dir: str,
+                         output_format: str = 'pdf'):
+    gene_idx = np.argmax(stdata.gene_names == gene)
+    st_plot(np.vstack([stdata.raw_counts[:, gene_idx]])[:, None],
+            stdata.positions,
+            layout='h' if stdata.layout is data.Layout.HEX else 's',
+            name=f'{gene}_raw_counts',
+            save=output_dir,
+            plot_format=output_format)

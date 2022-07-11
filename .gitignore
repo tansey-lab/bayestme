@@ -9,7 +9,6 @@ __pycache__/
 *.bbl
 *.blg
 *.fls
-*.ipynb
 *.npy
 .DS_Store
 *_data/
