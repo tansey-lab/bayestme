@@ -3,9 +3,9 @@ import os.path
 from scipy.stats import binom
 from sklearn.decomposition import LatentDirichletAllocation
 
-from . import utils
-from .HMM_fast import HMM, transition_mat_vec
-from .gfbt_multinomial import GraphFusedBinomialTree
+from bayestme import utils
+from bayestme.HMM_fast import HMM, transition_mat_vec
+from bayestme.gfbt_multinomial import GraphFusedBinomialTree
 
 
 def transition_mat(phi, n_max, coeff, ifsigma=False):
@@ -124,7 +124,7 @@ class GraphFusedMultinomial:
         expected_counts = self.cell_num[:, 1:, None] * self.expression[None]
         self.assignment_probs = expected_counts / np.clip(expected_counts.sum(axis=1, keepdims=True), 1e-20, None)
         self.assignment_probs = np.transpose(self.assignment_probs, [0, 2, 1])
-        # multinational draw for all spots
+        # multinomial draw for all spots
         self.reads = utils.multinomial_rvs(Observations.astype(np.int64), self.assignment_probs)
 
     def sample_phi(self):

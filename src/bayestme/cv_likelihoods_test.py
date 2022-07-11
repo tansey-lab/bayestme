@@ -4,20 +4,49 @@ import numpy as np
 import shutil
 import pathlib
 
-from bayestme import cv_likelihoods
+from bayestme import cv_likelihoods, data
 
 
-def create_fake_data(n_components, lam_vals, n_fold, n_draw, n_gene=1000, max_ncell=120):
+def create_fake_data(n_components,
+                     lam_vals,
+                     n_fold,
+                     n_samples,
+                     n_spot_in,
+                     n_gene=10):
     tempdir = tempfile.mkdtemp()
+    i = 0
 
     for cohort in ['train', 'test']:
         for n_components in range(2, n_components + 1):
             for lam in lam_vals:
-                for iter in range(0, n_fold):
+                for fold_num in range(0, n_fold):
                     fn = os.path.join(
                         tempdir,
-                        f'exp_{n_gene}_{max_ncell}_{cohort}_likelihood_{n_components}_{lam:.1f}_{iter}.npy')
-                    np.save(fn, np.random.random((n_draw,)))
+                        f'fold_{i}.h5ad')
+
+                    cell_prob_trace = np.random.random((n_samples, n_spot_in, n_components + 1))
+                    cell_num_trace = np.random.random((n_samples, n_spot_in, n_components + 1))
+                    expression_trace = np.random.random((n_samples, n_components, n_gene))
+                    beta_trace = np.random.random((n_samples, n_components))
+                    loglhtest_trace = np.random.random(n_samples)
+                    loglhtrain_trace = np.random.random(n_samples)
+
+                    result = data.PhenotypeSelectionResult(
+                        cell_num_trace=cell_num_trace,
+                        cell_prob_trace=cell_prob_trace,
+                        expression_trace=expression_trace,
+                        beta_trace=beta_trace,
+                        log_lh_train_trace=loglhtrain_trace,
+                        log_lh_test_trace=loglhtest_trace,
+                        n_components=n_components,
+                        lam=lam,
+                        fold_number=fold_num,
+                        mask=np.ones(n_spot_in)
+                    )
+
+                    result.save(fn)
+
+                    i += 1
     return tempdir
 
 
@@ -29,7 +58,8 @@ def test_load_likelihoods():
         lam_vals=lam_vals,
         n_fold=n_fold,
         n_components=n_components,
-        n_draw=100
+        n_samples=100,
+        n_spot_in=25
     )
 
     try:
@@ -51,7 +81,8 @@ def test_plot_likelihoods():
         lam_vals=lam_vals,
         n_fold=n_fold,
         n_components=n_components,
-        n_draw=100
+        n_samples=100,
+        n_spot_in=25
     )
 
     try:
@@ -70,7 +101,8 @@ def test_plot_cv_running():
         lam_vals=lam_vals,
         n_fold=n_fold,
         n_components=n_components,
-        n_draw=100
+        n_samples=100,
+        n_spot_in=25
     )
 
     try:
@@ -90,4 +122,8 @@ def test_get_max_likelihood_n_components():
     likelihoods = np.random.random((2, n_components - 1, len(lam_vals), n_fold))
     n_components = cv_likelihoods.get_max_likelihood_n_components(likelihoods)
 
+    best_lambda = cv_likelihoods.get_best_lambda_value(
+        likelihoods=likelihoods, lambda_array=lam_vals, best_n_components=n_components)
+
     assert n_components in range(2, n_components + 1)
+    assert best_lambda in lam_vals

@@ -7,7 +7,7 @@ import logging
 import h5py
 
 from enum import Enum
-from typing import Iterable, Optional
+from typing import Optional
 
 from . import utils
 
@@ -180,6 +180,69 @@ class BleedCorrectionResult:
                 global_rates=global_rates,
                 basis_functions=basis_functions,
                 weights=weights)
+
+
+class PhenotypeSelectionResult:
+    def __init__(self,
+                 mask: np.ndarray,
+                 cell_prob_trace: np.ndarray,
+                 expression_trace: np.ndarray,
+                 beta_trace: np.ndarray,
+                 cell_num_trace: np.ndarray,
+                 log_lh_train_trace: np.ndarray,
+                 log_lh_test_trace: np.ndarray,
+                 n_components: int,
+                 lam: float,
+                 fold_number: int):
+        self.fold_number = fold_number
+        self.lam = lam
+        self.n_components = n_components
+        self.mask = mask
+        self.log_lh_test_trace = log_lh_test_trace
+        self.log_lh_train_trace = log_lh_train_trace
+        self.cell_num_trace = cell_num_trace
+        self.beta_trace = beta_trace
+        self.expression_trace = expression_trace
+        self.cell_prob_trace = cell_prob_trace
+
+    def save(self, path):
+        with h5py.File(path, 'w') as f:
+            f['mask'] = self.mask
+            f['log_lh_test_trace'] = self.log_lh_test_trace
+            f['log_lh_train_trace'] = self.log_lh_train_trace
+            f['cell_num_trace'] = self.cell_num_trace
+            f['beta_trace'] = self.beta_trace
+            f['expression_trace'] = self.expression_trace
+            f['cell_prob_trace'] = self.cell_prob_trace
+            f.attrs['fold_number'] = self.fold_number
+            f.attrs['lam'] = self.lam
+            f.attrs['n_components'] = self.n_components
+
+    @classmethod
+    def read_h5(cls, path):
+        with h5py.File(path, 'r') as f:
+            mask = f['mask'][:]
+            log_lh_test_trace = f['log_lh_test_trace'][:]
+            log_lh_train_trace = f['log_lh_train_trace'][:]
+            cell_num_trace = f['cell_num_trace'][:]
+            beta_trace = f['beta_trace'][:]
+            expression_trace = f['expression_trace'][:]
+            cell_prob_trace = f['cell_prob_trace'][:]
+            fold_number = f.attrs['fold_number']
+            lam = f.attrs['lam']
+            n_components = f.attrs['n_components']
+
+            return cls(
+                mask=mask,
+                log_lh_test_trace=log_lh_test_trace,
+                log_lh_train_trace=log_lh_train_trace,
+                cell_prob_trace=cell_prob_trace,
+                expression_trace=expression_trace,
+                beta_trace=beta_trace,
+                cell_num_trace=cell_num_trace,
+                fold_number=fold_number,
+                lam=lam,
+                n_components=n_components)
 
 
 class DeconvolutionResult:

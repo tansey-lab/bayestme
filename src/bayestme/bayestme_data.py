@@ -460,7 +460,7 @@ class CrossValidationSTData(RawSTData):
         pathlib.Path(self.likelihood_path).mkdir(parents=True, exist_ok=True)
 
         self.n_fold = n_fold
-        self.exc_file = 'grid_search_cfg.py'
+        self.exc_file = 'phenotype_selection.py'
 
     def prepare_jobs(self):
         self.save_folds(n_fold=self.n_fold, n_splits=self.n_splits)
