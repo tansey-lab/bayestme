@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import binom
 import scipy.special as scs
 
-from . import utils
+from bayestme import utils
 
 
 def transition_mat_vec(phi, n_max, ifsigma=False):

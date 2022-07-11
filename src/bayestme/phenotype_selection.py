@@ -7,7 +7,7 @@ from sklearn.model_selection import KFold
 from typing import Iterable
 from scipy.stats import multinomial
 
-from bayestme import utils, data, bayestme_plot
+from bayestme import utils, data, plotting
 from bayestme.model_bkg import GraphFusedMultinomial
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def plot_folds(stdata, folds, output_dir: str):
         ax = [ax]
 
     for k, (lam, n_components, mask, fold_number) in enumerate(folds):
-        bayestme_plot.plot_spots(ax[k], n_neighbours, stdata.positions_tissue, s=5, cmap='viridis')
+        plotting.plot_spots(ax[k], n_neighbours, stdata.positions_tissue, s=5, cmap='viridis')
         ax[k].scatter(stdata.positions_tissue[0, mask], stdata.positions_tissue[1, mask], s=5, c='r')
     plt.savefig(os.path.join(output_dir, 'k_fold_masks.pdf'))
     plt.close()

@@ -283,7 +283,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import seaborn as sns
     import random
-    from bayestme_plot import plot_result
+    from plotting import plot_result
 
     np.random.seed(42)
 

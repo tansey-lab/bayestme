@@ -14,7 +14,7 @@ from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
 
 from .utils import ilogit, stable_softmax, sample_mvn_from_precision
-from . import utils, data, bayestme_plot
+from . import utils, data, plotting
 
 logger = logging.getLogger(__name__)
 
@@ -379,7 +379,7 @@ def plot_spatial_patterns(
                     plt.rc('lines', lw=1)
                     matplotlib.rcParams['pdf.fonttype'] = 42
                     matplotlib.rcParams['ps.fonttype'] = 42
-                    subfigs = bayestme_plot.st_plot_with_room_for_legend(
+                    subfigs = plotting.st_plot_with_room_for_legend(
                         data=w_plot[None, None],
                         pos=stdata.positions_tissue,
                         unit_dist=size,

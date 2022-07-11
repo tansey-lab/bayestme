@@ -14,8 +14,8 @@ from typing import Optional
 
 from scipy.stats import multivariate_normal, multivariate_t
 from torch.nn import Softmax, Softplus
-from .utils import stable_softmax
-from . import data, utils, bayestme_plot
+from bayestme.utils import stable_softmax
+from bayestme import data, utils, plotting
 from autograd_minimize import minimize
 from torch.nn import Softplus
 from torch.distributions.multinomial import Multinomial
@@ -603,7 +603,7 @@ def plot_before_after_cleanup(
         marker = 's'
         size = 10
 
-    bayestme_plot.st_plot(
+    plotting.st_plot(
         plot_data[:, None],
         before_correction.positions,
         unit_dist=size,
@@ -667,7 +667,7 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
         size = 10
 
     logger.info(plot_data.shape)
-    bayestme_plot.st_plot(
+    plotting.st_plot(
         plot_data[:, None],
         pos,
         unit_dist=size,
