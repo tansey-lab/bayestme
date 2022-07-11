@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-
-##################################################
-#
-# running imc_gtlabel to get cell prob trace here
-#
-##################################################
-
 import os
 import pandas as pd
 import argparse
@@ -31,7 +23,8 @@ parser.add_argument('--n-thin', type=int,
                     help='n thin',
                     default=5)
 
-class IMC_with_label:
+
+class IMCWithLabel:
     def __init__(self, n_components, edges, Observations, n_gene=300, n_max=120, background_noise=False, random_seed=0,
                  mask=None,
                  c=4, D=30, tf_order_psi=0, lam_psi=1e-2, lda_initialization=False, known_cell_num=None,
@@ -82,7 +75,7 @@ def get_cell_prob_trace(img_id, edges, labels, pos, save_path,
     n_nodes = labels.shape[0]
     n_components = labels.max() + 1
 
-    gfnb = IMC_with_label(n_components=n_components, edges=edges, Observations=labels, lam=1000)
+    gfnb = IMCWithLabel(n_components=n_components, edges=edges, Observations=labels, lam=1000)
 
     cell_prob_trace = np.zeros((n_samples, n_nodes, n_components + 1))
     for step in range(n_samples * n_thin + n_burn):
@@ -130,7 +123,3 @@ def main():
                         n_samples=args.n_samples,
                         n_thin=args.n_thin,
                         n_burn=args.n_burn)
-
-
-if __name__ == '__main__':
-    main()

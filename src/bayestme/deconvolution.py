@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Optional, List
 from matplotlib import pyplot as plt
 from matplotlib import colors
-from bayestme import model_bkg, data, bayestme_plot
+from bayestme import model_bkg, data, plotting
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +159,7 @@ def plot_cell_num(
     plot_object = result.cell_num_trace[:, :, 1:].mean(axis=0)
     if seperate_pdf:
         for i in range(result.n_components):
-            bayestme_plot.st_plot(
+            plotting.st_plot(
                 data=plot_object[:, i].T[:, np.newaxis],
                 pos=stdata.positions_tissue,
                 name='cell_number_component_{}'.format(i),
@@ -168,7 +168,7 @@ def plot_cell_num(
                 unit_dist=size,
                 cmap=cmap)
     else:
-        bayestme_plot.st_plot(
+        plotting.st_plot(
             data=plot_object.T[:, np.newaxis],
             pos=stdata.positions_tissue,
             name='cell_number',
@@ -195,7 +195,7 @@ def plot_cell_prob(
     plot_object = result.cell_prob_trace[:, :, 1:].mean(axis=0)
     if seperate_pdf:
         for i in range(result.n_components):
-            bayestme_plot.st_plot(
+            plotting.st_plot(
                 data=plot_object[:, i].T[:, np.newaxis],
                 pos=stdata.positions_tissue,
                 name='cell_probability_component_{}'.format(i),
@@ -204,7 +204,7 @@ def plot_cell_prob(
                 unit_dist=size,
                 cmap=cmap)
     else:
-        bayestme_plot.st_plot(
+        plotting.st_plot(
             data=plot_object.T[:, np.newaxis],
             pos=stdata.positions_tissue,
             name='cell_probability',

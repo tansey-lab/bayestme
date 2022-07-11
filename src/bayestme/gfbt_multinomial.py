@@ -2,7 +2,7 @@ import numpy as np
 from pypolyagamma import PyPolyaGamma
 from scipy.sparse import spdiags, kron, csc_matrix
 
-from . import utils
+from bayestme import utils
 
 
 class GraphFusedBinomialTree:
@@ -27,14 +27,6 @@ class GraphFusedBinomialTree:
         # Initialize the logits (thetas) and PG latent variables (omegas)
         self.Thetas = np.zeros((self.n_nodes, self.n_classes - 1))
         self.Omegas = np.zeros((self.n_nodes, self.n_classes - 1))
-
-        #         # Create the class-to-path lookup tables
-        #         self.paths = np.unpackbits(np.arange(self.n_classes, dtype=np.uint8)).reshape(self.n_classes, 8)
-        #         self.paths = self.paths[:,self.paths.shape[1]-int(np.log2(self.n_classes)):].astype(int) # Reshape and squeeze the array
-        #         depth_sizes = 2**np.arange(self.paths.shape[1]) # 1 2 4
-        #         self.path_nodes = np.zeros(self.paths.shape, dtype=int)
-        #         self.path_nodes[:,1:] = np.array([np.sum(self.paths[:,:i]*(depth_sizes[None,:i][:,::-1]),axis=1) for i in range(1,self.paths.shape[1])]).T
-        #         self.path_nodes += (depth_sizes-1)[None]
 
         # Numerical stability parameter to deal with crazy horseshoe sampling tails
         self.stability = stability

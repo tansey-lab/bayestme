@@ -29,11 +29,11 @@ setup(
             "bleeding_correction=bayestme.cli.bleeding_correction:main",
             "deconvolve=bayestme.cli.deconvolve:main",
             "spatial_expression=bayestme.cli.spatial_expression:main",
-            "prepare_kfold=bayestme.cli.prepare_kfold:main",
             "load_spaceranger=bayestme.cli.load_spaceranger:main",
             "plot_bleeding=bayestme.cli.plot_bleeding_correction:main",
             "plot_deconvolution=bayestme.cli.plot_deconvolution:main",
-            "plot_spatial_expression=bayestme.cli.plot_spatial_expression:main"
+            "plot_spatial_expression=bayestme.cli.plot_spatial_expression:main",
+            "phenotype_selection=bayestme.cli.phenotype_selection:main"
         ],
     },
     python_requires=">=3.7, <4",
