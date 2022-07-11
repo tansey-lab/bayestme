@@ -32,7 +32,9 @@ def load_likelihoods(output_dir):
     logger.info(f'Lambdas: {lam_vals}')
     logger.info(f'Ks: {k_vals}')
 
+    # Array to hold average likelihoods for each parameter set, for train and test
     likelihoods = np.full((2, len(k_vals), len(lam_vals), len(fold_nums)), np.nan)
+
     for result in results:
         kidx = k_vals.index(result.n_components)
         lamidx = lam_vals.index(result.lam)
@@ -153,6 +155,28 @@ def plot_cv_running(results_path, out_path):
 
 
 def get_max_likelihood_n_components(likelihoods):
-    likelihood_mean = np.nanmean(likelihoods[1], axis=(-2, -1))
+    # We look at only the test likelihoods
+    test_likelihoods = likelihoods[1]
+
+    likelihood_mean = np.nanmean(test_likelihoods, axis=(-2, -1))
 
     return np.argmax(likelihood_mean) + 2
+
+
+def get_best_lambda_value(likelihoods,
+                          best_n_components,
+                          lambda_array):
+    # We look at only the test likelihoods
+    test_likelihoods = likelihoods[1]
+
+    per_lambda_means_at_best_n_components_point = (
+        np.nanmean(test_likelihoods[best_n_components], axis=(-1,)))
+
+    global_mean_at_best_n_components_point = np.nanmean(
+        per_lambda_means_at_best_n_components_point)
+
+    best_lam_index = np.argmin(
+        np.abs(per_lambda_means_at_best_n_components_point - global_mean_at_best_n_components_point))
+
+    return lambda_array[best_lam_index]
+

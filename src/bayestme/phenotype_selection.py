@@ -141,14 +141,12 @@ def sample_graph_fused_multinomial(
     )
 
 
-def run_phenotype_selection_single_fold(
-        fold_idx: int,
+def run_phenotype_selection_single_job(
+        lam: float,
+        n_components: int,
+        mask: np.ndarray,
+        fold_number: int,
         stdata: data.SpatialExpressionDataset,
-        n_fold: int,
-        n_splits: int,
-        lams: Iterable[int],
-        n_components_min: int,
-        n_components_max: int,
         n_samples: int,
         n_burn: int,
         n_thin: int,
@@ -156,16 +154,6 @@ def run_phenotype_selection_single_fold(
         n_gene: int,
         background_noise: bool,
         lda_initialization: bool) -> data.PhenotypeSelectionResult:
-    params = [_ for _ in get_phenotype_selection_parameters_for_folds(
-        stdata,
-        n_fold,
-        n_splits,
-        lams,
-        n_components_min,
-        n_components_max)]
-
-    lam, n_components, mask, fold_number = params[fold_idx]
-
     train = stdata.reads.copy()
     test = stdata.reads.copy()
     train[mask] = 0

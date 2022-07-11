@@ -144,14 +144,22 @@ def test_run_phenotype_selection_single_fold():
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
-    result = phenotype_selection.run_phenotype_selection_single_fold(
-        fold_idx=0,
-        stdata=stdata,
+    params = [_ for _ in phenotype_selection.get_phenotype_selection_parameters_for_folds(
+        stdata,
         n_fold=2,
         n_splits=2,
         lams=[10],
         n_components_min=n_components,
-        n_components_max=n_components,
+        n_components_max=n_components)]
+
+    lam, n_components_for_job, mask, fold_number = params[0]
+
+    result = phenotype_selection.run_phenotype_selection_single_job(
+        lam=lam,
+        n_components=n_components_for_job,
+        mask=mask,
+        fold_number=fold_number,
+        stdata=stdata,
         n_samples=n_samples,
         n_burn=1,
         n_thin=1,
