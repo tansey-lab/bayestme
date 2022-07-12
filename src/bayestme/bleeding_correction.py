@@ -363,60 +363,6 @@ def fit_basis_functions(Reads, tissue_mask, Rates, global_rates, basis_idxs, bas
     return basis_functions, Weights, res
 
 
-def plot_basis_functions(basis_functions, output_dir):
-    print('Plotting')
-    basis_types = ['Out-Tissue', 'In-Tissue']
-    basis_names = ['North', 'South', 'West', 'East']
-
-    labels = [(d + t) for t in basis_types for d in basis_names]
-
-    for d in range(basis_functions.shape[0]):
-        plt.plot(np.arange(basis_functions.shape[1]), basis_functions[d], label=labels[d])
-    plt.xlabel('Distance along cardinal direction')
-    plt.ylabel('Relative bleed probability')
-    plt.legend(loc='upper right')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'basis-functions.pdf'), bbox_inches='tight')
-    plt.close()
-
-
-def plot_bleed_vectors(locations,
-                       gene_name,
-                       gene_idx,
-                       tissue_mask,
-                       rates,
-                       weights,
-                       output_dir,
-                       output_format: str = 'pdf'
-                       ):
-    # Plot the general directionality of where reads come from in each spot
-    contributions = (rates[None, :, gene_idx] * weights)
-    directions = locations[None] - locations[:, None]
-    vectors = (directions * contributions[..., None]).mean(axis=1)
-    vectors = vectors / np.abs(vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
-
-    tissue_matrix = imshow_matrix(tissue_mask, locations)
-    im = plt.imshow(tissue_matrix, cmap='viridis', vmin=-1, origin='lower')
-
-    # get the colors of the values, according to the
-    # colormap used by imshow
-    colors = [im.cmap(im.norm(value)) for value in np.unique(tissue_matrix.flatten())]
-    # create a patch (proxy artist) for every color
-    patches = [mpatches.Patch(color=colors[0], label='Out of tissue'),
-               mpatches.Patch(color=colors[1], label='In tissue')
-               ]
-    # put those patched as legend-handles into the legend
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    for i, ((y, x), (dy, dx)) in enumerate(zip(locations, vectors)):
-        plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
-                  color='black')
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'bleed_vectors_{gene_name}.{output_format}'), bbox_inches='tight')
-    plt.close()
-
-
 def rates_from_raw(x, tissue_mask, Reads_shape):
     Rates = np.zeros(Reads_shape)
     global_rates = softplus(x[:Reads_shape[1]])
