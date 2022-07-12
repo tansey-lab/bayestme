@@ -33,16 +33,16 @@ def generate_data(
         gene_bandwidth=1,
         bleeding='anisotropic'):
     """
-    Generate read data with modeled bleeding.
+    Generate simulated read data with modeled bleeding.
 
-    @param n_rows: Number of spot rows
-    @param n_cols: Number of spot columns
-    @param n_genes: Number of genes in output reads dataset
-    @param spot_bleed_prob: Tuning param
-    @param length_scale: Tuning param
-    @param gene_bandwidth: Tuning param
-    @param bleeding: Type of bleeding
-    @return: (locations, tissue_mask, true_rates, true_counts, bleed_counts)
+    :param n_rows: Number of spot rows
+    :param n_cols: Number of spot columns
+    :param n_genes: Number of genes in output reads dataset
+    :param spot_bleed_prob: Tuning param
+    :param length_scale: Tuning param
+    :param gene_bandwidth: Tuning param
+    :param bleeding: Type of bleeding
+    :return: (locations, tissue_mask, true_rates, true_counts, bleed_counts)
     """
     xygrid = np.meshgrid(np.arange(n_rows), np.arange(n_cols))
     locations = np.array([xygrid[0].reshape(-1), xygrid[1].reshape(-1)]).T
@@ -139,7 +139,7 @@ def tissue_mask_to_grid(tissue_mask, locations):
 
 
 def calculate_pairwise_coordinate_differences(locations):
-    '''
+    """
     Calculate pairwise coordinate differences between all locations
 
     For example:
@@ -150,12 +150,16 @@ def calculate_pairwise_coordinate_differences(locations):
      [[-1,-1], [0, 0], [1, 1]],
      [[-2,-2], [-1, -1], [0, 0]]]
 
-    '''
+    :param locations: np.ndarray of shape (N, 2), where N is the
+    number of coordinate points
+    :return: np.ndarray of shape (N, N, 2)
+    """
     return (locations[None] - locations[:, None]).astype(int)
 
 
 def build_basis_indices(locations, tissue_mask):
-    '''Creates 8 sets of basis functions: north, south, east, west, for in- and out-tissue.
+    """
+    Creates 8 sets of basis functions: north, south, east, west, for in- and out-tissue.
     Each basis is how far the 2nd element is from the first element.
 
     Output is two matrices:
@@ -190,7 +194,11 @@ def build_basis_indices(locations, tissue_mask):
                  true if location_i is < location_j on second dimension else false]
             else if location_i == location_j: 
                 [False]*8
-    '''
+
+    :param locations:
+    :param tissue_mask:
+    :return: (basis_idxs, basis_mask)
+    """
     NORTH = 0
     SOUTH = 1
     EAST = 2
@@ -353,57 +361,6 @@ def fit_basis_functions(Reads, tissue_mask, Rates, global_rates, basis_idxs, bas
 
     Weights = weights_from_basis(basis_functions, basis_idxs, basis_mask, tissue_mask, local_weight)
     return basis_functions, Weights, res
-
-
-def plot_basis_functions(basis_functions, output_dir):
-    print('Plotting')
-    basis_types = ['Out-Tissue', 'In-Tissue']
-    basis_names = ['North', 'South', 'West', 'East']
-
-    labels = [(d + t) for t in basis_types for d in basis_names]
-
-    for d in range(basis_functions.shape[0]):
-        plt.plot(np.arange(basis_functions.shape[1]), basis_functions[d], label=labels[d])
-    plt.xlabel('Distance along cardinal direction')
-    plt.ylabel('Relative bleed probability')
-    plt.legend(loc='upper right')
-    plt.savefig(os.path.join(output_dir, 'basis-functions.pdf'), bbox_inches='tight')
-    plt.close()
-
-
-def plot_bleed_vectors(locations,
-                       gene_name,
-                       gene_idx,
-                       tissue_mask,
-                       rates,
-                       weights,
-                       output_dir
-                       ):
-    # Plot the general directionality of where reads come from in each spot
-    Contributions = (rates[None, :, gene_idx] * weights)
-    Directions = locations[None] - locations[:, None]
-    Vectors = (Directions * Contributions[..., None]).mean(axis=1)
-    Vectors = Vectors / np.abs(Vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
-
-    tissue_matrix = imshow_matrix(tissue_mask, locations)
-    im = plt.imshow(tissue_matrix, cmap='viridis', vmin=-1)
-
-    # get the colors of the values, according to the
-    # colormap used by imshow
-    colors = [im.cmap(im.norm(value)) for value in np.unique(tissue_matrix.flatten())]
-    # create a patch (proxy artist) for every color
-    patches = [mpatches.Patch(color=colors[0], label='Out of tissue'),
-               mpatches.Patch(color=colors[1], label='In tissue')
-               ]
-    # put those patched as legend-handles into the legend
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    for i, ((y, x), (dy, dx)) in enumerate(zip(locations, Vectors)):
-        plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
-                  color='black')
-
-    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.pdf'), bbox_inches='tight')
-    plt.close()
 
 
 def rates_from_raw(x, tissue_mask, Reads_shape):
@@ -577,6 +534,57 @@ def get_suggested_initial_local_weight(dataset: data.SpatialExpressionDataset) -
     return math.sqrt(dataset.tissue_mask.sum())
 
 
+def plot_basis_functions(basis_functions, output_dir):
+    print('Plotting')
+    basis_types = ['Out-Tissue', 'In-Tissue']
+    basis_names = ['North', 'South', 'West', 'East']
+
+    labels = [(d + t) for t in basis_types for d in basis_names]
+
+    for d in range(basis_functions.shape[0]):
+        plt.plot(np.arange(basis_functions.shape[1]), basis_functions[d], label=labels[d])
+    plt.xlabel('Distance along cardinal direction')
+    plt.ylabel('Relative bleed probability')
+    plt.legend(loc='upper right')
+    plt.savefig(os.path.join(output_dir, 'basis-functions.pdf'), bbox_inches='tight')
+    plt.close()
+
+
+def plot_bleed_vectors(locations,
+                       gene_name,
+                       gene_idx,
+                       tissue_mask,
+                       rates,
+                       weights,
+                       output_dir
+                       ):
+    # Plot the general directionality of where reads come from in each spot
+    Contributions = (rates[None, :, gene_idx] * weights)
+    Directions = locations[None] - locations[:, None]
+    Vectors = (Directions * Contributions[..., None]).mean(axis=1)
+    Vectors = Vectors / np.abs(Vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+
+    tissue_matrix = imshow_matrix(tissue_mask, locations)
+    im = plt.imshow(tissue_matrix, cmap='viridis', vmin=-1)
+
+    # get the colors of the values, according to the
+    # colormap used by imshow
+    colors = [im.cmap(im.norm(value)) for value in np.unique(tissue_matrix.flatten())]
+    # create a patch (proxy artist) for every color
+    patches = [mpatches.Patch(color=colors[0], label='Out of tissue'),
+               mpatches.Patch(color=colors[1], label='In tissue')
+               ]
+    # put those patched as legend-handles into the legend
+    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+    for i, ((y, x), (dy, dx)) in enumerate(zip(locations, Vectors)):
+        plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
+                  color='black')
+
+    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.pdf'), bbox_inches='tight')
+    plt.close()
+
+
 def plot_before_after_cleanup(
         before_correction: data.SpatialExpressionDataset,
         after_correction: data.SpatialExpressionDataset,
@@ -626,10 +634,10 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
                   cmap='jet',
                   x_y_swap=False,
                   invert=[0, 0]):
-    '''
+    """
     Plot the raw reads, effective reads, and bleeding (if there is any) of a given gene
     where gene can be selected either by gene name or gene index
-    '''
+    """
     gene_idx = np.argwhere(before_correction.gene_names == gene)[0][0]
 
     # load raw reads
@@ -688,13 +696,13 @@ def clean_bleed(dataset: data.SpatialExpressionDataset,
                 local_weight: Optional[int],
                 max_steps: int = 5) -> (data.SpatialExpressionDataset, data.BleedCorrectionResult):
     """
-
-    @param dataset: SpatialExpressionDataset
-    @param n_top: Number of genes to use for bleed correction.
+    :param dataset: SpatialExpressionDataset
+    :param n_top: Number of genes to use for bleed correction.
                   Will use the top n genes by standard deviation for building basis functions.
-    @param max_steps: Number of steps for optimization
-    @param local_weight: Tuning parameter (optional, a reasonable value will be chosen if not provided)
-    @return:
+    :param local_weight: Tuning parameter (optional, a reasonable value will be chosen if not provided)
+    :param max_steps: Number of Expectation Maximization iterations to use.
+    :return: Tuple of (SpatialExpressionDataset, BleedCorrectionResult), the SpatialExpressionDataset
+             returned will contain the bleed corrected read counts.
     """
     if not has_non_tissue_spots(dataset):
         raise RuntimeError('Cannot run clean bleed without non-tissue spots.')
