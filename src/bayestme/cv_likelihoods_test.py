@@ -110,7 +110,7 @@ def test_plot_cv_running():
         cv_likelihoods.plot_cv_running(tempdir, os.path.join(tempdir, 'plot'))
 
         assert os.path.exists(os.path.join(tempdir, 'plot/cv_running.pdf'))
-        assert os.path.exists(os.path.join(tempdir, 'plot/k-folds.pdf'))
+        assert os.path.exists(os.path.join(tempdir, 'plot/k_folds.pdf'))
     finally:
         shutil.rmtree(tempdir)
 
@@ -118,12 +118,17 @@ def test_plot_cv_running():
 def test_get_max_likelihood_n_components():
     lam_vals = [1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0]
     n_fold = 5
-    n_components = 12
-    likelihoods = np.random.random((2, n_components - 1, len(lam_vals), n_fold))
-    n_components = cv_likelihoods.get_max_likelihood_n_components(likelihoods)
+    k_vals = [2, 3, 4, 5, 6, 7, 8]
+    likelihoods = np.random.random((2, len(k_vals), len(lam_vals), n_fold))
+    n_components = cv_likelihoods.get_max_likelihood_n_components(
+        likelihoods,
+        k_vals=k_vals)
 
     best_lambda = cv_likelihoods.get_best_lambda_value(
-        likelihoods=likelihoods, lambda_array=lam_vals, best_n_components=n_components)
+        likelihoods=likelihoods,
+        lambda_array=lam_vals,
+        best_n_components=n_components,
+        k_vals=k_vals)
 
-    assert n_components in range(2, n_components + 1)
+    assert n_components in k_vals
     assert best_lambda in lam_vals

@@ -51,7 +51,6 @@ def load_likelihoods(output_dir):
 def plot_likelihoods(
         likelihood_path,
         out_file,
-        exp_name='Experiment',
         normalize=False):
     (train_likelihoods, test_likelihoods), fold_nums, lam_vals, k_vals = load_likelihoods(likelihood_path)
     # Plot the averages for train and test
@@ -70,13 +69,13 @@ def plot_likelihoods(
         if normalize:
             like_mean = (like_mean - like_mean.mean()) / like_mean.std()
         like_means.append(like_mean)
-        plt.plot(k_vals, like_mean, label=f'Score for {exp_name}', lw=3, color=colors[0])
+        plt.plot(k_vals, like_mean, label=f'Score for Experiment', lw=3, color=colors[0])
 
         like_mean = np.nanmean(test_likelihoods, axis=(-2, -1))
         if normalize:
             like_mean = (like_mean - like_mean.mean()) / like_mean.std()
         plt.scatter(k_vals[np.nanargmax(like_mean)], np.nanmax(like_mean), color=colors[0], s=150, marker=(5, 1),
-                    zorder=10, label=f'Peak for {exp_name}')
+                    zorder=10, label=f'Peak for Experiment')
         plt.gca().set_xlabel('Number of cell types', fontsize=16, weight='bold')
         plt.gca().set_ylabel('Relative test likelihood' if normalize else 'Test Likelihood', fontsize=16, weight='bold')
         plt.gca().set_xticks(k_vals)
@@ -90,7 +89,7 @@ def plot_likelihoods(
     return np.array(like_means)
 
 
-def plot_cv_running(results_path, out_path):
+def plot_cv_running(results_path, out_path, output_format='pdf'):
     likelihoods, fold_nums, lam_vals, k_vals = load_likelihoods(results_path)
     # Plot the averages for train and test
     with sns.axes_style('white'):
@@ -132,7 +131,7 @@ def plot_cv_running(results_path, out_path):
 
         axarr[0].legend(loc='lower left')
         plt.tight_layout()
-        plt.savefig(os.path.join(out_path, f'cv_running.pdf'), bbox_inches='tight')
+        plt.savefig(os.path.join(out_path, f'cv_running.{output_format}'), bbox_inches='tight')
         plt.close()
         plt.figure()
         for lamidx, lam in enumerate(lam_vals):
@@ -150,27 +149,30 @@ def plot_cv_running(results_path, out_path):
 
         plt.legend(loc='upper right')
         plt.tight_layout()
-        plt.savefig(os.path.join(out_path, f'k-folds.pdf'), bbox_inches='tight')
+        plt.savefig(os.path.join(out_path, f'k_folds.{output_format}'), bbox_inches='tight')
         plt.close()
 
 
-def get_max_likelihood_n_components(likelihoods):
+def get_max_likelihood_n_components(likelihoods, k_vals):
     # We look at only the test likelihoods
     test_likelihoods = likelihoods[1]
 
     likelihood_mean = np.nanmean(test_likelihoods, axis=(-2, -1))
 
-    return np.argmax(likelihood_mean) + 2
+    return k_vals[np.argmax(likelihood_mean)]
 
 
 def get_best_lambda_value(likelihoods,
                           best_n_components,
-                          lambda_array):
+                          lambda_array,
+                          k_vals):
+    k_idx = k_vals.index(best_n_components)
+
     # We look at only the test likelihoods
     test_likelihoods = likelihoods[1]
 
     per_lambda_means_at_best_n_components_point = (
-        np.nanmean(test_likelihoods[best_n_components], axis=(-1,)))
+        np.nanmean(test_likelihoods[k_idx], axis=(-1,)))
 
     global_mean_at_best_n_components_point = np.nanmean(
         per_lambda_means_at_best_n_components_point)

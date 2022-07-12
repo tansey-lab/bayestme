@@ -556,7 +556,8 @@ def plot_bleed_vectors(locations,
                        tissue_mask,
                        rates,
                        weights,
-                       output_dir
+                       output_dir,
+                       output_format: str = 'pdf'
                        ):
     # Plot the general directionality of where reads come from in each spot
     Contributions = (rates[None, :, gene_idx] * weights)
@@ -581,7 +582,7 @@ def plot_bleed_vectors(locations,
         plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
                   color='black')
 
-    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.pdf'), bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.{output_format}'), bbox_inches='tight')
     plt.close()
 
 
@@ -589,18 +590,21 @@ def plot_before_after_cleanup(
         before_correction: data.SpatialExpressionDataset,
         after_correction: data.SpatialExpressionDataset,
         gene: str,
-        output: str,
+        output_dir: str,
+        output_format: str = 'pdf',
         cmap='jet',
         x_y_swap=False,
         invert=[0, 0]):
-    gene_idx = np.argwhere(before_correction.gene_names == gene)[0][0]
+    gene_idx_before = np.argwhere(before_correction.gene_names == gene)[0][0]
+    gene_idx_after = np.argwhere(after_correction.gene_names == gene)[0][0]
 
     after_correction_counts = after_correction.raw_counts.copy()
 
     after_correction_counts[~after_correction.tissue_mask] = np.nan
 
     # plot
-    plot_data = np.vstack([before_correction.raw_counts[:, gene_idx], after_correction_counts[:, gene_idx]])
+    plot_data = np.vstack(
+        [before_correction.raw_counts[:, gene_idx_before], after_correction_counts[:, gene_idx_after]])
     plot_titles = ['Raw Reads', 'Corrected Reads']
     v_min = np.nanpercentile(plot_data, 5, axis=1)
     v_max = np.nanpercentile(plot_data, 95, axis=1)
@@ -623,14 +627,15 @@ def plot_before_after_cleanup(
         v_max=v_max,
         subtitles=plot_titles,
         name='{}_bleeding_plot'.format(gene),
-        save=output,
-        show=False)
+        plot_format=output_format,
+        save=output_dir)
 
 
 def plot_bleeding(before_correction: data.SpatialExpressionDataset,
                   after_correction: data.SpatialExpressionDataset,
                   gene: str,
-                  output: str,
+                  output_dir: str,
+                  output_format: str = 'pdf',
                   cmap='jet',
                   x_y_swap=False,
                   invert=[0, 0]):
@@ -687,13 +692,13 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
         v_max=v_max,
         subtitles=plot_titles,
         name='{}_bleeding_plot'.format(gene),
-        show=False,
-        save=output)
+        plot_format=output_format,
+        save=output_dir)
 
 
 def clean_bleed(dataset: data.SpatialExpressionDataset,
                 n_top: int,
-                local_weight: Optional[int],
+                local_weight: Optional[int] = None,
                 max_steps: int = 5) -> (data.SpatialExpressionDataset, data.BleedCorrectionResult):
     """
     :param dataset: SpatialExpressionDataset
@@ -749,6 +754,7 @@ def create_top_n_gene_bleeding_plots(
         corrected_dataset: data.SpatialExpressionDataset,
         bleed_result: data.BleedCorrectionResult,
         output_dir: str,
+        output_format: str = 'pdf',
         n_genes: int = 10):
     top_gene_names = utils.get_top_gene_names_by_stddev(
         reads=corrected_dataset.reads,
@@ -756,7 +762,13 @@ def create_top_n_gene_bleeding_plots(
         n_genes=n_genes)
 
     for gene_name in top_gene_names:
-        plot_before_after_cleanup(dataset, corrected_dataset, gene_name, output_dir)
+        plot_before_after_cleanup(
+            before_correction=dataset,
+            after_correction=corrected_dataset,
+            gene=gene_name,
+            output_dir=output_dir,
+            output_format=output_format)
+
         plot_bleed_vectors(
             locations=corrected_dataset.positions.T,
             gene_name=gene_name,
@@ -764,5 +776,5 @@ def create_top_n_gene_bleeding_plots(
             tissue_mask=corrected_dataset.tissue_mask,
             weights=bleed_result.weights,
             rates=np.copy(dataset.raw_counts) * dataset.tissue_mask[:, None],
-            output_dir=output_dir
-        )
+            output_dir=output_dir,
+            output_format=output_format)
