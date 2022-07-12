@@ -164,12 +164,15 @@ def get_max_likelihood_n_components(likelihoods, k_vals):
 
 def get_best_lambda_value(likelihoods,
                           best_n_components,
-                          lambda_array):
+                          lambda_array,
+                          k_vals):
+    k_idx = k_vals.index(best_n_components)
+
     # We look at only the test likelihoods
     test_likelihoods = likelihoods[1]
 
     per_lambda_means_at_best_n_components_point = (
-        np.nanmean(test_likelihoods[best_n_components], axis=(-1,)))
+        np.nanmean(test_likelihoods[k_idx], axis=(-1,)))
 
     global_mean_at_best_n_components_point = np.nanmean(
         per_lambda_means_at_best_n_components_point)

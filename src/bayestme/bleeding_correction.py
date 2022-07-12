@@ -556,7 +556,8 @@ def plot_bleed_vectors(locations,
                        tissue_mask,
                        rates,
                        weights,
-                       output_dir
+                       output_dir,
+                       output_format: str = 'pdf'
                        ):
     # Plot the general directionality of where reads come from in each spot
     Contributions = (rates[None, :, gene_idx] * weights)
@@ -581,7 +582,7 @@ def plot_bleed_vectors(locations,
         plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
                   color='black')
 
-    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.pdf'), bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.{output_format}'), bbox_inches='tight')
     plt.close()
 
 
