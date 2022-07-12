@@ -147,6 +147,7 @@ def plot_cell_num(
         stdata: data.SpatialExpressionDataset,
         result: data.DeconvolutionResult,
         output_dir: str,
+        output_format: str = 'pdf',
         cmap: str = 'jet',
         seperate_pdf: bool = False):
     if stdata.layout == data.Layout.HEX:
@@ -162,7 +163,8 @@ def plot_cell_num(
             plotting.st_plot(
                 data=plot_object[:, i].T[:, np.newaxis],
                 pos=stdata.positions_tissue,
-                name='cell_number_component_{}'.format(i),
+                name='cell_number_component_{}'.format(i + 1),
+                plot_format=output_format,
                 save=output_dir,
                 layout=layout,
                 unit_dist=size,
@@ -172,7 +174,8 @@ def plot_cell_num(
             data=plot_object.T[:, np.newaxis],
             pos=stdata.positions_tissue,
             name='cell_number',
-            subtitles=['Cell type {}'.format(i+1) for i in range(result.n_components)],
+            plot_format=output_format,
+            subtitles=['Cell type {}'.format(i + 1) for i in range(result.n_components)],
             save=output_dir,
             layout=layout,
             unit_dist=size,
@@ -183,6 +186,7 @@ def plot_cell_prob(
         stdata: data.SpatialExpressionDataset,
         result: data.DeconvolutionResult,
         output_dir: str,
+        output_format: str = 'pdf',
         cmap: str = 'jet',
         seperate_pdf: bool = False):
     if stdata.layout == data.Layout.HEX:
@@ -198,7 +202,8 @@ def plot_cell_prob(
             plotting.st_plot(
                 data=plot_object[:, i].T[:, np.newaxis],
                 pos=stdata.positions_tissue,
-                name='cell_probability_component_{}'.format(i),
+                name='cell_probability_component_{}'.format(i + 1),
+                plot_format=output_format,
                 save=output_dir,
                 layout=layout,
                 unit_dist=size,
@@ -208,7 +213,8 @@ def plot_cell_prob(
             data=plot_object.T[:, np.newaxis],
             pos=stdata.positions_tissue,
             name='cell_probability',
-            subtitles=['Component {}'.format(i) for i in range(result.n_components)],
+            plot_format=output_format,
+            subtitles=['Cell type {}'.format(i + 1) for i in range(result.n_components)],
             save=output_dir,
             layout=layout,
             unit_dist=size,
@@ -272,6 +278,8 @@ def plot_marker_genes(
         stframe.set_yticklabels(cell_type_labels, fontsize=45, rotation=0, fontweight='bold')
         stframe.invert_yaxis()
         stframe.margins(x=0.02, y=0.1)
+
+        plt.tight_layout()
         plt.savefig(output_file, bbox_inches='tight')
         plt.close()
 
@@ -281,16 +289,19 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
                        output_dir: str,
                        n_marker_genes: int = 5,
                        alpha: float = 0.05,
-                       marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT):
+                       marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
+                       output_format: str = 'pdf'):
     plot_cell_num(
         stdata=stdata,
         result=deconvolution_result,
         output_dir=output_dir,
+        output_format=output_format,
         seperate_pdf=False)
     plot_cell_prob(
         stdata=stdata,
         result=deconvolution_result,
         output_dir=output_dir,
+        output_format=output_format,
         seperate_pdf=False)
 
     marker_genes, omega_difference = detect_marker_genes(
@@ -304,4 +315,4 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         difference=omega_difference,
         deconvolution_results=deconvolution_result,
         stdata=stdata,
-        output_file=os.path.join(output_dir, 'marker_genes.pdf'))
+        output_file=os.path.join(output_dir, f'marker_genes.{output_format}'))

@@ -18,7 +18,6 @@ def st_plot(data,
             name='st_plot',
             colorbar=True,
             subtitles=None,
-            show=True,
             save='.',
             plot_format='pdf'):
     if x_y_swap:
@@ -84,7 +83,8 @@ def st_plot(data,
             stframe.invert_yaxis()
 
     print(f'Plot saved as {save}/{name}.{plot_format}')
-    plt.savefig(os.path.join(save, f'{name}.{plot_format}'))
+    plt.tight_layout()
+    plt.savefig(os.path.join(save, f'{name}.{plot_format}'), bbox_inches='tight')
     plt.close()
 
 

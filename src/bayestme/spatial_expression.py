@@ -331,13 +331,13 @@ def plot_spatial_patterns(
         decon_result: data.DeconvolutionResult,
         sde_result: data.SpatialDifferentialExpressionResult,
         output_dir,
+        output_format: str = 'pdf',
         n_top: int = 10,
         tissue_threshold: int = 5,
         plot_threshold: int = 2,
         cell_correlation_threshold: float = 0.5,
         moran_i_score_threshold: float = 0.9,
         gene_spatial_pattern_proportion_threshold: float = 0.95):
-
     if stdata.layout is data.Layout.HEX:
         marker = 'H'
         size = 5
@@ -422,5 +422,8 @@ def plot_spatial_patterns(
                 ax.spines["left"].set_visible(False)
                 ax.margins(x=0, y=0.15)
                 plt.tight_layout()
-                plt.savefig(os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.pdf'.format(k, h)), bbox_inches='tight')
+                plt.savefig(
+                    os.path.join(output_dir,
+                                 'spatial_loading_cell_type_{}_{}.{}'.format(k, h, output_format)),
+                    bbox_inches='tight')
                 plt.close()

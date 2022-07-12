@@ -176,9 +176,9 @@ def test_clean_bleed_plots():
                 output_dir=tempdir
             )
             bleeding_correction.plot_bleeding(
-                before_correction=dataset, after_correction=cleaned_dataset, gene=gene, output=tempdir)
+                before_correction=dataset, after_correction=cleaned_dataset, gene=gene, output_dir=tempdir)
             bleeding_correction.plot_before_after_cleanup(
-                before_correction=dataset, after_correction=cleaned_dataset, gene=gene, output=tempdir)
+                before_correction=dataset, after_correction=cleaned_dataset, gene=gene, output_dir=tempdir)
     finally:
         shutil.rmtree(tempdir)
 
