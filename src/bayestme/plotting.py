@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import matplotlib.cm as cm
+import matplotlib.axes
+import matplotlib.figure
 from matplotlib.colors import Normalize
 
 from matplotlib.patches import RegularPolygon
 
 from bayestme import data
-
+import math
 
 def st_plot(data,
             pos,
@@ -197,6 +199,62 @@ def plot_spots(ax, data, pos, rgb=np.array([1, 0, 0]), cmap=None, discrete_cmap=
     return img
 
 
+def plot_colored_spatial_polygon(
+        fig: matplotlib.figure.Figure,
+        ax: matplotlib.axes.Axes,
+        coords: np.ndarray,
+        values: np.ndarray,
+        layout: data.Layout,
+        colormap: cm.ScalarMappable = cm.BuPu):
+    """
+    Basic plot of spatial gene expression
+
+    :param fig: matplotlib figure artist object to which plot will be written
+    :param ax: matplotlib axes artist object to which plot will be written
+    :param coords: np.ndarray of int, shape of (N, 2)
+    :param values: np.ndarray of int, shape of (N,)
+    :param layout: Layout enum
+    :param colormap: Colormap for converting values to colors, defaults to BuPu
+    :return: matplotlib Figure object
+    """
+    norm = Normalize(vmin=np.min(values), vmax=np.max(values))
+
+    ax.set_aspect('equal')
+
+    if layout is data.Layout.HEX:
+        hcoord = coords[:, 0]
+        vcoord = (2. * np.sin(np.radians(60)) * (coords[:, 1]) / 3.)
+        num_vertices = 6
+        packing_radius = 2.0 / 3.0
+        orientation = np.radians(30)
+    elif layout is data.Layout.SQUARE:
+        hcoord = coords[:, 0]
+        vcoord = coords[:, 1]
+        num_vertices = 4
+        packing_radius = math.sqrt(2) / 2.0
+        orientation = np.radians(45)
+    else:
+        raise NotImplementedError(layout)
+
+    # Add colored polygons
+    for x, y, v in zip(hcoord, vcoord, values):
+        polygon = RegularPolygon(
+            (x, y),
+            numVertices=num_vertices,
+            radius=packing_radius,
+            orientation=orientation,
+            facecolor=colormap(norm(v)),
+            alpha=1,
+            edgecolor='k')
+        ax.add_patch(polygon)
+
+    # By scatter-plotting an invisible point on to all of our patches
+    # we ensure the plotting domain is
+    # adjusted such that all patches are visible.
+    ax.scatter(hcoord, vcoord, alpha=0)
+    fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax)
+
+
 def scatter_pie(dist, pos, size, ax=None):
     cumsum = np.cumsum(dist)
     cumsum = cumsum / cumsum[-1]
@@ -214,42 +272,23 @@ def scatter_pie(dist, pos, size, ax=None):
 
 def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
                          gene: str,
-                         output_dir: str,
-                         output_format: str = 'pdf'):
+                         output_file: str):
     gene_idx = np.argmax(stdata.gene_names == gene)
-    st_plot(np.vstack([stdata.raw_counts[:, gene_idx]])[:, None],
-            stdata.positions,
-            layout='h' if stdata.layout is data.Layout.HEX else 's',
-            name=f'{gene}_raw_counts',
-            save=output_dir,
-            plot_format=output_format)
-
-
-def plot_hexagonal_grid(coords, values):
-    cmap = cm.autumn
-    norm = Normalize(vmin=np.min(values), vmax=np.max(values))
-
-    # Horizontal cartesian coords
-    hcoord = [c[0] for c in coords]
-
-    # Vertical cartersian coords
-    vcoord = [2. * np.sin(np.radians(60)) * (c[1] - c[2]) / 3. for c in coords]
+    counts = stdata.raw_counts[:, gene_idx]
+    counts = counts[stdata.tissue_mask]
+    positions = stdata.positions.T[stdata.tissue_mask, :]
 
     fig, ax = plt.subplots(1)
-    ax.set_aspect('equal')
 
-    # Add some coloured hexagons
-    for x, y, v in zip(hcoord, vcoord, values):
-        hex = RegularPolygon(
-            (x, y),
-            numVertices=6,
-            radius=2. / 3.,
-            orientation=np.radians(30),
-            facecolor=cmap(norm(v)),
-            alpha=0.2,
-            edgecolor='k')
-        ax.add_patch(hex)
+    plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax,
+        coords=positions,
+        values=counts,
+        layout=stdata.layout)
 
-    plt.colorbar(fig)
+    fig.savefig(output_file)
+    plt.close(fig)
 
-    plt.show()
+
+
