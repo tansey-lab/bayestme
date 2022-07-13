@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
+
+from matplotlib.patches import RegularPolygon
 
 from bayestme import data
 
@@ -148,7 +152,7 @@ def st_plot_with_room_for_legend(
     for i in range(n_plots):
         stbox = [0 + i * subplots_adj, 0, st_ratio * subplots_adj, h]
         cbbox = [(st_ratio + 0.01 + i) * subplots_adj, h_cb_l, 0.04 * subplots_adj, h - h_cb_l * 2]
-        stframe = subfigs[i+1].add_axes(stbox)
+        stframe = subfigs[i + 1].add_axes(stbox)
         img = stframe.scatter(pos[0], pos[1], c=data[i][0], cmap=cmap, s=scatter_size, vmin=v_min[i], vmax=v_max[i],
                               norm=norm, marker=layout, linewidths=0)
         if data[i].shape[0] > 1:
@@ -156,7 +160,7 @@ def st_plot_with_room_for_legend(
                             vmax=v_max[i], norm=norm,
                             marker=layout, linewidths=0)
         if colorbar:
-            cbframe = subfigs[i+1].add_axes(cbbox)
+            cbframe = subfigs[i + 1].add_axes(cbbox)
             plt.colorbar(img, cax=cbframe)
         stframe.set_xlim(pos[0].min() - 1, pos[0].max() + 1)
         stframe.set_ylim(pos[1].min() - 1, pos[1].max() + 1)
@@ -219,3 +223,33 @@ def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
             name=f'{gene}_raw_counts',
             save=output_dir,
             plot_format=output_format)
+
+
+def plot_hexagonal_grid(coords, values):
+    cmap = cm.autumn
+    norm = Normalize(vmin=np.min(values), vmax=np.max(values))
+
+    # Horizontal cartesian coords
+    hcoord = [c[0] for c in coords]
+
+    # Vertical cartersian coords
+    vcoord = [2. * np.sin(np.radians(60)) * (c[1] - c[2]) / 3. for c in coords]
+
+    fig, ax = plt.subplots(1)
+    ax.set_aspect('equal')
+
+    # Add some coloured hexagons
+    for x, y, v in zip(hcoord, vcoord, values):
+        hex = RegularPolygon(
+            (x, y),
+            numVertices=6,
+            radius=2. / 3.,
+            orientation=np.radians(30),
+            facecolor=cmap(norm(v)),
+            alpha=0.2,
+            edgecolor='k')
+        ax.add_patch(hex)
+
+    plt.colorbar(fig)
+
+    plt.show()
