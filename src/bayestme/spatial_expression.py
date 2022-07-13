@@ -326,6 +326,51 @@ def moran_i(
     return result
 
 
+def select_significant_spatial_programs(
+        stdata: data.SpatialExpressionDataset,
+        decon_result: data.DeconvolutionResult,
+        sde_result: data.SpatialDifferentialExpressionResult,
+        tissue_threshold: int = 5,
+        cell_correlation_threshold: float = 0.5,
+        moran_i_score_threshold: float = 0.9,
+        gene_spatial_pattern_proportion_threshold: float = 0.95):
+    """
+    Filter significant combinations of cell type and spatial expression patterns.
+    This methodology aims to filter out programs that capture technical noise and
+    over-dispersion rather than meaningful spatial signal.
+
+    :param stdata: spatial expression dataset
+    :param decon_result: deconvolution result
+    :param sde_result: spatial differential expression result
+    :param cell_correlation_threshold: Threshold for cell correlation metric
+    :param moran_i_score_threshold: Moran's I score cutoff,
+                                    spatial programs with scores below this will be filtered out
+    :param gene_spatial_pattern_proportion_threshold: Only return (k, h) pairs where in cell types k
+    greater than this proportion of spots are labeled with spatial pattern h.
+    :param tissue_threshold: Only consider spots with greater than this many cells of type k
+                             for Moran's I calculation and cell correlation calculation
+    :return: generator of (cell type index, spatial pattern index)
+    """
+    for k in range(sde_result.n_components):
+        cell_number_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
+        n_cell_filter = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0)[cell_number_mask]
+        pos_filter = stdata.positions_tissue[:, cell_number_mask].astype(int)
+        edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
+        for h in range(1, sde_result.n_spatial_patterns + 1):
+            gene_ids = np.argwhere(
+                (sde_result.h_samples[:, :, k] == h).mean(axis=0) > gene_spatial_pattern_proportion_threshold)
+            w_pattern = sde_result.w_samples[:, k, h, :].mean(axis=0).copy()[cell_number_mask]
+            n_sp_gene = len(gene_ids)
+            if n_sp_gene > 0:
+                mask = np.array([':' in g for g in stdata.gene_names[gene_ids].flatten()])
+                n_sp_gene = (~mask).sum()
+            moran_i_score = moran_i(edges_filter, w_pattern[None])[0]
+            n_cell_correlation = pearsonr(n_cell_filter, w_pattern)[0]
+            if n_sp_gene != 0 and moran_i_score > moran_i_score_threshold and abs(
+                    n_cell_correlation) < cell_correlation_threshold:
+                yield k, h
+
+
 def plot_spatial_patterns(
         stdata: data.SpatialExpressionDataset,
         decon_result: data.DeconvolutionResult,

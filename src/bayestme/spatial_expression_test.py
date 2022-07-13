@@ -95,6 +95,37 @@ def test_spatial_detection():
     assert sde_result.w_samples.shape == (n_samples, n_components, n_spatial_patterns + 1, dataset.n_spot_in)
 
 
+def test_select_significant_spatial_programs():
+    n_genes = 7
+    n_components = 3
+    n_samples = 10
+    n_spatial_patterns = 10
+
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(
+        n_rows=50,
+        n_cols=50,
+        n_genes=n_genes)
+
+    deconvolution_results = generate_fake_deconvolve_results(
+        n_samples=n_samples,
+        n_tissue_spots=dataset.n_spot_in,
+        n_components=n_components,
+        n_genes=n_genes)
+
+    sde_results = generate_fake_sde_results(
+        n_samples=n_samples,
+        n_genes=n_genes,
+        n_components=n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_spot_in=dataset.n_spot_in)
+
+    result = [_ for _ in spatial_expression.select_significant_spatial_programs(
+        stdata=dataset,
+        decon_result=deconvolution_results,
+        sde_result=sde_results,
+    )]
+
+
 def test_plot_spatial_patterns():
     n_genes = 7
     n_components = 3
