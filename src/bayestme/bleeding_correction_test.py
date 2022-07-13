@@ -60,7 +60,7 @@ def test_build_basis_indices():
 def test_decontaminate_spots():
     np.random.seed(100)
     # This is just a smoke test, eventually we should make some assertions here
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=3,
         n_cols=3,
         n_genes=1)
@@ -76,7 +76,7 @@ def test_decontaminate_spots():
 
 def test_select_local_weight():
     np.random.seed(100)
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=1)
@@ -91,7 +91,7 @@ def test_select_local_weight():
 def test_fit_basis_functions():
     np.random.seed(100)
     # This is just a smoke test, eventually we should make some assertions here
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=9,
         n_cols=9,
         n_genes=1)
@@ -116,7 +116,7 @@ def test_multinomial():
 
 def test_clean_bleed():
     np.random.seed(100)
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=5)
@@ -141,7 +141,7 @@ def test_clean_bleed():
 
 def test_clean_bleed_plots():
     np.random.seed(100)
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=5)
@@ -186,7 +186,7 @@ def test_clean_bleed_plots():
 
 def test_create_top_n_gene_bleeding_plots():
     np.random.seed(100)
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=5)

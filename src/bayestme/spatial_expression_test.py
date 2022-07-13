@@ -55,7 +55,7 @@ def test_spatial_detection():
     n_samples = 10
     n_spatial_patterns = 10
 
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=n_genes)
@@ -101,7 +101,7 @@ def test_plot_spatial_patterns():
     n_samples = 10
     n_spatial_patterns = 10
 
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=50,
         n_cols=50,
         n_genes=n_genes)

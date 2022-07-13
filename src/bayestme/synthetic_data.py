@@ -1,15 +1,17 @@
+from bayestme import data
+
 import numpy as np
 from scipy.stats import multivariate_normal, multivariate_t
 
 
-def generate_data(
+def generate_simulated_bleeding_reads_data(
         n_rows=30,
         n_cols=30,
         n_genes=20,
         spot_bleed_prob=0.5,
         length_scale=0.2,
         gene_bandwidth=1,
-        bleeding='anisotropic'):
+        bleeding='anisotropic', ):
     """
     Generate simulated read data with modeled bleeding.
 
@@ -97,3 +99,38 @@ def generate_data(
     bleed_counts += local_counts
 
     return locations, tissue_mask, true_rates, true_counts, bleed_counts
+
+
+def generate_fake_stdataset(
+        n_rows: int = 30,
+        n_cols: int = 30,
+        n_genes: int = 20,
+        layout: data.Layout = data.Layout.SQUARE) -> data.SpatialExpressionDataset:
+    """
+    Create a fake dataset for use in testing or demonstration.
+
+    :param n_rows: width of the fake slide
+    :param n_cols: height of the fake slide
+    :param n_genes: number of marker genes
+    :param layout: layout of spots on the fake slide
+    :return: SpatialExpressionDataset object containing simulated data
+    """
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = generate_simulated_bleeding_reads_data(
+        n_rows=n_rows,
+        n_cols=n_cols,
+        n_genes=n_genes)
+
+    if layout is data.Layout.HEX:
+        locations[:, 1] = locations[:, 1] * 2
+        locations[locations[:, 0] % 2 == 1, 1] += 1
+    elif layout is data.Layout.SQUARE:
+        locations = locations
+    else:
+        raise NotImplementedError(layout)
+
+    return data.SpatialExpressionDataset(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations.T,
+        gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
+        layout=layout)
