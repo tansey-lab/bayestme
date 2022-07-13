@@ -3,6 +3,7 @@ import shutil
 import numpy as np
 import tempfile
 
+import bayestme.synthetic_data
 from bayestme import bleeding_correction, data, phenotype_selection
 
 
@@ -13,7 +14,7 @@ def test_get_phenotype_selection_parameters_for_folds():
     n_fold = 2
     n_splits = 15
     lams = [1, 10]
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=50,
         n_cols=50,
         n_genes=n_genes)
@@ -46,7 +47,7 @@ def test_plot_folds():
     n_fold = 2
     n_splits = 15
     lams = [1, 10]
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=50,
         n_cols=50,
         n_genes=n_genes)
@@ -81,7 +82,7 @@ def test_sample_graph_fused_multinomial():
     n_genes = 50
     n_samples = 3
     n_components = 2
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=n_genes)
@@ -132,7 +133,7 @@ def test_run_phenotype_selection_single_fold():
     n_samples = 1
     n_top = 1
     n_components = 3
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=n_genes)

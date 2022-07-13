@@ -2,6 +2,7 @@ import shutil
 import tempfile
 import numpy as np
 
+import bayestme.synthetic_data
 from bayestme import bleeding_correction, utils, deconvolution, data
 
 
@@ -22,7 +23,7 @@ def create_toy_deconvolve_result(
 
 
 def test_deconvolve():
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=15,
         n_cols=15,
         n_genes=5)
@@ -62,7 +63,7 @@ def test_detect_marker_genes():
     n_components = 3
     n_marker = 2
     n_genes = 100
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=n_genes)
@@ -91,7 +92,7 @@ def test_deconvolve_plots():
     tempdir = tempfile.mkdtemp()
     n_genes = 50
     n_marker_genes = 5
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bleeding_correction.generate_data(
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=12,
         n_cols=12,
         n_genes=n_genes)
