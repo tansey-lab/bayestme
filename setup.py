@@ -42,7 +42,7 @@ setup(
         "seaborn>=0.11.2",
         "scipy>=1.7",
         "scikit-image>=0.19.2",
-        "scikit-learn>=1.1.1",
+        "scikit-learn~=1",
         "pypolyagamma>=1.2.3",
         "matplotlib>=3.5",
         "autograd-minimize>=0.2.2",
