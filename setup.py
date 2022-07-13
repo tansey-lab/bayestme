@@ -38,7 +38,7 @@ setup(
     },
     python_requires=">=3.7, <4",
     install_requires=[
-        "numpy>=1.22.4",
+        "numpy>=1.21",
         "seaborn>=0.11.2",
         "scipy>=1.7",
         "scikit-image>=0.19.2",
