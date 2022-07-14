@@ -20,7 +20,7 @@ def main():
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
     sde_result = data.SpatialDifferentialExpressionResult.read_h5(args.sde_result)
 
-    spatial_expression.plot_spatial_patterns(
+    spatial_expression.plot_significant_spatial_patterns(
         stdata=stdata,
         decon_result=deconvolution_result,
         sde_result=sde_result,

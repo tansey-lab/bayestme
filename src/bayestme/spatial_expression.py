@@ -4,8 +4,9 @@ import os
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
-import seaborn as sns
+import matplotlib.cm as cm
 
+from matplotlib.lines import Line2D
 from scipy.sparse import block_diag, spdiags
 from scipy.stats import nbinom
 from matplotlib import colors
@@ -13,8 +14,8 @@ from scipy.stats import pearsonr
 from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
 
-from .utils import ilogit, stable_softmax, sample_mvn_from_precision
-from . import utils, data, plotting
+from bayestme.utils import ilogit, stable_softmax, sample_mvn_from_precision
+from bayestme import utils, data, plotting
 
 logger = logging.getLogger(__name__)
 
@@ -294,14 +295,19 @@ def calculate_spatial_genes(sde_result: data.SpatialDifferentialExpressionResult
 
 def moran_i(
         edges: np.ndarray,
-        data: np.ndarray,
-        two_tailed=False):
-    '''
+        data: np.array,
+        two_tailed=False) -> float:
+    """
     Calculate Moran's I (spatial auto-correlation statistic)
-    N nodes, M edges
-    edges: 2 by M
-    data: 2d or 3d, K (by H) by N
-    '''
+
+    :param edges: N x 2 np.ndarray, where N is the number of edges.
+                  Values in the edges matrix represent indices into data.
+    :param data: np.array of scalar values
+    :param two_tailed: If true, return 2-tailed p-value. Default is False.
+    :return: float between 0 and 1
+    """
+    data = data[np.newaxis]
+
     neighbours = dict()
     weights = dict()
     for i in range(edges.max() + 1):
@@ -323,7 +329,48 @@ def moran_i(
         else:
             result[k] = Moran(data[k, :], w, two_tailed=two_tailed).I
 
-    return result
+    return result[0]
+
+
+def get_n_cell_correlation(n_cell_filter: np.array, w_pattern: np.array):
+    """
+    Return perason's R between two arrays
+    
+    :param n_cell_filter: np.array
+    :param w_pattern: np.array
+    :return: float
+    """
+    return pearsonr(n_cell_filter, w_pattern)[0]
+
+
+def get_proportion_of_spots_in_k_with_pattern_h_per_gene(
+        h_samples: np.ndarray,
+        k: int,
+        h: int) -> np.array:
+    """
+    
+    :param h_samples: h_samples from SpatialDifferentialExpressionResult
+    :param k: cell type index
+    :param h: spatial pattern index
+    :return: float
+    """
+    return (h_samples[:, :, k] == h).mean(axis=0)
+
+
+PSEUDOGENE_MARKER = ':'
+
+
+def filter_pseudogenes_from_selection(gene_id_selection: np.array, gene_names: np.array):
+    """
+    Given an array indexing genes from gene_names, remove
+    any selection of a pseudogene.
+
+    :param gene_id_selection: Array indexing into gene_names
+    :param gene_names: Array of string, gene names
+    :return:
+    """
+    mask = np.array([PSEUDOGENE_MARKER in g for g in gene_names[gene_id_selection].flatten()])
+    return gene_id_selection[~mask]
 
 
 def select_significant_spatial_programs(
@@ -333,7 +380,8 @@ def select_significant_spatial_programs(
         tissue_threshold: int = 5,
         cell_correlation_threshold: float = 0.5,
         moran_i_score_threshold: float = 0.9,
-        gene_spatial_pattern_proportion_threshold: float = 0.95):
+        gene_spatial_pattern_proportion_threshold: float = 0.95,
+        filter_pseudogenes: bool = False):
     """
     Filter significant combinations of cell type and spatial expression patterns.
     This methodology aims to filter out programs that capture technical noise and
@@ -346,129 +394,191 @@ def select_significant_spatial_programs(
     :param moran_i_score_threshold: Moran's I score cutoff,
                                     spatial programs with scores below this will be filtered out
     :param gene_spatial_pattern_proportion_threshold: Only return (k, h) pairs where in cell types k
-    greater than this proportion of spots are labeled with spatial pattern h.
+    greater than this proportion of spots are labeled with spatial pattern h for at least one gene.
     :param tissue_threshold: Only consider spots with greater than this many cells of type k
                              for Moran's I calculation and cell correlation calculation
-    :return: generator of (cell type index, spatial pattern index)
+    :param filter_pseudogenes: Do not consider pseudogenes.
+    :return: generator of (cell type index, spatial pattern index, np.array of gene indices)
     """
     for k in range(sde_result.n_components):
         cell_number_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
-        n_cell_filter = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0)[cell_number_mask]
+        n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0)[cell_number_mask]
         pos_filter = stdata.positions_tissue[:, cell_number_mask].astype(int)
         edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
+
         for h in range(1, sde_result.n_spatial_patterns + 1):
+            gene_proportions_with_pattern_in_k = get_proportion_of_spots_in_k_with_pattern_h_per_gene(
+                h_samples=sde_result.h_samples, h=h, k=k)
             gene_ids = np.argwhere(
-                (sde_result.h_samples[:, :, k] == h).mean(axis=0) > gene_spatial_pattern_proportion_threshold)
+                gene_proportions_with_pattern_in_k > gene_spatial_pattern_proportion_threshold)
+
+            if len(gene_ids) == 0:
+                logger.debug(
+                    f'No genes have proportion > gene_spatial_pattern_proportion_threshold '
+                    f'{gene_spatial_pattern_proportion_threshold} '
+                    f'for cell type {k} pattern {h}, dropping.')
+                continue
+
             w_pattern = sde_result.w_samples[:, k, h, :].mean(axis=0).copy()[cell_number_mask]
-            n_sp_gene = len(gene_ids)
-            if n_sp_gene > 0:
-                mask = np.array([':' in g for g in stdata.gene_names[gene_ids].flatten()])
-                n_sp_gene = (~mask).sum()
-            moran_i_score = moran_i(edges_filter, w_pattern[None])[0]
-            n_cell_correlation = pearsonr(n_cell_filter, w_pattern)[0]
-            if n_sp_gene != 0 and moran_i_score > moran_i_score_threshold and abs(
-                    n_cell_correlation) < cell_correlation_threshold:
-                yield k, h
+
+            if filter_pseudogenes:
+                gene_ids = filter_pseudogenes_from_selection(gene_id_selection=gene_ids, gene_names=stdata.gene_names)
+
+                if len(gene_ids) == 0:
+                    logger.debug(
+                        f'No non-pesudogenes have proportion > gene_spatial_pattern_proportion_threshold '
+                        f'{gene_spatial_pattern_proportion_threshold} '
+                        f'for cell type {k} pattern {h}, dropping.')
+                    continue
+
+            n_cell_correlation = get_n_cell_correlation(n_cells_of_type_k_per_spot, w_pattern)
+
+            if abs(n_cell_correlation) >= cell_correlation_threshold:
+                logger.debug(
+                    f'n_cell_correlation >= cell_correlation_threshold '
+                    f'{cell_correlation_threshold} '
+                    f'for cell type {k} pattern {h}, dropping.')
+                continue
+
+            moran_i_score = moran_i(edges_filter, w_pattern)
+
+            if moran_i_score <= moran_i_score_threshold:
+                logger.debug(
+                    f'Moran I score <= moran_i_score_threshold '
+                    f'{moran_i_score_threshold} '
+                    f'for cell type {k} pattern {h}, dropping.')
+                continue
+
+            logger.debug(
+                f'Significant spatial pattern found: cell type {k}, pattern {h}.')
+            yield k, h, gene_ids
 
 
-def plot_spatial_patterns(
+def plot_spatial_pattern_legend(
+        fig: matplotlib.figure.Figure,
+        ax: matplotlib.axes.Axes,
+        stdata: data.SpatialExpressionDataset,
+        sde_result: data.SpatialDifferentialExpressionResult,
+        gene_ids: np.array,
+        k: int,
+        colormap):
+    loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
+    loadings /= np.max(np.abs(loadings)) * np.sign(loadings[np.argmax(np.abs(loadings))])
+    genes_selected = gene_ids[abs(loadings) > 0.1]
+    loadings = loadings[abs(loadings) > 0.1]
+    plot_order = np.argsort(loadings)
+    loading_plot = loadings[plot_order]
+    genes_selected_in_plot_order = genes_selected[plot_order]
+    vmin = min(-1e-4, loading_plot.min())
+    vmax = max(1e-4, loading_plot.max())
+    norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    legend_elements = []
+    for i, g in enumerate(genes_selected_in_plot_order):
+        legend_elements.append(
+            Line2D([0], [0], marker='o',
+                   color=colormap(norm(loading_plot[i])),
+                   label=stdata.gene_names[genes_selected_in_plot_order[i]],
+                   markerfacecolor=colormap(norm(loading_plot[i])),
+                   markersize=loading_plot[i] * 20,
+                   linestyle='none')
+        )
+    legend_elements.reverse()
+
+    ax.legend(handles=legend_elements, loc='center', fontsize=10, labelspacing=2, frameon=False)
+    ax.set_axis_off()
+
+
+def plot_spatial_pattern(
+        fig: matplotlib.figure.Figure,
+        ax: matplotlib.axes.Axes,
+        stdata: data.SpatialExpressionDataset,
+        decon_result: data.DeconvolutionResult,
+        sde_result: data.SpatialDifferentialExpressionResult,
+        gene_ids: np.array,
+        k: int,
+        h: int,
+        colormap,
+        plot_threshold: int = 2):
+    plot_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > plot_threshold
+    loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
+    rank = abs(loadings).argsort()[::-1]
+    gene_ids = gene_ids.flatten()[rank]
+    loadings = loadings[rank]
+    w_plot = sde_result.w_samples[:, k, h, :].mean(axis=0).copy() * np.max(np.abs(loadings)) * np.sign(
+        loadings[np.argmax(np.abs(loadings))])
+    w_plot[~plot_mask] = 0
+
+    vmin = min(-1e-4, w_plot[plot_mask].min())
+    vmax = max(1e-4, w_plot[plot_mask].max())
+    norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax,
+        coords=stdata.positions_tissue.T,
+        values=w_plot,
+        layout=stdata.layout,
+        norm=norm,
+        colormap=colormap)
+    ax.set_axis_off()
+
+
+def plot_spatial_pattern_with_legend(
+        stdata: data.SpatialExpressionDataset,
+        decon_result: data.DeconvolutionResult,
+        sde_result: data.SpatialDifferentialExpressionResult,
+        gene_ids: np.array,
+        k: int,
+        h: int,
+        output_file: str,
+        colormap=cm.coolwarm,
+        plot_threshold: int = 2):
+    fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [1, 3]})
+    plot_spatial_pattern_legend(
+        fig=fig,
+        ax=ax1,
+        stdata=stdata,
+        sde_result=sde_result,
+        gene_ids=gene_ids,
+        k=k,
+        colormap=colormap
+    )
+    plot_spatial_pattern(
+        fig=fig,
+        ax=ax2,
+        stdata=stdata,
+        decon_result=decon_result,
+        sde_result=sde_result,
+        gene_ids=gene_ids,
+        k=k,
+        h=h,
+        plot_threshold=plot_threshold,
+        colormap=colormap
+    )
+    fig.savefig(output_file)
+    plt.close(fig)
+
+
+def plot_significant_spatial_patterns(
         stdata: data.SpatialExpressionDataset,
         decon_result: data.DeconvolutionResult,
         sde_result: data.SpatialDifferentialExpressionResult,
         output_dir,
-        output_format: str = 'pdf',
-        n_top: int = 10,
-        tissue_threshold: int = 5,
-        plot_threshold: int = 2,
-        cell_correlation_threshold: float = 0.5,
-        moran_i_score_threshold: float = 0.9,
-        gene_spatial_pattern_proportion_threshold: float = 0.95):
-    if stdata.layout is data.Layout.HEX:
-        marker = 'H'
-        size = 5
-    else:
-        marker = 's'
-        size = 10
+        output_format: str = 'pdf'):
+    significant_programs = select_significant_spatial_programs(
+        stdata=stdata,
+        decon_result=decon_result,
+        sde_result=sde_result,
+    )
 
-    for k in range(sde_result.n_components):
-        cell_number_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
-        plot_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > plot_threshold
-        n_cell_filter = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0)[cell_number_mask]
-        pos_filter = stdata.positions_tissue[:, cell_number_mask].astype(int)
-        edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
-        for h in range(1, sde_result.n_spatial_patterns + 1):
-            gene_ids = np.argwhere(
-                (sde_result.h_samples[:, :, k] == h).mean(axis=0) > gene_spatial_pattern_proportion_threshold)
-            w_pattern = sde_result.w_samples[:, k, h, :].mean(axis=0).copy()[cell_number_mask]
-            n_sp_gene = len(gene_ids)
-            if n_sp_gene > 0:
-                mask = np.array([':' in g for g in stdata.gene_names[gene_ids].flatten()])
-                n_sp_gene = (~mask).sum()
-            moran_i_score = moran_i(edges_filter, w_pattern[None])[0]
-            n_cell_correlation = pearsonr(n_cell_filter, w_pattern)[0]
-            if n_sp_gene != 0 and moran_i_score > moran_i_score_threshold and abs(
-                    n_cell_correlation) < cell_correlation_threshold:
-                loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
-                rank = abs(loadings).argsort()[::-1]
-                gene_ids = gene_ids.flatten()[rank]
-                loadings = loadings[rank]
-                w_plot = sde_result.w_samples[:, k, h, :].mean(axis=0).copy() * np.max(np.abs(loadings)) * np.sign(
-                    loadings[np.argmax(np.abs(loadings))])
-                w_plot[~plot_mask] = 0
-                vmin = min(-1e-4, w_plot[plot_mask].min())
-                vmax = max(1e-4, w_plot[plot_mask].max())
-                norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
-                with sns.axes_style('white'):
-                    plt.rc('font', weight='bold')
-                    plt.rc('grid', lw=3)
-                    plt.rc('lines', lw=1)
-                    matplotlib.rcParams['pdf.fonttype'] = 42
-                    matplotlib.rcParams['ps.fonttype'] = 42
-                    subfigs = plotting.st_plot_with_room_for_legend(
-                        data=w_plot[None, None],
-                        pos=stdata.positions_tissue,
-                        unit_dist=size,
-                        cmap='coolwarm',
-                        v_min=None,
-                        v_max=None,
-                        layout=marker,
-                        subtitles=None, norm=norm,
-                        x_y_swap=False, invert=[1, 1])
-
-                loadings /= np.max(np.abs(loadings)) * np.sign(loadings[np.argmax(np.abs(loadings))])
-                genes_selected = gene_ids[abs(loadings) > 0.1]
-                loadings = loadings[abs(loadings) > 0.1]
-                n_genes = len(genes_selected)
-                if n_genes > n_top:
-                    genes_selected = gene_ids[:n_top]
-                    loadings = loadings[:n_top]
-                    n_genes = n_top
-                ax = subfigs[0].subplots(1, 1)
-                plot_order = np.argsort(loadings)
-                loading_plot = loadings[plot_order]
-                gene_selected = genes_selected[plot_order]
-                vmin = min(-1e-4, loading_plot.min())
-                vmax = max(1e-4, loading_plot.max())
-                norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
-                ax.scatter(
-                    np.ones(n_genes),
-                    np.arange(n_genes) + 1,
-                    c=loading_plot,
-                    s=abs(loading_plot) * 500,
-                    cmap='coolwarm',
-                    norm=norm)
-                for g in range(n_genes):
-                    ax.text(1 + 0.03, g + 1, stdata.gene_names[gene_selected[g]], ha='left', va='center')
-                ax.set_yticks([])
-                ax.set_xticks([])
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                ax.spines["bottom"].set_visible(False)
-                ax.spines["left"].set_visible(False)
-                ax.margins(x=0, y=0.15)
-                plt.tight_layout()
-                plt.savefig(
-                    os.path.join(output_dir,
-                                 'spatial_loading_cell_type_{}_{}.{}'.format(k, h, output_format)),
-                    bbox_inches='tight')
-                plt.close()
+    for k, h, gene_ids in significant_programs:
+        plot_spatial_pattern_with_legend(
+            stdata=stdata,
+            decon_result=decon_result,
+            sde_result=sde_result,
+            gene_ids=gene_ids,
+            k=k,
+            h=h,
+            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format(k, h, output_format))
+        )
