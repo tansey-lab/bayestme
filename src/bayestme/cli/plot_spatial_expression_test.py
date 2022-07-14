@@ -61,7 +61,7 @@ def test_plot_bleeding_correction():
         '--output-dir',
         tmpdir]
 
-    with mock.patch('bayestme.spatial_expression.plot_spatial_patterns') as plot_spatial_patterns_mock:
+    with mock.patch('bayestme.spatial_expression.plot_significant_spatial_patterns') as plot_spatial_patterns_mock:
         with mock.patch('sys.argv', command_line_args):
             bayestme.cli.plot_spatial_expression.main()
 

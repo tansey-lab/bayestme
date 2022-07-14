@@ -205,7 +205,8 @@ def plot_colored_spatial_polygon(
         coords: np.ndarray,
         values: np.ndarray,
         layout: data.Layout,
-        colormap: cm.ScalarMappable = cm.BuPu):
+        colormap: cm.ScalarMappable = cm.BuPu,
+        norm = None):
     """
     Basic plot of spatial gene expression
 
@@ -215,9 +216,11 @@ def plot_colored_spatial_polygon(
     :param values: np.ndarray of int, shape of (N,)
     :param layout: Layout enum
     :param colormap: Colormap for converting values to colors, defaults to BuPu
+    :param norm: Function for normalizing scalar values, defaults to Normalizer over values domain
     :return: matplotlib Figure object
     """
-    norm = Normalize(vmin=np.min(values), vmax=np.max(values))
+    if norm is None:
+        norm = Normalize(vmin=np.min(values), vmax=np.max(values))
 
     ax.set_aspect('equal')
 
