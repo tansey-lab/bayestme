@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Optional, List
 from matplotlib import pyplot as plt
 from matplotlib import colors
+import matplotlib.cm as cm
 from bayestme import model_bkg, data, plotting
 
 logger = logging.getLogger(__name__)
@@ -148,38 +149,41 @@ def plot_cell_num(
         result: data.DeconvolutionResult,
         output_dir: str,
         output_format: str = 'pdf',
-        cmap: str = 'jet',
+        cmap=cm.jet,
         seperate_pdf: bool = False):
-    if stdata.layout == data.Layout.HEX:
-        layout = 'H'
-        size = 5
-    else:
-        layout = 's'
-        size = 10
-
     plot_object = result.cell_num_trace[:, :, 1:].mean(axis=0)
+
     if seperate_pdf:
         for i in range(result.n_components):
-            plotting.st_plot(
-                data=plot_object[:, i].T[:, np.newaxis],
-                pos=stdata.positions_tissue,
-                name='cell_number_component_{}'.format(i + 1),
-                plot_format=output_format,
-                save=output_dir,
-                layout=layout,
-                unit_dist=size,
-                cmap=cmap)
+            fig, ax = plt.subplot()
+            ax.set_title(f'Cell Type {i+1}')
+            plotting.plot_colored_spatial_polygon(
+                fig=fig,
+                ax=ax,
+                coords=stdata.positions_tissue.T,
+                values=plot_object[:, i],
+                layout=stdata.layout,
+                colormap=cm.jet)
+            ax.set_axis_off()
+
+            fig.savefig(os.path.join(output_dir, f'cell_type_counts_{i}.{output_format}'))
+            plt.close(fig)
     else:
-        plotting.st_plot(
-            data=plot_object.T[:, np.newaxis],
-            pos=stdata.positions_tissue,
-            name='cell_number',
-            plot_format=output_format,
-            subtitles=['Cell type {}'.format(i + 1) for i in range(result.n_components)],
-            save=output_dir,
-            layout=layout,
-            unit_dist=size,
-            cmap=cmap)
+        fig, axes = plt.subplots(ncols=result.n_components, subplot_kw=dict(adjustable='datalim', aspect='equal'))
+
+        for i, ax in enumerate(axes):
+            ax.set_title(f'Cell Type {i+1}')
+            plotting.plot_colored_spatial_polygon(
+                fig=fig,
+                ax=ax,
+                coords=stdata.positions_tissue.T,
+                values=plot_object[:, i],
+                layout=stdata.layout,
+                colormap=cm.jet
+            )
+            ax.set_axis_off()
+        fig.savefig(os.path.join(output_dir, f'cell_type_counts.{output_format}'))
+        plt.close(fig)
 
 
 def plot_cell_prob(
@@ -187,38 +191,43 @@ def plot_cell_prob(
         result: data.DeconvolutionResult,
         output_dir: str,
         output_format: str = 'pdf',
-        cmap: str = 'jet',
+        cmap=cm.jet,
         seperate_pdf: bool = False):
-    if stdata.layout == data.Layout.HEX:
-        layout = 'H'
-        size = 5
-    else:
-        layout = 's'
-        size = 10
-
     plot_object = result.cell_prob_trace[:, :, 1:].mean(axis=0)
+
     if seperate_pdf:
         for i in range(result.n_components):
-            plotting.st_plot(
-                data=plot_object[:, i].T[:, np.newaxis],
-                pos=stdata.positions_tissue,
-                name='cell_probability_component_{}'.format(i + 1),
-                plot_format=output_format,
-                save=output_dir,
-                layout=layout,
-                unit_dist=size,
-                cmap=cmap)
+            fig, ax = plt.subplot()
+            ax.set_title(f'Cell Type {i+1}')
+            plotting.plot_colored_spatial_polygon(
+                fig=fig,
+                ax=ax,
+                coords=stdata.positions_tissue.T,
+                values=plot_object[:, i],
+                layout=stdata.layout,
+                colormap=cm.jet)
+            ax.set_axis_off()
+
+            fig.savefig(os.path.join(output_dir, f'cell_type_probability_{i}.{output_format}'))
+            plt.close(fig)
     else:
-        plotting.st_plot(
-            data=plot_object.T[:, np.newaxis],
-            pos=stdata.positions_tissue,
-            name='cell_probability',
-            plot_format=output_format,
-            subtitles=['Cell type {}'.format(i + 1) for i in range(result.n_components)],
-            save=output_dir,
-            layout=layout,
-            unit_dist=size,
-            cmap=cmap)
+        fig, axes = plt.subplots(
+            ncols=result.n_components,
+            subplot_kw=dict(adjustable='datalim', aspect='equal'))
+
+        for i, ax in enumerate(axes):
+            ax.set_title(f'Cell Type {i+1}')
+            plotting.plot_colored_spatial_polygon(
+                fig=fig,
+                ax=ax,
+                coords=stdata.positions_tissue.T,
+                values=plot_object[:, i],
+                layout=stdata.layout,
+                colormap=cm.jet
+            )
+            ax.set_axis_off()
+        fig.savefig(os.path.join(output_dir, f'cell_type_probabilities.{output_format}'))
+        plt.close(fig)
 
 
 def plot_marker_genes(
