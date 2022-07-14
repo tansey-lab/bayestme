@@ -11,6 +11,7 @@ from matplotlib.patches import RegularPolygon
 from bayestme import data
 import math
 
+
 def st_plot(data,
             pos,
             cmap='BuPu',
@@ -206,7 +207,8 @@ def plot_colored_spatial_polygon(
         values: np.ndarray,
         layout: data.Layout,
         colormap: cm.ScalarMappable = cm.BuPu,
-        norm = None):
+        norm=None,
+        plotting_coordinates=None):
     """
     Basic plot of spatial gene expression
 
@@ -217,6 +219,8 @@ def plot_colored_spatial_polygon(
     :param layout: Layout enum
     :param colormap: Colormap for converting values to colors, defaults to BuPu
     :param norm: Function for normalizing scalar values, defaults to Normalizer over values domain
+    :param plotting_coordinates: Expand the plotting window to include these coordinates,
+                                 default is to just plot over coords.
     :return: matplotlib Figure object
     """
     if norm is None:
@@ -227,12 +231,24 @@ def plot_colored_spatial_polygon(
     if layout is data.Layout.HEX:
         hcoord = coords[:, 0]
         vcoord = (2. * np.sin(np.radians(60)) * (coords[:, 1]) / 3.)
+        if plotting_coordinates is None:
+            support_hcoord = coords[:, 0]
+            support_vcoord = (2. * np.sin(np.radians(60)) * (coords[:, 1]) / 3.)
+        else:
+            support_hcoord = plotting_coordinates[:, 0]
+            support_vcoord = (2. * np.sin(np.radians(60)) * (plotting_coordinates[:, 1]) / 3.)
         num_vertices = 6
         packing_radius = 2.0 / 3.0
         orientation = np.radians(30)
     elif layout is data.Layout.SQUARE:
         hcoord = coords[:, 0]
         vcoord = coords[:, 1]
+        if plotting_coordinates is None:
+            support_hcoord = coords[:, 0]
+            support_vcoord = coords[:, 1]
+        else:
+            support_hcoord = plotting_coordinates[:, 0]
+            support_vcoord = plotting_coordinates[:, 1]
         num_vertices = 4
         packing_radius = math.sqrt(2) / 2.0
         orientation = np.radians(45)
@@ -254,7 +270,8 @@ def plot_colored_spatial_polygon(
     # By scatter-plotting an invisible point on to all of our patches
     # we ensure the plotting domain is
     # adjusted such that all patches are visible.
-    ax.scatter(hcoord, vcoord, alpha=0)
+    ax.scatter(support_hcoord, support_vcoord, alpha=0)
+
     fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax)
 
 
@@ -292,6 +309,3 @@ def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
 
     fig.savefig(output_file)
     plt.close(fig)
-
-
-

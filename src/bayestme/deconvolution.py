@@ -156,7 +156,7 @@ def plot_cell_num(
     if seperate_pdf:
         for i in range(result.n_components):
             fig, ax = plt.subplot()
-            ax.set_title(f'Cell Type {i+1}')
+            ax.set_title(f'Cell Type {i + 1}')
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
@@ -169,10 +169,12 @@ def plot_cell_num(
             fig.savefig(os.path.join(output_dir, f'cell_type_counts_{i}.{output_format}'))
             plt.close(fig)
     else:
-        fig, axes = plt.subplots(ncols=result.n_components, subplot_kw=dict(adjustable='datalim', aspect='equal'))
+        fig, axes = plt.subplots(ncols=result.n_components,
+                                 subplot_kw=dict(adjustable='box', aspect='equal'))
+        fig.set_figwidth(fig.get_size_inches()[0] * result.n_components)
 
         for i, ax in enumerate(axes):
-            ax.set_title(f'Cell Type {i+1}')
+            ax.set_title(f'Cell Type {i + 1}')
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
@@ -198,7 +200,7 @@ def plot_cell_prob(
     if seperate_pdf:
         for i in range(result.n_components):
             fig, ax = plt.subplot()
-            ax.set_title(f'Cell Type {i+1}')
+            ax.set_title(f'Cell Type {i + 1}')
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
@@ -213,10 +215,12 @@ def plot_cell_prob(
     else:
         fig, axes = plt.subplots(
             ncols=result.n_components,
-            subplot_kw=dict(adjustable='datalim', aspect='equal'))
+            subplot_kw=dict(adjustable='box', aspect='equal'))
+
+        fig.set_figwidth(fig.get_size_inches()[0] * result.n_components)
 
         for i, ax in enumerate(axes):
-            ax.set_title(f'Cell Type {i+1}')
+            ax.set_title(f'Cell Type {i + 1}')
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,

@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import os.path
 import math
 import logging
+import matplotlib.cm as cm
 
 from typing import Optional
 
@@ -494,9 +495,7 @@ def plot_before_after_cleanup(
         gene: str,
         output_dir: str,
         output_format: str = 'pdf',
-        cmap='jet',
-        x_y_swap=False,
-        invert=[0, 0]):
+        cmap=cm.jet):
     gene_idx_before = np.argwhere(before_correction.gene_names == gene)[0][0]
     gene_idx_after = np.argwhere(after_correction.gene_names == gene)[0][0]
 
@@ -504,33 +503,33 @@ def plot_before_after_cleanup(
 
     after_correction_counts[~after_correction.tissue_mask] = np.nan
 
-    # plot
-    plot_data = np.vstack(
-        [before_correction.raw_counts[:, gene_idx_before], after_correction_counts[:, gene_idx_after]])
-    plot_titles = ['Raw Reads', 'Corrected Reads']
-    v_min = np.nanpercentile(plot_data, 5, axis=1)
-    v_max = np.nanpercentile(plot_data, 95, axis=1)
-    if before_correction.layout is data.Layout.HEX:
-        marker = 'H'
-        size = 5
-    else:
-        marker = 's'
-        size = 10
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(fig.get_size_inches()[0] * 2)
 
-    plotting.st_plot(
-        plot_data[:, None],
-        before_correction.positions,
-        unit_dist=size,
-        cmap=cmap,
-        layout=marker,
-        x_y_swap=x_y_swap,
-        invert=invert,
-        v_min=v_min,
-        v_max=v_max,
-        subtitles=plot_titles,
-        name='{}_bleeding_plot'.format(gene),
-        plot_format=output_format,
-        save=output_dir)
+    plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax1,
+        coords=before_correction.positions.T,
+        values=before_correction.raw_counts[:, gene_idx_before],
+        layout=before_correction.layout,
+        colormap=cmap)
+
+    ax1.set_title('Raw Reads')
+    ax1.set_axis_off()
+    plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax2,
+        coords=after_correction.positions_tissue.T,
+        values=after_correction.reads[:, gene_idx_after],
+        layout=after_correction.layout,
+        colormap=cmap,
+        plotting_coordinates=after_correction.positions.T)
+
+    ax2.set_title('Corrected Reads')
+    ax2.set_axis_off()
+
+    fig.savefig(os.path.join(output_dir, f'{gene}_bleeding_plot.{output_format}'))
+    plt.close(fig)
 
 
 def plot_bleeding(before_correction: data.SpatialExpressionDataset,
