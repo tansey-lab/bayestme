@@ -468,8 +468,10 @@ def plot_bleed_vectors(locations,
     Vectors = (Directions * Contributions[..., None]).mean(axis=1)
     Vectors = Vectors / np.abs(Vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
 
+    fig, ax = plt.subplots()
+
     tissue_matrix = imshow_matrix(tissue_mask, locations)
-    im = plt.imshow(tissue_matrix, cmap='viridis', vmin=-1)
+    im = ax.imshow(tissue_matrix, cmap='viridis', vmin=-1, origin='lower')
 
     # get the colors of the values, according to the
     # colormap used by imshow
@@ -479,10 +481,10 @@ def plot_bleed_vectors(locations,
                mpatches.Patch(color=colors[1], label='In tissue')
                ]
     # put those patched as legend-handles into the legend
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
     for i, ((y, x), (dy, dx)) in enumerate(zip(locations, Vectors)):
-        plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
+        ax.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
                   color='black')
 
     plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.{output_format}'), bbox_inches='tight')
