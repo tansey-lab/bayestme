@@ -491,17 +491,10 @@ def plot_bleed_vectors(
     directions = plotted_locations[None] - plotted_locations[:, None]
     vectors = (directions * contributions[..., None]).mean(axis=1)
     vectors = vectors / np.abs(vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+    for i, ((y, x), (dy, dx)) in enumerate(zip(plotted_locations, vectors)):
+        ax.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
+                 color='black')
 
-    quiver = ax.quiver(
-        locations[:, 0],
-        locations[:, 1],
-        vectors[:, 0],
-        vectors[:, 1],
-        angles='xy',
-        scale_units='xy',
-        scale=1
-    )
-    quiver.set_zorder(99)
     ax.set_axis_off()
 
     plt.savefig(output_path, bbox_inches='tight')
