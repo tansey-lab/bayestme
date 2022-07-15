@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import os.path
 import math
 import logging
+import matplotlib.cm as cm
 
 from typing import Optional
 
@@ -452,39 +453,50 @@ def plot_basis_functions(basis_functions, output_dir):
     plt.close()
 
 
-def plot_bleed_vectors(locations,
-                       gene_name,
-                       gene_idx,
-                       tissue_mask,
-                       rates,
-                       weights,
-                       output_dir,
-                       output_format: str = 'pdf'
-                       ):
-    # Plot the general directionality of where reads come from in each spot
-    Contributions = (rates[None, :, gene_idx] * weights)
-    Directions = locations[None] - locations[:, None]
-    Vectors = (Directions * Contributions[..., None]).mean(axis=1)
-    Vectors = Vectors / np.abs(Vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+def plot_bleed_vectors(
+        stdata: data.SpatialExpressionDataset,
+        bleed_result: data.BleedCorrectionResult,
+        gene_name: str,
+        output_path: str,
+        colormap=cm.Set2_r):
+    gene_idx = np.argwhere(stdata.gene_names == gene_name)[0][0]
+    rates = np.copy(stdata.raw_counts) * stdata.tissue_mask[:, None]
+    locations = stdata.positions.T
 
-    tissue_matrix = imshow_matrix(tissue_mask, locations)
-    im = plt.imshow(tissue_matrix, cmap='viridis', vmin=-1)
+    fig, ax = plt.subplots()
 
-    # get the colors of the values, according to the
-    # colormap used by imshow
-    colors = [im.cmap(im.norm(value)) for value in np.unique(tissue_matrix.flatten())]
+    ax, cb, norm, hcoord_plotted, vcoord_plotted = plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax,
+        coords=locations,
+        values=stdata.tissue_mask.astype(int),
+        layout=stdata.layout,
+        colormap=colormap
+    )
+
+    cb.remove()
+
     # create a patch (proxy artist) for every color
-    patches = [mpatches.Patch(color=colors[0], label='Out of tissue'),
-               mpatches.Patch(color=colors[1], label='In tissue')
+    patches = [mpatches.Patch(color=colormap(norm(0)), label='Out of tissue'),
+               mpatches.Patch(color=colormap(norm(1)), label='In tissue')
                ]
     # put those patched as legend-handles into the legend
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-    for i, ((y, x), (dy, dx)) in enumerate(zip(locations, Vectors)):
-        plt.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
-                  color='black')
+    plotted_locations = np.row_stack([vcoord_plotted, hcoord_plotted]).T
 
-    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.{output_format}'), bbox_inches='tight')
+    # Plot the general directionality of where reads come from in each spot
+    contributions = (rates[None, :, gene_idx] * bleed_result.weights)
+    directions = plotted_locations[None] - plotted_locations[:, None]
+    vectors = (directions * contributions[..., None]).mean(axis=1)
+    vectors = vectors / np.abs(vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+    for i, ((y, x), (dy, dx)) in enumerate(zip(plotted_locations, vectors)):
+        ax.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
+                 color='black')
+
+    ax.set_axis_off()
+
+    plt.savefig(output_path, bbox_inches='tight')
     plt.close()
 
 
@@ -494,9 +506,7 @@ def plot_before_after_cleanup(
         gene: str,
         output_dir: str,
         output_format: str = 'pdf',
-        cmap='jet',
-        x_y_swap=False,
-        invert=[0, 0]):
+        cmap=cm.jet):
     gene_idx_before = np.argwhere(before_correction.gene_names == gene)[0][0]
     gene_idx_after = np.argwhere(after_correction.gene_names == gene)[0][0]
 
@@ -504,33 +514,33 @@ def plot_before_after_cleanup(
 
     after_correction_counts[~after_correction.tissue_mask] = np.nan
 
-    # plot
-    plot_data = np.vstack(
-        [before_correction.raw_counts[:, gene_idx_before], after_correction_counts[:, gene_idx_after]])
-    plot_titles = ['Raw Reads', 'Corrected Reads']
-    v_min = np.nanpercentile(plot_data, 5, axis=1)
-    v_max = np.nanpercentile(plot_data, 95, axis=1)
-    if before_correction.layout is data.Layout.HEX:
-        marker = 'H'
-        size = 5
-    else:
-        marker = 's'
-        size = 10
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(fig.get_size_inches()[0] * 2)
 
-    plotting.st_plot(
-        plot_data[:, None],
-        before_correction.positions,
-        unit_dist=size,
-        cmap=cmap,
-        layout=marker,
-        x_y_swap=x_y_swap,
-        invert=invert,
-        v_min=v_min,
-        v_max=v_max,
-        subtitles=plot_titles,
-        name='{}_bleeding_plot'.format(gene),
-        plot_format=output_format,
-        save=output_dir)
+    plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax1,
+        coords=before_correction.positions.T,
+        values=before_correction.raw_counts[:, gene_idx_before],
+        layout=before_correction.layout,
+        colormap=cmap)
+
+    ax1.set_title('Raw Reads')
+    ax1.set_axis_off()
+    plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax2,
+        coords=after_correction.positions_tissue.T,
+        values=after_correction.reads[:, gene_idx_after],
+        layout=after_correction.layout,
+        colormap=cmap,
+        plotting_coordinates=after_correction.positions.T)
+
+    ax2.set_title('Corrected Reads')
+    ax2.set_axis_off()
+
+    fig.savefig(os.path.join(output_dir, f'{gene}_bleeding_plot.{output_format}'))
+    plt.close(fig)
 
 
 def plot_bleeding(before_correction: data.SpatialExpressionDataset,
@@ -672,11 +682,8 @@ def create_top_n_gene_bleeding_plots(
             output_format=output_format)
 
         plot_bleed_vectors(
-            locations=corrected_dataset.positions.T,
+            stdata=dataset,
             gene_name=gene_name,
-            gene_idx=np.argwhere(corrected_dataset.gene_names == gene_name)[0][0],
-            tissue_mask=corrected_dataset.tissue_mask,
-            weights=bleed_result.weights,
-            rates=np.copy(dataset.raw_counts) * dataset.tissue_mask[:, None],
-            output_dir=output_dir,
-            output_format=output_format)
+            bleed_result=bleed_result,
+            output_path=os.path.join(output_dir, f'{gene_name}_bleed_vectors.{output_format}')
+        )

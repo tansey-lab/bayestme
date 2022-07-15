@@ -1,6 +1,7 @@
 import shutil
 import numpy as np
 import tempfile
+import os
 
 import bayestme.synthetic_data
 from bayestme import bleeding_correction, data
@@ -139,6 +140,30 @@ def test_clean_bleed():
     assert bleed_correction_result.global_rates.shape == (5, )
 
 
+def test_plot_bleed_vectors():
+    np.random.seed(100)
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(12,
+                                                    12,
+                                                    2,
+                                                    data.Layout.SQUARE)
+
+    (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(
+        dataset,
+        n_top=3,
+        local_weight=None)
+
+    tempdir = tempfile.mkdtemp()
+    try:
+        bleeding_correction.plot_bleed_vectors(
+            stdata=cleaned_dataset,
+            bleed_result=bleed_correction_result,
+            gene_name='1',
+            output_path=os.path.join(tempdir, 'bleed_plot.pdf')
+        )
+    finally:
+        shutil.rmtree(tempdir)
+
+
 def test_clean_bleed_plots():
     np.random.seed(100)
     locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
@@ -168,13 +193,10 @@ def test_clean_bleed_plots():
 
         for gene in ['1', '2', '3', '4', '5']:
             bleeding_correction.plot_bleed_vectors(
-                locations=cleaned_dataset.positions.T,
+                stdata=cleaned_dataset,
+                bleed_result=bleed_correction_result,
                 gene_name=gene,
-                gene_idx=np.argwhere(cleaned_dataset.gene_names == gene)[0][0],
-                tissue_mask=cleaned_dataset.tissue_mask,
-                weights=bleed_correction_result.weights,
-                rates=np.copy(dataset.raw_counts) * dataset.tissue_mask[:, None],
-                output_dir=tempdir
+                output_path=os.path.join(tempdir, 'bleed_plot.pdf')
             )
             bleeding_correction.plot_bleeding(
                 before_correction=dataset, after_correction=cleaned_dataset, gene=gene, output_dir=tempdir)
