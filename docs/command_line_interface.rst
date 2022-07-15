@@ -1,7 +1,7 @@
 Command Line Interface
 ======================
 
-BayesTME provides a suite of command line utilities that allow users to script running the pipeline end to end on their platform.
+BayesTME provides a suite of command line utilities that allow users to script running the pipeline end to end.
 
 These commands will be available on the path in the python environment in which the ``bayestme`` package is installed.
 
