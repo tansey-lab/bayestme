@@ -15,7 +15,7 @@ parser.add_argument('--filter-ribosomal-genes', action='store_true',
                     default=False,
                     help='Filter ribosomal genes (based on gene name regex)')
 parser.add_argument('--n-top-by-standard-deviation', type=int, default=None,
-                    help='Use the top n genes with the highest standard deviation among tissue spots.')
+                    help='Use the top N genes with the highest spatial variance.')
 parser.add_argument('--spot-threshold', type=float, default=None,
                     help='Filter genes appearing in greater than the provided threshold of tissue spots.')
 
