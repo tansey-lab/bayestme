@@ -458,11 +458,10 @@ def plot_bleed_vectors(
         bleed_result: data.BleedCorrectionResult,
         gene_name: str,
         output_path: str,
-        colormap = cm.Set2_r):
+        colormap=cm.Set2_r):
     gene_idx = np.argwhere(stdata.gene_names == gene_name)[0][0]
     rates = np.copy(stdata.raw_counts) * stdata.tissue_mask[:, None]
     locations = stdata.positions.T
-
 
     fig, ax = plt.subplots()
 
@@ -683,11 +682,8 @@ def create_top_n_gene_bleeding_plots(
             output_format=output_format)
 
         plot_bleed_vectors(
-            locations=corrected_dataset.positions.T,
+            stdata=dataset,
             gene_name=gene_name,
-            gene_idx=np.argwhere(corrected_dataset.gene_names == gene_name)[0][0],
-            tissue_mask=corrected_dataset.tissue_mask,
-            weights=bleed_result.weights,
-            rates=np.copy(dataset.raw_counts) * dataset.tissue_mask[:, None],
-            output_dir=output_dir,
-            output_format=output_format)
+            bleed_result=bleed_result,
+            output_path=os.path.join(output_dir, f'{gene_name}_bleed_vectors.{output_format}')
+        )

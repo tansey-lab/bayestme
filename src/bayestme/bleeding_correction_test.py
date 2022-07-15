@@ -142,8 +142,8 @@ def test_clean_bleed():
 
 def test_plot_bleed_vectors():
     np.random.seed(100)
-    dataset = bayestme.synthetic_data.generate_fake_stdataset(16,
-                                                    16,
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(12,
+                                                    12,
                                                     2,
                                                     data.Layout.SQUARE)
 
