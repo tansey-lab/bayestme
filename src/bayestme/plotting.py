@@ -209,9 +209,9 @@ def scatter_pie(dist, pos, size, ax=None):
     return ax
 
 
-def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
-                         gene: str,
-                         output_file: str):
+def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset,
+                               gene: str,
+                               output_file: str):
     gene_idx = np.argmax(stdata.gene_names == gene)
     counts = stdata.raw_counts[:, gene_idx]
     counts = counts[stdata.tissue_mask]
@@ -224,6 +224,25 @@ def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
         ax=ax,
         coords=positions,
         values=counts,
+        layout=stdata.layout,
+        plotting_coordinates=stdata.positions.T)
+
+    fig.savefig(output_file)
+    plt.close(fig)
+
+
+def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
+                         gene: str,
+                         output_file: str):
+    gene_idx = np.argmax(stdata.gene_names == gene)
+
+    fig, ax = plt.subplots(1)
+
+    plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax,
+        coords=stdata.positions.T,
+        values=stdata.raw_counts[:, gene_idx],
         layout=stdata.layout)
 
     fig.savefig(output_file)

@@ -16,7 +16,7 @@ parser.add_argument('--max-steps', type=int, default=5,
                     help='Number of EM steps')
 parser.add_argument('--local-weight', type=int, default=None,
                     help='Initial value for local weight, a tuning parameter for bleed correction. '
-                         'rho_0g from equation 1 in the paper. Should be set to sqrt(N tissue spots)')
+                         'rho_0g from equation 1 in the paper. By default will be set to sqrt(N tissue spots)')
 
 
 def main():

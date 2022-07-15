@@ -13,33 +13,37 @@ parser.add_argument('--output', type=str,
 parser.add_argument('--n-cell-min',
                     type=int,
                     default=5,
-                    help='min number of cell types')
+                    help='Only consider spots where there are at least <n_cell_min> cells of a given type, '
+                         'as determined by the deconvolution results.')
 parser.add_argument('--n-spatial-patterns', type=int,
-                    help='number of spatial patterns')
+                    help='Number of spatial patterns.')
 parser.add_argument('--n-samples', type=int,
                     default=100,
-                    help='number of samples')
+                    help='Number of samples from the posterior distribution.')
 parser.add_argument('--n-burn', type=int,
                     default=1000,
-                    help='burnin iterations')
+                    help='Number of burn-in samples')
 parser.add_argument('--n-thin', type=int,
                     default=2,
-                    help='thin iterations')
+                    help='Thinning factor for sampling')
 parser.add_argument('--simple',
                     action='store_true',
                     default=False,
-                    help='simple mode')
+                    help='Simpler model for sampling spatial differential expression posterior')
 parser.add_argument('--alpha0', type=int,
-                    help='Alpha0 tuning parameter',
+                    help='Alpha0 tuning parameter. Defaults to 10',
                     default=10)
 parser.add_argument('--prior-var', type=float,
-                    help='Prior var tuning parameter',
+                    help='Prior var tuning parameter. Defaults to 100.0',
                     default=100.0)
 parser.add_argument('--lam2', type=int,
-                    help='lam2 tuning parameter',
+                    help='Smoothness parameter, this tuning parameter expected to be determined '
+                         'from cross validation.',
                     default=1)
 parser.add_argument('--n-gene', type=int,
-                    help='number of genes')
+                    help='Number of genes to consider for detecting spatial programs,'
+                         ' if this number is less than the total number of genes the top N'
+                         ' by spatial variance will be selected')
 
 
 def main():
