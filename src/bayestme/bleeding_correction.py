@@ -453,41 +453,58 @@ def plot_basis_functions(basis_functions, output_dir):
     plt.close()
 
 
-def plot_bleed_vectors(locations,
-                       gene_name,
-                       gene_idx,
-                       tissue_mask,
-                       rates,
-                       weights,
-                       output_dir,
-                       output_format: str = 'pdf'
-                       ):
-    # Plot the general directionality of where reads come from in each spot
-    Contributions = (rates[None, :, gene_idx] * weights)
-    Directions = locations[None] - locations[:, None]
-    Vectors = (Directions * Contributions[..., None]).mean(axis=1)
-    Vectors = Vectors / np.abs(Vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+def plot_bleed_vectors(
+        stdata: data.SpatialExpressionDataset,
+        bleed_result: data.BleedCorrectionResult,
+        gene_name: str,
+        output_path: str,
+        colormap = cm.Set2_r):
+    gene_idx = np.argwhere(stdata.gene_names == gene_name)[0][0]
+    rates = np.copy(stdata.raw_counts) * stdata.tissue_mask[:, None]
+    locations = stdata.positions.T
+
 
     fig, ax = plt.subplots()
 
-    tissue_matrix = imshow_matrix(tissue_mask, locations)
-    im = ax.imshow(tissue_matrix, cmap='viridis', vmin=-1, origin='lower')
+    ax, cb, norm, hcoord_plotted, vcoord_plotted = plotting.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax,
+        coords=locations,
+        values=stdata.tissue_mask.astype(int),
+        layout=stdata.layout,
+        colormap=colormap
+    )
 
-    # get the colors of the values, according to the
-    # colormap used by imshow
-    colors = [im.cmap(im.norm(value)) for value in np.unique(tissue_matrix.flatten())]
+    cb.remove()
+
     # create a patch (proxy artist) for every color
-    patches = [mpatches.Patch(color=colors[0], label='Out of tissue'),
-               mpatches.Patch(color=colors[1], label='In tissue')
+    patches = [mpatches.Patch(color=colormap(norm(0)), label='Out of tissue'),
+               mpatches.Patch(color=colormap(norm(1)), label='In tissue')
                ]
     # put those patched as legend-handles into the legend
     ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-    for i, ((y, x), (dy, dx)) in enumerate(zip(locations, Vectors)):
-        ax.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
-                  color='black')
+    plotted_locations = np.row_stack([vcoord_plotted, hcoord_plotted]).T
 
-    plt.savefig(os.path.join(output_dir, f'bleed-vectors-{gene_name}.{output_format}'), bbox_inches='tight')
+    # Plot the general directionality of where reads come from in each spot
+    contributions = (rates[None, :, gene_idx] * bleed_result.weights)
+    directions = plotted_locations[None] - plotted_locations[:, None]
+    vectors = (directions * contributions[..., None]).mean(axis=1)
+    vectors = vectors / np.abs(vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
+
+    quiver = ax.quiver(
+        locations[:, 0],
+        locations[:, 1],
+        vectors[:, 0],
+        vectors[:, 1],
+        angles='xy',
+        scale_units='xy',
+        scale=1
+    )
+    quiver.set_zorder(99)
+    ax.set_axis_off()
+
+    plt.savefig(output_path, bbox_inches='tight')
     plt.close()
 
 

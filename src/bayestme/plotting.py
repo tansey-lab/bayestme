@@ -272,7 +272,9 @@ def plot_colored_spatial_polygon(
     # adjusted such that all patches are visible.
     ax.scatter(support_hcoord, support_vcoord, alpha=0)
 
-    fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax)
+    cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax)
+
+    return ax, cb, norm, hcoord, vcoord
 
 
 def scatter_pie(dist, pos, size, ax=None):
