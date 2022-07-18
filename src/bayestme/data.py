@@ -20,12 +20,25 @@ class Layout(Enum):
 
 
 class SpatialExpressionDataset:
+    """
+    Data model for holding read counts, their associated position information,
+    and whether they come from tissue or non tissue spots.
+    Also holds the names of the gene markers in the dataset.
+    """
     def __init__(self,
                  raw_counts: np.ndarray,
                  positions: Optional[np.ndarray],
                  tissue_mask: Optional[np.ndarray],
                  gene_names: np.ndarray,
                  layout: Layout):
+        """
+        :param raw_counts: An <N spots> x <N markers> matrix.
+        :param positions: An 2 x <N spots> matrix of spot coordinates.
+        :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
+        :param gene_names: An <M markers> length array of gene names.
+        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        in a hex grid layout.
+        """
         self.layout = layout
         self.gene_names = gene_names
         self.tissue_mask = tissue_mask
@@ -58,13 +71,14 @@ class SpatialExpressionDataset:
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
         """
         Load data from spaceranger /outputs folder
-        Inputs:
-            data_path:  /path/to/spaceranger/outs
-                        should contain at least 1) /raw_feature_bc_matrix for raw count matrix
-                                                2) /filtered_feature_bc_matrix for filtered count matrix
-                                                3) /spatial for position list
-            layout:     Visim(hex)  1
-                        ST(square)  2
+
+        :param data_path: Directory containing at least
+            1) /raw_feature_bc_matrix for raw count matrix
+            2) /filtered_feature_bc_matrix for filtered count matrix
+            3) /spatial for position list
+        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        in a hex grid layout.
+        :return: SpatialExpressionDataset
         """
         raw_count_path = os.path.join(data_path, 'raw_feature_bc_matrix/matrix.mtx.gz')
         filtered_count_path = os.path.join(data_path, 'filtered_feature_bc_matrix/matrix.mtx.gz')
@@ -103,12 +117,14 @@ class SpatialExpressionDataset:
     @classmethod
     def read_count_mat(cls, data_path, layout=Layout.SQUARE):
         """
-        Load data from tsv count matrix containing only in-tissue spots where the count matrix is a tsv file of shape G by N
-        the column names and row names are position and gene names respectively
-        Inputs:
-            data_path:  /path/to/count_matrix
-            layout:     Visim(hex)  1
-                        ST(square)  2
+        Load data from tsv count matrix containing only in-tissue spots where the count matrix
+        is a tsv file of shape G by N
+        The column names and row names are position and gene names respectively
+
+        :param data_path: /path/to/count_matrix
+        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        in a hex grid layout.
+        :return: SpatialExpressionDataset
         """
         raw_data = pd.read_csv(data_path, sep='\t')
         count_mat = raw_data.values[:, 1:].T.astype(int)
@@ -133,6 +149,11 @@ class SpatialExpressionDataset:
 
     @classmethod
     def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
         with h5py.File(path, 'r') as f:
             raw_counts = f['raw_counts'][:]
             positions = f['positions'][:]
@@ -150,11 +171,20 @@ class SpatialExpressionDataset:
 
 
 class BleedCorrectionResult:
+    """
+    Data model for the results of bleeding correction.
+    """
     def __init__(self,
                  corrected_reads: np.ndarray,
                  global_rates: np.ndarray,
                  basis_functions: np.ndarray,
                  weights: np.ndarray):
+        """
+        :param corrected_reads: <N in-tissue spot> x <N genes> matrix of corrected read counts.
+        :param global_rates:
+        :param basis_functions:
+        :param weights:
+        """
         self.weights = weights
         self.basis_functions = basis_functions
         self.global_rates = global_rates
@@ -169,6 +199,11 @@ class BleedCorrectionResult:
 
     @classmethod
     def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
         with h5py.File(path, 'r') as f:
             corrected_reads = f['corrected_reads'][:]
             global_rates = f['global_rates'][:]
@@ -183,6 +218,9 @@ class BleedCorrectionResult:
 
 
 class PhenotypeSelectionResult:
+    """
+    Data model for the results of one job in phenotype selection k-fold cross validation
+    """
     def __init__(self,
                  mask: np.ndarray,
                  cell_prob_trace: np.ndarray,
@@ -194,6 +232,18 @@ class PhenotypeSelectionResult:
                  n_components: int,
                  lam: float,
                  fold_number: int):
+        """
+        :param mask: <N tissue spots> length boolean array, False if the spot is being held out, True otherwise
+        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param expression_trace: <N samples> x <N components> x <N markers> matrix
+        :param beta_trace: <N samples> x <N components> matrix
+        :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param log_lh_train_trace: -log likelihood for training set
+        :param log_lh_test_trace: -log likelihood for test set
+        :param n_components: Number of cell types for posterior distribution being sampled in this job
+        :param lam: Lambda parameter of posterior distribution for this job
+        :param fold_number: Index into the k-fold series
+        """
         self.fold_number = fold_number
         self.lam = lam
         self.n_components = n_components
@@ -220,6 +270,11 @@ class PhenotypeSelectionResult:
 
     @classmethod
     def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
         with h5py.File(path, 'r') as f:
             mask = f['mask'][:]
             log_lh_test_trace = f['log_lh_test_trace'][:]
@@ -246,6 +301,9 @@ class PhenotypeSelectionResult:
 
 
 class DeconvolutionResult:
+    """
+    Data model for the results of sampling from the deconvolution posterior distribution.
+    """
     def __init__(self,
                  cell_prob_trace: np.ndarray,
                  expression_trace: np.ndarray,
@@ -254,6 +312,16 @@ class DeconvolutionResult:
                  reads_trace: np.ndarray,
                  lam2: float,
                  n_components: int):
+        """
+
+        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param expression_trace: <N samples> x <N components> x <N markers> matrix
+        :param beta_trace: <N samples> x <N components> matrix
+        :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param reads_trace: <N samples> x <N tissue spots> x <N markers> x <N components>
+        :param lam2: lambda smoothing parameter used for the posterior distribution
+        :param n_components: N components value for the posterior distribution
+        """
         self.reads_trace = reads_trace
         self.cell_prob_trace = cell_prob_trace
         self.expression_trace = expression_trace
@@ -274,6 +342,11 @@ class DeconvolutionResult:
 
     @classmethod
     def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
         with h5py.File(path, 'r') as f:
             cell_prob_trace = f['cell_prob_trace'][:]
             expression_trace = f['expression_trace'][:]
@@ -294,6 +367,9 @@ class DeconvolutionResult:
 
 
 class SpatialDifferentialExpressionResult:
+    """
+    Data model for results from sampling from the spatial differential expression posterior distribution.
+    """
     def __init__(self,
                  w_samples: np.ndarray,
                  c_samples: np.ndarray,
@@ -301,6 +377,14 @@ class SpatialDifferentialExpressionResult:
                  h_samples: np.ndarray,
                  v_samples: np.ndarray,
                  theta_samples: np.ndarray):
+        """
+        :param w_samples: <N samples> x <N components> x <N spatial patterns + 1> x <N tissue spots>
+        :param c_samples: <N samples> x <N markers> x <N components>
+        :param gamma_samples: <N samples> x <N components> x <N spatial patterns + 1>
+        :param h_samples: <N samples> x <N markers> x <N components>
+        :param v_samples: <N samples> x <N markers> x <N components>
+        :param theta_samples: <N samples> x <N tissue spots> x <N markers> x <N components>
+        """
         self.theta_samples = theta_samples
         self.v_samples = v_samples
         self.h_samples = h_samples
@@ -327,6 +411,11 @@ class SpatialDifferentialExpressionResult:
 
     @classmethod
     def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
         with h5py.File(path, 'r') as f:
             theta_samples = f['theta_samples'][:]
             v_samples = f['v_samples'][:]
