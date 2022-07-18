@@ -68,4 +68,5 @@ autodoc_mock_imports = [
     'anndata',
     'statsmodels',
     'autograd_minimize',
-    'sklearn']
+    'sklearn',
+    'esda']
