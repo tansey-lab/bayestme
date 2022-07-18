@@ -16,7 +16,7 @@ docker image we maintain on docker hub.
     docker pull jeffquinnmsk/bayestme:latest
 
 Option 2: Install Using pip
--------------------------
+---------------------------
 
 Installing the package directly will require `SuiteSparse <https://github.com/DrTimothyAldenDavis/SuiteSparse>`_
 

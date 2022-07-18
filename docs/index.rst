@@ -12,6 +12,7 @@ Contents
     :maxdepth: 2
 
     install
+    overview
     demo_notebooks
     command_line_interface
     api

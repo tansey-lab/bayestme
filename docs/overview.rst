@@ -1,4 +1,4 @@
-Tutorial
+Overview
 ========
 
 BayesTME is a holistic Bayesian approach to end-to-end modeling of ST data.
