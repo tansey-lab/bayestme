@@ -11,7 +11,9 @@ BayesTME uses several python packages with C extensions,
 so the easiest way to get started is using the up to date
 docker image we maintain on docker hub.
 
-    $ docker pull jeffquinnmsk/bayestme:latest
+.. code::
+
+    docker pull jeffquinnmsk/bayestme:latest
 
 Option 2: Install Using pip
 -------------------------
@@ -20,5 +22,7 @@ Installing the package directly will require `SuiteSparse <https://github.com/Dr
 
 The ``bayestme`` package can be installed directly from github:
 
-    $ pip install git+https://github.com/tansey-lab/bayestme
+.. code::
+
+    pip install git+https://github.com/tansey-lab/bayestme
 

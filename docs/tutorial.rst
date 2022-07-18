@@ -1,6 +1,0 @@
-Tutorial Introduction
-=====================
-
-Getting started
----------------
-

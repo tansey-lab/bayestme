@@ -12,7 +12,10 @@ Contents
     :maxdepth: 2
 
     install
-    tutorial
+    demo_notebooks
+    command_line_interface
+    api
+
     🚀 Github <https://github.com/tansey-lab/bayestme>
 
 
