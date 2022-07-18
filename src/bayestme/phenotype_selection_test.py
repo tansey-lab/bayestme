@@ -59,13 +59,10 @@ def test_plot_folds():
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
-    g = phenotype_selection.get_phenotype_selection_parameters_for_folds(
+    g = phenotype_selection.create_folds(
         stdata=stdata,
         n_fold=n_fold,
-        n_splits=n_splits,
-        lams=lams,
-        n_components_max=n_components_max,
-        n_components_min=n_components_min,
+        n_splits=n_splits
     )
 
     folds = [_ for _ in g]

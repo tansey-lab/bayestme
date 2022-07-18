@@ -97,28 +97,6 @@ def st_plot(data,
     plt.close()
 
 
-def plot_spots(ax, data, pos, rgb=np.array([1, 0, 0]), cmap=None, discrete_cmap=None, s=15, v_min=None, v_max=None,
-               invert_x=True, invert_y=True, norm=None):
-    if cmap is None and discrete_cmap is None:
-        n_nodes = data.shape[0]
-        plot_color = np.zeros((n_nodes, 4))
-        plot_color[:, :3] = rgb[None]
-        plot_color[:, 3] = data / data.max()
-        ax.scatter(pos[0], pos[1], color=np.array([0, 0, 0, 0.02]), edgecolors=None, linewidths=None, s=s)
-        img = ax.scatter(pos[0], pos[1], color=plot_color, edgecolors=None, linewidths=0, s=s)
-    elif discrete_cmap is not None:
-        for i, value in enumerate(np.unique(data)):
-            idx = np.argwhere(data == value).flatten()
-            img = ax.scatter(pos[0, idx], pos[1, idx], color=discrete_cmap[value], edgecolors=None, linewidths=0, s=s)
-    else:
-        img = ax.scatter(pos[0], pos[1], c=data, cmap=cmap, s=s, vmin=v_min, vmax=v_max, norm=norm)
-    if invert_x:
-        ax.invert_xaxis()
-    if invert_y:
-        ax.invert_yaxis()
-    return img
-
-
 def get_x_y_arrays_for_layout(coords: np.ndarray, layout: data.Layout) -> Tuple[np.array, np.array]:
     if layout is data.Layout.HEX:
         hcoord = coords[:, 0]
@@ -139,9 +117,11 @@ def plot_colored_spatial_polygon(
         layout: data.Layout,
         colormap: cm.ScalarMappable = cm.BuPu,
         norm=None,
-        plotting_coordinates=None):
+        plotting_coordinates=None,
+        normalize=True):
     """
     Basic plot of spatial gene expression
+
 
     :param fig: matplotlib figure artist object to which plot will be written
     :param ax: matplotlib axes artist object to which plot will be written
@@ -152,6 +132,7 @@ def plot_colored_spatial_polygon(
     :param norm: Function for normalizing scalar values, defaults to Normalizer over values domain
     :param plotting_coordinates: Expand the plotting window to include these coordinates,
                                  default is to just plot over coords.
+    :param normalize: Whether to normalize values before coloring them or not. Set false for boolean data.
     :return: matplotlib Figure object
     """
     if norm is None:
@@ -182,7 +163,7 @@ def plot_colored_spatial_polygon(
             numVertices=num_vertices,
             radius=packing_radius,
             orientation=orientation,
-            facecolor=colormap(norm(v)),
+            facecolor=colormap(norm(v)) if normalize else colormap(v),
             alpha=1,
             edgecolor='k')
         ax.add_patch(polygon)
@@ -192,7 +173,7 @@ def plot_colored_spatial_polygon(
     # adjusted such that all patches are visible.
     ax.scatter(support_hcoord, support_vcoord, alpha=0)
 
-    cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax)
+    cb = fig.colorbar(cm.ScalarMappable(norm=norm if normalize else None, cmap=colormap), ax=ax)
 
     return ax, cb, norm, hcoord, vcoord
 
