@@ -1,5 +1,6 @@
 import shutil
 import numpy as np
+from numpy import testing
 import tempfile
 import os
 
@@ -39,7 +40,7 @@ def generate_fake_sde_results(n_samples, n_genes, n_components, n_spatial_patter
             h_samples[:, gene_id, component_id] = dominant_pattern
 
     theta_samples = np.random.random((n_samples, n_spot_in, n_genes, n_components))
-    v_samples = np.random.random((n_samples, n_genes, n_components))
+    v_samples = (np.random.random((n_samples, n_genes, n_components)) - 0.5) * 2
     w_samples = np.random.random((n_samples, n_components, n_spatial_patterns + 1, n_spot_in))
 
     return data.SpatialDifferentialExpressionResult(
@@ -183,7 +184,7 @@ def test_select_significant_spatial_programs():
         [],
         [],
         [],
-        [(0, 1)]
+        [(0, 1, np.array([0, 1, 2]))]
     ]
 
     for mock_setup, expected_result in zip(mock_setups, expected_results):
@@ -203,7 +204,7 @@ def test_select_significant_spatial_programs():
 
                         mock_moran_i.return_value = morans_i
 
-                        significant_spatial_programs = [(k, h) for (k, h, ids) in
+                        significant_spatial_programs = [_ for _ in
                                                         spatial_expression.select_significant_spatial_programs(
                                                             stdata=dataset,
                                                             decon_result=deconvolution_results,
@@ -214,11 +215,15 @@ def test_select_significant_spatial_programs():
                                                             gene_spatial_pattern_proportion_threshold=0.95,
                                                             filter_pseudogenes=True
                                                         )]
-
-                        assert sorted(significant_spatial_programs) == expected_result
+                        assert len(significant_spatial_programs) == len(expected_result)
+                        for i, significant_spatial_program in enumerate(significant_spatial_programs):
+                            assert significant_spatial_programs[i][0] == expected_result[i][0]
+                            assert significant_spatial_programs[i][1] == expected_result[i][1]
+                            testing.assert_equal(significant_spatial_programs[i][2], expected_result[i][2])
 
 
 def test_plot_spatial_pattern_with_legend():
+    np.random.seed(100)
     n_genes = 7
     n_components = 3
     n_samples = 10

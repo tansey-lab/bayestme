@@ -451,7 +451,7 @@ def select_significant_spatial_programs(
 
             logger.debug(
                 f'Significant spatial pattern found: cell type {k}, pattern {h}.')
-            yield k, h, gene_ids
+            yield k, h, gene_ids.flatten()
 
 
 def plot_spatial_pattern_legend(
@@ -480,7 +480,7 @@ def plot_spatial_pattern_legend(
                    color=colormap(norm(loading_plot[i])),
                    label=stdata.gene_names[genes_selected_in_plot_order[i]],
                    markerfacecolor=colormap(norm(loading_plot[i])),
-                   markersize=loading_plot[i] * 20,
+                   markersize=abs(loading_plot[i]) * 20,
                    linestyle='none')
         )
     legend_elements.reverse()
@@ -503,7 +503,6 @@ def plot_spatial_pattern(
     plot_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > plot_threshold
     loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
     rank = abs(loadings).argsort()[::-1]
-    gene_ids = gene_ids.flatten()[rank]
     loadings = loadings[rank]
     w_plot = sde_result.w_samples[:, k, h, :].mean(axis=0).copy() * np.max(np.abs(loadings)) * np.sign(
         loadings[np.argmax(np.abs(loadings))])
