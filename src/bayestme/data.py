@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 IN_TISSUE_ATTR = 'in_tissue'
 SPATIAL_ATTR = 'spatial'
 LAYOUT_ATTR = 'layout'
+CONNECTIVITIES_ATTR = 'connectivities'
 
 
 class Layout(Enum):
@@ -32,12 +33,26 @@ def create_anndata_object(
         tissue_mask: Optional[np.ndarray],
         gene_names: np.ndarray,
         layout: Layout):
+    """
+    Create an AnnData object from spatial expression data.
 
+    :param counts: N x G read count matrix
+    :param coordinates: N x 2 coordinate matrix
+    :param tissue_mask: N length boolean array indicating in-tissue or out of tissue
+    :param gene_names: N length string array of gene names
+    :param layout: Layout enum
+    :return: AnnData object containing all information provided.
+    """
     coordinates = coordinates.astype(int)
     adata = anndata.AnnData(counts, obsm={SPATIAL_ATTR: coordinates})
     adata.obs[IN_TISSUE_ATTR] = tissue_mask
     adata.uns[LAYOUT_ATTR] = layout.value
     adata.var_names = gene_names
+    edges = utils.get_edges(coordinates, layout.value)
+    connectivities = csr_matrix(
+        (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
+        shape=(adata.n_obs, adata.n_obs), dtype=np.bool)
+    adata.obsp[CONNECTIVITIES_ATTR] = connectivities
 
     return adata
 
@@ -62,12 +77,13 @@ class SpatialExpressionDataset:
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
         in a hex grid layout.
         """
-        self.layout = layout
-        self.gene_names = gene_names
-        self.tissue_mask = tissue_mask
-        self.positions = positions.astype(int)
-        self.raw_counts = raw_counts
-        self.edges = utils.get_edges(self.positions_tissue, layout=self.layout.value)
+        self.anndata = create_anndata_object(
+            counts=raw_counts,
+            coordinates=positions,
+            tissue_mask=tissue_mask,
+            gene_names=gene_names,
+            layout=layout
+        )
 
     @property
     def reads(self) -> np.ndarray:
