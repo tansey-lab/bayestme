@@ -1,74 +1,25 @@
 import numpy as np
-from collections import defaultdict
-from scipy.sparse import issparse, coo_matrix, csc_matrix, vstack
+from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.stats import poisson
 from scipy.linalg import solve_triangular, cho_solve
+from sksparse.cholmod import cholesky
 
 
-def hypercube_edges(dims, use_map=False):
-    '''Create edge lists for an arbitrary hypercube. TODO: this is probably not the fastest way.'''
-    edges = []
-    nodes = np.arange(np.product(dims)).reshape(dims)
-    for i, d in enumerate(dims):
-        for j in range(d - 1):
-            for n1, n2 in zip(np.take(nodes, [j], axis=i).flatten(), np.take(nodes, [j + 1], axis=i).flatten()):
-                edges.append((n1, n2))
-    if use_map:
-        return edge_map_from_edge_list(edges)
-    return edges
+def get_kth_order_trend_filtering_matrix(edge_adjacency_matrix, k):
+    """
+    Calculate the k-th order trend filtering matrix given the oriented edge
+    incidence matrix and the value of k.
 
-
-def edge_map_from_edge_list(edges):
-    result = defaultdict(list)
-    for s, t in edges:
-        result[s].append(t)
-        result[t].append(s)
-    return result
-
-
-def matrix_from_edges(edges):
-    '''Returns a sparse penalty matrix (D) from a list of edge pairs. Each edge
-    can have an optional weight associated with it.'''
-    max_col = 0
-    cols = []
-    rows = []
-    vals = []
-    if type(edges) is defaultdict:
-        edge_list = []
-        for i, neighbors in edges.items():
-            for j in neighbors:
-                if i <= j:
-                    edge_list.append((i, j))
-        edges = edge_list
-    for i, edge in enumerate(edges):
-        s, t = edge[0], edge[1]
-        weight = 1 if len(edge) == 2 else edge[2]
-        cols.append(min(s, t))
-        cols.append(max(s, t))
-        rows.append(i)
-        rows.append(i)
-        vals.append(weight)
-        vals.append(-weight)
-        if cols[-1] > max_col:
-            max_col = cols[-1]
-    return coo_matrix((vals, (rows, cols)), shape=(rows[-1] + 1, max_col + 1)).tocsc()
-
-
-def get_delta(D, k):
-    '''Calculate the k-th order trend filtering matrix given the oriented edge
-    incidence matrix and the value of k.'''
+    :param edge_adjacency_matrix:
+    :param k:
+    :return:
+    """
     if k < 0:
         raise Exception('k must be at least 0th order.')
-    result = D
+    result = edge_adjacency_matrix
     for i in range(k):
-        result = D.T.dot(result) if i % 2 == 0 else D.dot(result)
+        result = edge_adjacency_matrix.T.dot(result) if i % 2 == 0 else edge_adjacency_matrix.dot(result)
     return result
-
-
-def grid_penalty_matrix(dims, k):
-    edges = hypercube_edges(dims)
-    D = matrix_from_edges(edges)
-    return get_delta(D, k)
 
 
 def sample_horseshoe_plus(size=1):
@@ -79,21 +30,19 @@ def sample_horseshoe_plus(size=1):
     return d, c, b, a
 
 
-def sample_horseshoe(size=1):
-    a = 1 / np.random.gamma(0.5, 1, size=size)
-    return 1 / np.random.gamma(0.5, a), a
-
-
 def sample_mvn_from_precision(Q, mu=None, mu_part=None, sparse=True, chol_factor=False, Q_shape=None):
-    '''Fast sampling from a multivariate normal with precision parameterization.
-    Supports sparse arrays. Params:
-        - mu: If provided, assumes the model is N(mu, Q^-1)
-        - mu_part: If provided, assumes the model is N(Q^-1 mu_part, Q^-1)
-        - sparse: If true, assumes we are working with a sparse Q
-        - chol_factor: If true, assumes Q is a (lower triangular) Cholesky
-                        decomposition of the precision matrix
-    '''
-    from sksparse.cholmod import cholesky
+    """
+    Fast sampling from a multivariate normal with precision parameterization.
+    Supports sparse arrays.
+
+    :param Q: input array
+    :param mu: If provided, assumes the model is N(mu, Q^-1)
+    :param mu_part: If provided, assumes the model is N(Q^-1 mu_part, Q^-1)
+    :param sparse: If true, assumes we are working with a sparse Q
+    :param chol_factor: If true, assumes Q is a (lower triangular) Cholesky decomposition of the precision matrix
+    :param Q_shape: input array shape
+    :return:
+    """
     assert np.any([Q_shape is not None, not chol_factor, not sparse])
     if sparse:
         # Cholesky factor LL' = PQP' of the prior precision Q
@@ -128,17 +77,6 @@ def ilogit(x):
     return 1 / (1 + np.exp(-x))
 
 
-def logit(x):
-    return np.log(x / (1 - x))
-
-
-def sigmoid(x, inverse=False):
-    if inverse:
-        return (1 - x) / x
-    else:
-        return x / (1 - x)
-
-
 def stable_softmax(x, axis=-1):
     z = x - np.max(x, axis=axis, keepdims=True)
     numerator = np.exp(z)
@@ -156,69 +94,82 @@ def sample_horseshoe_plus(size=1):
 
 
 def construct_edge_adjacency(neighbors):
-    '''Builds the oriented edge-adjacency matrix from a list of (v1, v2) edges.'''
-    from scipy.sparse import csc_matrix
+    """
+    Build the oriented edge-adjacency matrix from a list of (v1, v2) edges.
+
+    :param neighbors: E x 2 array, where E is the number of edges
+    :return: An E x V sparse matrix, where E is the number of edges and V the number of vertices
+    """
     data, rows, cols = [], [], []
     nrows = 0
     for i, j in neighbors:
-        # if i < j:
         data.extend([1, -1])
         rows.extend([nrows, nrows])
         cols.extend([i, j])
         nrows += 1
-    D = csc_matrix((data, (rows, cols)))
-    return D
+    edge_adjacency_matrix = csc_matrix((data, (rows, cols)))
+    return edge_adjacency_matrix
 
 
-def construct_trendfilter(D, t, eps=1e-4, sparse=False):
-    '''Builds the t'th-order trend filtering matrix from an edge adjacency matrix.
+def construct_trendfilter(edge_adjacency_matrix, t, sparse=False):
+    """
+    Builds the t'th-order trend filtering matrix from an edge adjacency matrix.
     t=0 is the fused lasso / total variation matrix
     t=1 is the linear trend filtering / graph laplacian matrix
     t=2 is the quadratic trend filtering matrix
     etc.
-    '''
-    from scipy.sparse import vstack, csc_matrix
-    Delta = D.copy().astype('float')
+
+    :param edge_adjacency_matrix:
+    :param t:
+    :param sparse:
+    :return:
+    """
+    transformed_edge_adjacency_matrix = edge_adjacency_matrix.copy().astype('float')
     for i in range(t):
         if i % 2 == 0:
-            Delta = D.T.dot(Delta)
+            transformed_edge_adjacency_matrix = edge_adjacency_matrix.T.dot(transformed_edge_adjacency_matrix)
         else:
-            Delta = D.dot(Delta)
-
-    # Add a small amount of independent noise to make the matrix full rank
-    # Delta[np.arange(min(Delta.shape)), np.arange(min(Delta.shape))] += eps
+            transformed_edge_adjacency_matrix = edge_adjacency_matrix.dot(transformed_edge_adjacency_matrix)
 
     if sparse:
         # Add a coordinate sparsity penalty
-        extra = csc_matrix(np.eye(D.shape[1]))
+        extra = csc_matrix(np.eye(edge_adjacency_matrix.shape[1]))
     else:
         # Add a single independent node to make the matrix full rank
         extra = csc_matrix((np.array([1.]), (np.array([0], dtype=int), np.array([0], dtype=int))),
-                           shape=(1, Delta.shape[1]))
-    Delta = vstack([Delta, extra])
-    return Delta
+                           shape=(1, transformed_edge_adjacency_matrix.shape[1]))
+    transformed_edge_adjacency_matrix = vstack([transformed_edge_adjacency_matrix, extra])
+    return transformed_edge_adjacency_matrix
 
 
-def composite_trendfilter(D, K, anchor=0, sparse=False):
+def composite_trendfilter(edge_adjacency_matrix, k, anchor=0, sparse=False):
+    """
+
+    :param edge_adjacency_matrix:
+    :param k:
+    :param anchor:
+    :param sparse:
+    :return:
+    """
     if sparse:
-        Dbayes = np.eye(D.shape[1])
+        dbayes = np.eye(edge_adjacency_matrix.shape[1])
     else:
         # Start with the simple mu_1 ~ N(0, sigma)
-        Dbayes = np.zeros((1, D.shape[1]))
-        Dbayes[0, anchor] = 1
+        dbayes = np.zeros((1, edge_adjacency_matrix.shape[1]))
+        dbayes[0, anchor] = 1
 
-    if issparse(D):
-        Dbayes = csc_matrix(Dbayes)
+    if issparse(edge_adjacency_matrix):
+        dbayes = csc_matrix(dbayes)
 
     # Add in the k'th order diffs
-    for k in range(K + 1):
-        Dk = get_delta(D, k=k)
-        if issparse(Dbayes):
-            Dbayes = vstack([Dbayes, Dk])
+    for k in range(k + 1):
+        kth_order_trend_filtering_matrix = get_kth_order_trend_filtering_matrix(edge_adjacency_matrix, k=k)
+        if issparse(dbayes):
+            dbayes = vstack([dbayes, kth_order_trend_filtering_matrix])
         else:
-            Dbayes = np.concatenate([Dbayes, Dk], axis=0)
+            dbayes = np.concatenate([dbayes, kth_order_trend_filtering_matrix], axis=0)
 
-    return Dbayes
+    return dbayes
 
 
 def multinomial_rvs(count, p):
@@ -245,10 +196,6 @@ def multinomial_rvs(count, p):
     return out
 
 
-def sigma(p):
-    return 1 / (1 + np.exp(-p))
-
-
 def logp(beta, components, attr, obs):
     attribute = beta * attr
     lams = np.einsum('nk,kg->nkg', attribute, components)
@@ -267,8 +214,14 @@ def log_likelihood(attrributes, n_cells, Obs):
 
 
 def get_posmap(pos):
-    ### get a matrix where the (i, j) entry stores the idx of the reads at spatial coordinates (i, j) on the tissue sample
-    ### pos shape 2 by N
+    """
+    Return a matrix where the (i, j) entry stores the idx of the reads
+    at spatial coordinates (i, j) on the tissue sample.
+
+    :param pos: a 2 x N matrix of coordinates
+    :return: An X x Y matrix of coordinates, where X and Y are
+    the max coordinate values on their respective axes
+    """
     pos_map = np.empty((pos[0].max() + 1, pos[1].max() + 1))
     pos_map[:, :] = np.nan
     for i in range(pos.shape[1]):
@@ -321,39 +274,6 @@ def get_edges(pos, layout=1) -> np.ndarray:
     edges = np.array(edges)
     edges = edges.astype(int)
     return edges
-
-
-def DIC(cell_post, beta_post, components_post, cell_attributes_post, Observations_tissue, idx):
-    N = 0
-    dic = 0
-    for n in idx:
-        loglh = logp(cell_post[-n], beta_post[-n], components_post[-n].T, cell_attributes_post[-n], Observations_tissue)
-        if ~np.isnan(loglh):
-            dic += -2 * loglh
-            N += 1
-    dic /= N
-    dic *= 2
-    dic -= -2 * logp(cell_post[-idx].mean(axis=0), beta_post[-idx].mean(axis=0), components_post[-idx].mean(axis=0).T,
-                     cell_attributes_post[-idx].mean(axis=0), Observations_tissue)
-    return dic
-
-
-def get_WAIC(beta, components, attr, obs, idx):
-    attribute = beta_trace[-idx, None] * cell_assignment_num_trace[-idx]
-    lams = attribute[:, :, :, None] * gene_expression_trace[-idx, None]
-    lams = np.clip(lams.sum(axis=2), 1e-6, None)
-    # lppd
-    pd = np.clip(poisson.pmf(Observation[None], lams), 1e-6, None)
-    pd_mean = pd.mean(axis=0)
-    lppd = np.log(pd_mean).sum()
-    # p_waic
-    loglikelihood = np.log(pd)
-    mean_ll = loglikelihood.mean(axis=0)
-    v_s = ((loglikelihood - mean_ll[None, :]) ** 2).sum(axis=0) / (loglikelihood.shape[0] - 1)
-    p_waic = v_s.sum()
-    # scale by -2 (Gelman et al. 2013)
-    waic = -2 * (lppd - p_waic)
-    return waic
 
 
 def filter_reads_to_top_n_genes(reads, n_gene):

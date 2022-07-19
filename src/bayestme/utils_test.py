@@ -1,5 +1,13 @@
 import numpy as np
+import numpy.testing
+
 from bayestme import utils
+
+
+def test_construct_edge_adjacency():
+    edge_adjacency_matrix = utils.construct_edge_adjacency(np.array([[0, 1], [1, 2], [2, 3], [3, 4]]))
+    numpy.testing.assert_equal(edge_adjacency_matrix.toarray(),
+                               np.array([[1, -1, 0, 0, 0], [0, 1, -1, 0, 0], [0, 0, 1, -1, 0], [0, 0, 0, 1, -1]]))
 
 
 def test_get_stddev_ordering():

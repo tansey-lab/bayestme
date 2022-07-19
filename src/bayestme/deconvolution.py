@@ -94,7 +94,7 @@ def detect_marker_genes(
         deconvolution_result: data.DeconvolutionResult,
         n_marker: int = 5,
         alpha: float = 0.05,
-        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT):
+        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> (np.ndarray, np.ndarray):
     """
     Returns (marker_gene, omega_difference)
 
@@ -105,8 +105,13 @@ def detect_marker_genes(
     omega_difference: matrix of shape N components x N genes
     representing the average expression value / max expression value
     for each gene within each component.
-    """
 
+    :param deconvolution_result: DeconvolutionResult object
+    :param n_marker: Number of markers per cell type to select
+    :param alpha: Marker gene threshold parameter, defaults to 0.05
+    :param method: Enum representing which marker gene selection method to use.
+    :return: Tuple of (marker_genes, omega_difference)
+    """
     gene_expression = deconvolution_result.expression_trace.mean(axis=0)
     n_components = gene_expression.shape[0]
     # omega size K by G
@@ -343,6 +348,7 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         output_dir=output_dir,
         output_format=output_format,
         seperate_pdf=False)
+
     plot_cell_prob(
         stdata=stdata,
         result=deconvolution_result,
