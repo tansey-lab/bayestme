@@ -5,6 +5,8 @@ import os
 import glob
 import logging
 import h5py
+import anndata
+from scipy.sparse import csr_matrix
 
 from enum import Enum
 from typing import Optional
@@ -14,9 +16,30 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
+IN_TISSUE_ATTR = 'in_tissue'
+SPATIAL_ATTR = 'spatial'
+LAYOUT_ATTR = 'layout'
+
+
 class Layout(Enum):
     HEX = 1
     SQUARE = 2
+
+
+def create_anndata_object(
+        counts: np.ndarray,
+        coordinates: Optional[np.ndarray],
+        tissue_mask: Optional[np.ndarray],
+        gene_names: np.ndarray,
+        layout: Layout):
+
+    coordinates = coordinates.astype(int)
+    adata = anndata.AnnData(counts, obsm={SPATIAL_ATTR: coordinates})
+    adata.obs[IN_TISSUE_ATTR] = tissue_mask
+    adata.uns[LAYOUT_ATTR] = layout.value
+    adata.var_names = gene_names
+
+    return adata
 
 
 class SpatialExpressionDataset:
@@ -39,6 +62,9 @@ class SpatialExpressionDataset:
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
         in a hex grid layout.
         """
+        self.adata = anndata.AnnData(
+
+        )
         self.layout = layout
         self.gene_names = gene_names
         self.tissue_mask = tissue_mask

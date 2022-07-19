@@ -3,7 +3,7 @@ import tempfile
 import os
 import shutil
 
-from bayestme import data
+from bayestme import data, synthetic_data
 
 
 def generate_toy_stdataset() -> data.SpatialExpressionDataset:
@@ -90,3 +90,22 @@ def test_serialize_deserialize_deconvolution_results_dataset():
         assert new_dataset.n_components == dataset.n_components
     finally:
         shutil.rmtree(tmpdir)
+
+
+def test_create_anndata_object():
+    n_genes = 10
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=10, n_cols=10, n_genes=n_genes)
+
+    gene_names = np.array([f'{i}' for i in range(n_genes)])
+
+    adata = data.create_anndata_object(counts=bleed_counts,
+                                       coordinates=locations,
+                                       gene_names=gene_names,
+                                       layout=data.Layout.SQUARE,
+                                       tissue_mask=tissue_mask)
+
+    np.testing.assert_array_equal(adata.X, bleed_counts)
+    np.testing.assert_array_equal(adata.var_names, gene_names)
+    np.testing.assert_array_equal(adata.obs[data.IN_TISSUE_ATTR], tissue_mask)
+    assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.value
