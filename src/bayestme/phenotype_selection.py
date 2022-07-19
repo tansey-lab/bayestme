@@ -1,11 +1,13 @@
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import os
 
 from sklearn.model_selection import KFold
 from typing import Iterable
 from scipy.stats import multinomial
+from matplotlib.patches import Patch
 
 from bayestme import utils, data, plotting
 from bayestme.model_bkg import GraphFusedMultinomial
@@ -47,14 +49,34 @@ def create_folds(stdata: data.SpatialExpressionDataset,
 
 
 def plot_folds(stdata, folds, output_dir: str):
-    n_neighbours = get_n_neighbors(stdata)
     fig, ax = plt.subplots(1, len(folds), figsize=(6 * (len(folds) + 1), 6))
     if len(folds) == 1:
         ax = [ax]
 
-    for k, (lam, n_components, mask, fold_number) in enumerate(folds):
-        plotting.plot_spots(ax[k], n_neighbours, stdata.positions_tissue, s=5, cmap='viridis')
-        ax[k].scatter(stdata.positions_tissue[0, mask], stdata.positions_tissue[1, mask], s=5, c='r')
+    patches = []
+    for v, label in [(0, 'Heldout'), (1, 'Not Heldout')]:
+        patches.append(Patch(color=cm.Set1(v), label=label))
+
+    for k, mask in enumerate(folds):
+        _, cb, _, _, _ = plotting.plot_colored_spatial_polygon(
+            fig=fig,
+            ax=ax[k],
+            coords=stdata.positions_tissue.T,
+            values=(~mask).astype(int),
+            normalize=False,
+            colormap=cm.Set1,
+            plotting_coordinates=stdata.positions.T,
+            layout=stdata.layout
+        )
+
+        cb.remove()
+
+        ax[k].set_axis_off()
+
+        ax[k].set_title(f'Split {k + 1}')
+
+    ax[k].legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
     plt.savefig(os.path.join(output_dir, 'k_fold_masks.pdf'))
     plt.close()
 

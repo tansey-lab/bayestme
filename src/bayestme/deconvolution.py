@@ -297,6 +297,28 @@ def plot_marker_genes(
         plt.close()
 
 
+def plot_cell_num_scatterpie(
+        stdata: data.SpatialExpressionDataset,
+        deconvolution_result: data.DeconvolutionResult,
+        output_path: str):
+    """
+    Create a "scatter pie" plot of the deconvolution cell counts.
+
+    :param stdata: SpatialExpressionDataset to plot
+    :param deconvolution_result: DeconvolutionResult to plot
+    :param output_path: Where to save plot
+    """
+    fig, ax = plt.subplots()
+
+    plotting.plot_spatial_pie_charts(fig, ax,
+                                     stdata.positions_tissue.T,
+                                     values=deconvolution_result.cell_num_trace.mean(axis=0),
+                                     layout=stdata.layout,
+                                     plotting_coordinates=stdata.positions.T)
+    fig.savefig(output_path)
+    plt.close(fig)
+
+
 def plot_deconvolution(stdata: data.SpatialExpressionDataset,
                        deconvolution_result: data.DeconvolutionResult,
                        output_dir: str,
@@ -304,6 +326,17 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
                        alpha: float = 0.05,
                        marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
                        output_format: str = 'pdf'):
+    """
+    Create a suite of plots for deconvolution results.
+
+    :param stdata: SpatialExpressionDataset to plot
+    :param deconvolution_result: DeconvolutionResult to plot
+    :param output_dir: Output directory where plots will be saved
+    :param n_marker_genes: Number of marker genes to choose
+    :param alpha: Alpha parameter for selecting marker genes
+    :param marker_gene_method: Method for marker genes selection
+    :param output_format: File format of plots
+    """
     plot_cell_num(
         stdata=stdata,
         result=deconvolution_result,
@@ -329,3 +362,9 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         deconvolution_results=deconvolution_result,
         stdata=stdata,
         output_file=os.path.join(output_dir, f'marker_genes.{output_format}'))
+
+    plot_cell_num_scatterpie(
+        stdata=stdata,
+        deconvolution_result=deconvolution_result,
+        output_path=os.path.join(output_dir, f'cell_num_scatterpie.{output_format}')
+    )
