@@ -77,7 +77,7 @@ class SpatialExpressionDataset:
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
         in a hex grid layout.
         """
-        self.anndata = create_anndata_object(
+        self.anndata: anndata.AnnData = create_anndata_object(
             counts=raw_counts,
             coordinates=positions,
             tissue_mask=tissue_mask,
@@ -87,27 +87,46 @@ class SpatialExpressionDataset:
 
     @property
     def reads(self) -> np.ndarray:
-        return self.raw_counts[self.tissue_mask]
+        return self.adata.X[self.adata.obs[IN_TISSUE_ATTR]]
 
     @property
     def positions_tissue(self) -> np.ndarray:
-        return self.positions[self.tissue_mask, :]
+        return self.adata.obsm[SPATIAL_ATTR][self.adata.obs[IN_TISSUE_ATTR]]
 
     @property
     def n_spot_in(self) -> int:
-        return self.tissue_mask.sum()
+        return self.anndata.obs[IN_TISSUE_ATTR].sum()
 
     @property
     def n_gene(self) -> int:
-        return self.raw_counts.shape[1]
+        return self.adata.n_vars
+
+    @property
+    def raw_counts(self) -> np.ndarray:
+        return self.adata.X
+
+    @property
+    def positions(self) -> np.ndarray:
+        return self.adata.obsm[SPATIAL_ATTR]
+
+    @property
+    def tissue_mask(self) -> np.array:
+        return self.adata.obs[IN_TISSUE_ATTR]
+
+    @property
+    def gene_names(self) -> np.array:
+        return self.adata.var_names
+
+    @property
+    def edges(self) -> np.ndarray:
+        return np.array(self.adata.obsp[CONNECTIVITIES_ATTR].nonzero())
+
+    @property
+    def layout(self) -> Layout:
+        return Layout[self.adata.uns[LAYOUT_ATTR]]
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f['raw_counts'] = self.raw_counts
-            f['positions'] = self.positions
-            f['tissue_mask'] = self.tissue_mask
-            f['gene_names'] = self.gene_names.astype('S')
-            f.attrs['layout'] = self.layout.name
+        self.adata.write_h5ad(path)
 
     @classmethod
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
