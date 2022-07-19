@@ -1,100 +1,16 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import matplotlib.cm as cm
 import matplotlib.axes
 import matplotlib.figure
-from matplotlib.colors import Normalize
-
-from matplotlib.patches import RegularPolygon, Wedge, Patch
-
-from bayestme import data
-import math
 
 from typing import Tuple
 
+from matplotlib.colors import Normalize
+from matplotlib.patches import RegularPolygon, Wedge, Patch
 
-def st_plot(data,
-            pos,
-            cmap='BuPu',
-            v_min=None,
-            v_max=None,
-            norm=None,
-            layout='s',
-            unit_dist=10,
-            x_y_swap=False,
-            invert=[0, 0],
-            name='st_plot',
-            colorbar=True,
-            subtitles=None,
-            save='.',
-            plot_format='pdf'):
-    if x_y_swap:
-        pos = pos[::-1]
-    n_plots = data.shape[0]
-    if not isinstance(v_min, (list, np.ndarray)):
-        v_min = [v_min for i in range(n_plots)]
-    if not isinstance(v_max, (list, np.ndarray)):
-        v_max = [v_max for i in range(n_plots)]
-    subplots_adj = 1 / n_plots
-    x_axis_distance = pos[0].max() - pos[0].min() + 2
-    y_axis_distance = pos[1].max() - pos[1].min() + 2
-    dpi = plt.rcParams["figure.dpi"]
-    text_width = plt.rcParams['font.size'] * 2
-    if layout == 'H' and invert[0] + invert[1] == 1:
-        layout = 'h'
-        text_ratio = text_width / (x_axis_distance * unit_dist + text_width)
-        st_ratio = 1 - text_ratio - 0.08
-    else:
-        text_ratio = text_width / (x_axis_distance * np.sqrt(3) * unit_dist + text_width)
-        st_ratio = 1 - text_ratio - 0.1
-
-    if subtitles:
-        h = 0.78
-
-    else:
-        h = 1
-    h_cb_l = h * 0.03
-    if layout == 's':
-        scatter_size = unit_dist ** 2
-        fig_width = (x_axis_distance * unit_dist / dpi) / st_ratio
-        fig_height = y_axis_distance * unit_dist / dpi / h
-    elif layout == 'H':
-        scatter_size = (2 * unit_dist) ** 2
-        fig_width = x_axis_distance * np.sqrt(3) * unit_dist / dpi / st_ratio
-        fig_height = y_axis_distance * unit_dist / dpi / h
-    elif layout == 'h':
-        scatter_size = (2 * unit_dist) ** 2
-        fig_width = x_axis_distance * unit_dist / dpi / st_ratio
-        fig_height = y_axis_distance * np.sqrt(3) * unit_dist / dpi / h
-    fig = plt.figure(figsize=(fig_width * n_plots, fig_height))
-    for i in range(n_plots):
-        stbox = [0 + i * subplots_adj, 0, st_ratio * subplots_adj, h]
-        cbbox = [(st_ratio + 0.01 + i) * subplots_adj, h_cb_l, 0.04 * subplots_adj, h - h_cb_l * 2]
-        stframe = plt.axes(stbox)
-        img = stframe.scatter(pos[0], pos[1], c=data[i][0], cmap=cmap, s=scatter_size, vmin=v_min[i], vmax=v_max[i],
-                              norm=norm, marker=layout, linewidths=0)
-        if data[i].shape[0] > 1:
-            stframe.scatter(pos[0], pos[1], c=data[i][1], cmap=cmap, s=scatter_size, alpha=0.2, vmin=v_min[i],
-                            vmax=v_max[i], norm=norm,
-                            marker=layout, linewidths=0)
-        if colorbar:
-            cbframe = plt.axes(cbbox)
-            plt.colorbar(img, cax=cbframe)
-        stframe.set_xlim(pos[0].min() - 1, pos[0].max() + 1)
-        stframe.set_ylim(pos[1].min() - 1, pos[1].max() + 1)
-        stframe.axis('off')
-        if subtitles:
-            stframe.set_title(subtitles[i], fontweight='bold')
-        if invert[0]:
-            stframe.invert_xaxis()
-        if invert[1]:
-            stframe.invert_yaxis()
-
-    print(f'Plot saved as {save}/{name}.{plot_format}')
-    plt.tight_layout()
-    plt.savefig(os.path.join(save, f'{name}.{plot_format}'), bbox_inches='tight')
-    plt.close()
+from bayestme import data
 
 
 def get_x_y_arrays_for_layout(coords: np.ndarray, layout: data.Layout) -> Tuple[np.array, np.array]:
@@ -143,7 +59,7 @@ def plot_colored_spatial_polygon(
     if plotting_coordinates is None:
         support_hcoord, support_vcoord = (hcoord, vcoord)
     else:
-        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(coords, layout)
+        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(plotting_coordinates, layout)
 
     if layout is data.Layout.HEX:
         num_vertices = 6
@@ -219,7 +135,7 @@ def plot_spatial_pie_charts(
     if plotting_coordinates is None:
         support_hcoord, support_vcoord = (hcoord, vcoord)
     else:
-        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(coords, layout)
+        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(plotting_coordinates, layout)
 
     if layout is data.Layout.HEX:
         packing_radius = .5

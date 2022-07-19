@@ -546,24 +546,15 @@ def plot_before_after_cleanup(
 def plot_bleeding(before_correction: data.SpatialExpressionDataset,
                   after_correction: data.SpatialExpressionDataset,
                   gene: str,
-                  output_dir: str,
-                  output_format: str = 'pdf',
-                  cmap='jet',
-                  x_y_swap=False,
-                  invert=[0, 0]):
+                  output_path: str):
     """
-    Plot the raw reads, effective reads, and bleeding (if there is any) of a given gene
-    where gene can be selected either by gene name or gene index
+    Plot the raw reads, effective reads, and bleeding of a given gene.
     """
     gene_idx = np.argwhere(before_correction.gene_names == gene)[0][0]
 
     # load raw reads
     raw_count = before_correction.raw_counts[:, gene_idx]
-    pos = before_correction.positions
-    raw_filtered_align = (before_correction.reads[:, gene_idx] == after_correction.reads[:, gene_idx]).sum()
-    # determine if any bleeding filtering is performed
-    if raw_filtered_align == before_correction.n_spot_in:
-        logger.info('\t no bleeding filtering performed')
+
     # calculate bleeding ratio
     all_counts = before_correction.raw_counts.sum()
     tissue_counts = after_correction.reads.sum()
@@ -575,37 +566,33 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
     plot_intissue[before_correction.tissue_mask] = after_correction.reads[:, gene_idx]
     plot_outside = raw_count.copy().astype(float)
     plot_outside[before_correction.tissue_mask] = np.nan
-    if bleed_ratio == 0:
-        plot_data = np.vstack([raw_count, plot_intissue])
-        plot_titles = ['Raw Reads', 'Reads']
-    else:
-        plot_data = np.vstack([raw_count, plot_intissue, plot_outside])
-        plot_titles = ['Raw Reads', 'Reads', 'Bleeding']
-    v_min = np.nanpercentile(plot_data, 5, axis=1)
-    v_max = np.nanpercentile(plot_data, 95, axis=1)
 
-    if before_correction.layout is data.Layout.HEX:
-        marker = 'H'
-        size = 5
-    else:
-        marker = 's'
-        size = 10
+    plot_data = [before_correction.reads[:, gene_idx],
+                 after_correction.reads[:, gene_idx],
+                 before_correction.raw_counts[:, gene_idx][~before_correction.tissue_mask]]
+    coords = [before_correction.positions_tissue.T,
+              after_correction.positions_tissue.T,
+              before_correction.positions.T[~before_correction.tissue_mask]]
+    plot_titles = ['Raw Reads', 'Corrected Reads', 'Bleeding']
 
-    logger.info(plot_data.shape)
-    plotting.st_plot(
-        plot_data[:, None],
-        pos,
-        unit_dist=size,
-        cmap=cmap,
-        layout=marker,
-        x_y_swap=x_y_swap,
-        invert=invert,
-        v_min=v_min,
-        v_max=v_max,
-        subtitles=plot_titles,
-        name='{}_bleeding_plot'.format(gene),
-        plot_format=output_format,
-        save=output_dir)
+    fig, axes = plt.subplots(1, len(plot_data))
+    fig.set_figwidth(fig.get_size_inches()[0] * len(plot_data))
+
+    for idx, ax in enumerate(axes):
+        plotting.plot_colored_spatial_polygon(
+            fig=fig,
+            ax=ax,
+            coords=coords[idx],
+            values=plot_data[idx],
+            plotting_coordinates=before_correction.positions.T,
+            layout=before_correction.layout
+        )
+
+        ax.set_title(plot_titles[idx])
+        ax.set_axis_off()
+
+    fig.savefig(output_path)
+    plt.close(fig)
 
 
 def clean_bleed(dataset: data.SpatialExpressionDataset,
