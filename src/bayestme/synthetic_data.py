@@ -131,6 +131,6 @@ def generate_fake_stdataset(
     return data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
         layout=layout)

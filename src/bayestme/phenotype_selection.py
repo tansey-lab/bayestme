@@ -20,7 +20,7 @@ def get_n_neighbors(stdata: data.SpatialExpressionDataset):
     Return a numpy array of size stdata.n_spot_in representing the number of neighbors for each spot.
     """
     n_neighbours = np.zeros(stdata.n_spot_in)
-    edges = utils.get_edges(stdata.positions_tissue, layout=stdata.layout.value)
+    edges = stdata.edges
 
     for i in range(stdata.n_spot_in):
         n_neighbours[i] = (edges[:, 0] == i).sum() + (edges[:, 1] == i).sum()
@@ -65,7 +65,7 @@ def plot_folds(stdata, folds, output_dir: str):
             values=(~mask).astype(int),
             normalize=False,
             colormap=cm.Set1,
-            plotting_coordinates=stdata.positions.T,
+            plotting_coordinates=stdata.positions,
             layout=stdata.layout
         )
 

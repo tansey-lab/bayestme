@@ -160,7 +160,7 @@ def plot_cell_num(
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
-                coords=stdata.positions_tissue.T,
+                coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
                 colormap=cm.jet)
@@ -178,7 +178,7 @@ def plot_cell_num(
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
-                coords=stdata.positions_tissue.T,
+                coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
                 colormap=cm.jet
@@ -204,7 +204,7 @@ def plot_cell_prob(
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
-                coords=stdata.positions_tissue.T,
+                coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
                 colormap=cm.jet)
@@ -224,7 +224,7 @@ def plot_cell_prob(
             plotting.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
-                coords=stdata.positions_tissue.T,
+                coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
                 colormap=cm.jet
@@ -311,10 +311,10 @@ def plot_cell_num_scatterpie(
     fig, ax = plt.subplots()
 
     plotting.plot_spatial_pie_charts(fig, ax,
-                                     stdata.positions_tissue.T,
+                                     stdata.positions_tissue,
                                      values=deconvolution_result.cell_num_trace.mean(axis=0)[:, 1:],
                                      layout=stdata.layout,
-                                     plotting_coordinates=stdata.positions.T)
+                                     plotting_coordinates=stdata.positions)
     fig.savefig(output_path)
     plt.close(fig)
 

@@ -22,7 +22,7 @@ def test_get_phenotype_selection_parameters_for_folds():
     stdata = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
@@ -55,7 +55,7 @@ def test_plot_folds():
     stdata = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
@@ -87,7 +87,7 @@ def test_sample_graph_fused_multinomial():
     stdata = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
@@ -138,7 +138,7 @@ def test_run_phenotype_selection_single_fold():
     stdata = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 

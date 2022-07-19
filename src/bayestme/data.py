@@ -56,21 +56,17 @@ class SpatialExpressionDataset:
                  layout: Layout):
         """
         :param raw_counts: An <N spots> x <N markers> matrix.
-        :param positions: An 2 x <N spots> matrix of spot coordinates.
+        :param positions: An <N spots> x 2 matrix of spot coordinates.
         :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
         :param gene_names: An <M markers> length array of gene names.
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
         in a hex grid layout.
         """
-        self.adata = anndata.AnnData(
-
-        )
         self.layout = layout
         self.gene_names = gene_names
         self.tissue_mask = tissue_mask
         self.positions = positions.astype(int)
         self.raw_counts = raw_counts
-        self.positions_tissue = positions[:, tissue_mask].astype(int)
         self.edges = utils.get_edges(self.positions_tissue, layout=self.layout.value)
 
     @property
@@ -78,8 +74,12 @@ class SpatialExpressionDataset:
         return self.raw_counts[self.tissue_mask]
 
     @property
+    def positions_tissue(self) -> np.ndarray:
+        return self.positions[self.tissue_mask, :]
+
+    @property
     def n_spot_in(self) -> int:
-        return self.raw_counts[self.tissue_mask].shape[0]
+        return self.tissue_mask.sum()
 
     @property
     def n_gene(self) -> int:

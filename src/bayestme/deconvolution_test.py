@@ -28,7 +28,7 @@ def test_deconvolve():
         n_cols=15,
         n_genes=5)
 
-    edges = utils.get_edges(locations.T[:, tissue_mask], 2)
+    edges = utils.get_edges(locations[tissue_mask, :], 2)
 
     n_samples = 3
     lam2 = 1000
@@ -71,7 +71,7 @@ def test_detect_marker_genes():
     dataset = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 
@@ -100,7 +100,7 @@ def test_deconvolve_plots():
     dataset = data.SpatialExpressionDataset(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE)
 

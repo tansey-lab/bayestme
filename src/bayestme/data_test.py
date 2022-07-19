@@ -27,7 +27,7 @@ def generate_toy_stdataset() -> data.SpatialExpressionDataset:
     return data.SpatialExpressionDataset(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE
     )

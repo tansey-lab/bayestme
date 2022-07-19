@@ -17,7 +17,7 @@ def test_plot_gene_raw_counts():
 
     counts = sq_stdata.raw_counts[:, gene_idx]
     counts = counts
-    positions = sq_stdata.positions.T
+    positions = sq_stdata.positions
 
     plotting.plot_colored_spatial_polygon(
         fig=fig,
@@ -28,7 +28,7 @@ def test_plot_gene_raw_counts():
 
     counts = hex_stdata.raw_counts[:, gene_idx]
     counts = counts
-    positions = hex_stdata.positions.T
+    positions = hex_stdata.positions
 
     plotting.plot_colored_spatial_polygon(
         fig=fig,

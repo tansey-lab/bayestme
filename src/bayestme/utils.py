@@ -277,15 +277,19 @@ def get_posmap(pos):
     return pos_map
 
 
-def get_edges(pos, layout=1):
-    ### get edge graph from spot position and layout
-    ### layout  1 = Visium (hex)
-    ###         2 = ST (square)
-    ### pos shape 2 by N
+def get_edges(pos, layout=1) -> np.ndarray:
+    """
+    Given a set of positions and plate layout, return adjacency edges.
+
+    :param pos: An N x 2 array of coordinates
+    :param layout: Plate layout enum
+    :return: An <N edges> x 2 array
+    """
+    pos = pos.T
     pos_map = get_posmap(pos)
     edges = []
     if layout == 1:
-        # current spot as '@' put edges between '@' and 'o's 
+        # If the current spot is '@' put edges between '@' and 'o's
         #  * *
         # * @ o
         #  o o
@@ -300,7 +304,7 @@ def get_edges(pos, layout=1):
                     if j + 2 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 2]):
                         edges.append(np.array([pos_map[i, j], pos_map[i, j + 2]]))
     elif layout == 2:
-        # current spot as '@' put edges between '@' and 'o's 
+        # If the current spot is '@' put edges between '@' and 'o's
         # * * *
         # * @ o
         # * o *
@@ -312,7 +316,7 @@ def get_edges(pos, layout=1):
                     if j + 1 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 1]):
                         edges.append(np.array([pos_map[i, j], pos_map[i, j + 1]]))
     else:
-        raise Exception('Unknown layout')
+        raise RuntimeError('Unknown layout')
 
     edges = np.array(edges)
     edges = edges.astype(int)

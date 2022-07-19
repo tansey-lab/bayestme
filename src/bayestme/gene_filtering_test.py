@@ -24,7 +24,7 @@ def test_select_top_genes_by_standard_deviation():
     dataset = data.SpatialExpressionDataset(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE
     )
@@ -70,7 +70,7 @@ def test_filter_genes_by_spot_threshold():
     dataset = data.SpatialExpressionDataset(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE
     )
@@ -114,7 +114,7 @@ def test_filter_ribosome_genes():
     dataset = data.SpatialExpressionDataset(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE
     )
