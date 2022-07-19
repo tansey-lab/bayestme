@@ -179,7 +179,7 @@ def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset,
     gene_idx = np.argmax(stdata.gene_names == gene)
     counts = stdata.raw_counts[:, gene_idx]
     counts = counts[stdata.tissue_mask]
-    positions = stdata.positions.T[stdata.tissue_mask, :]
+    positions = stdata.positions[stdata.tissue_mask, :]
 
     fig, ax = plt.subplots(1)
 
@@ -189,7 +189,7 @@ def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset,
         coords=positions,
         values=counts,
         layout=stdata.layout,
-        plotting_coordinates=stdata.positions.T)
+        plotting_coordinates=stdata.positions)
 
     fig.savefig(output_file)
     plt.close(fig)
@@ -205,7 +205,7 @@ def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
     plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
-        coords=stdata.positions.T,
+        coords=stdata.positions,
         values=stdata.raw_counts[:, gene_idx],
         layout=stdata.layout)
 

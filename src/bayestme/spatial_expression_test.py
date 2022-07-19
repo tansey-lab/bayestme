@@ -129,10 +129,10 @@ def test_morans_i():
     half_size_2 = size - half_size
     clustered_w_pattern = np.concatenate([np.ones(half_size), np.zeros(half_size_2)])
 
-    positions = np.zeros((2, size))
+    positions = np.zeros((size, 2))
 
-    positions[1, :] = np.concatenate([np.arange(square_dim)] * square_dim)
-    positions[0, :] = np.array(np.concatenate([np.array([i] * square_dim) for i in range(square_dim)]))
+    positions[:, 1] = np.concatenate([np.arange(square_dim)] * square_dim)
+    positions[:, 0] = np.array(np.concatenate([np.array([i] * square_dim) for i in range(square_dim)]))
 
     positions = positions.astype(int)
 
@@ -234,10 +234,10 @@ def test_plot_spatial_pattern_with_legend():
         n_cols=50,
         n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['looong name', 'big big name', 'eirbgoewqugberf:erferf', '304ofh308fh3wf:sdfsdfsdr', 'erferfserf:44', 'fsdrfsdrgdsrv98dvfj', 'f34fawefc']),
         layout=data.Layout.SQUARE
     )

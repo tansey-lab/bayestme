@@ -27,10 +27,10 @@ def test_filter_genes():
                            'filter1',
                            'filter2'])
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE
     )

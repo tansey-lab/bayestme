@@ -461,7 +461,7 @@ def plot_bleed_vectors(
         colormap=cm.Set2_r):
     gene_idx = np.argwhere(stdata.gene_names == gene_name)[0][0]
     rates = np.copy(stdata.raw_counts) * stdata.tissue_mask[:, None]
-    locations = stdata.positions.T
+    locations = stdata.positions
 
     fig, ax = plt.subplots()
 
@@ -520,7 +520,7 @@ def plot_before_after_cleanup(
     plotting.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax1,
-        coords=before_correction.positions.T,
+        coords=before_correction.positions,
         values=before_correction.raw_counts[:, gene_idx_before],
         layout=before_correction.layout,
         colormap=cmap)
@@ -530,11 +530,11 @@ def plot_before_after_cleanup(
     plotting.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax2,
-        coords=after_correction.positions_tissue.T,
+        coords=after_correction.positions_tissue,
         values=after_correction.reads[:, gene_idx_after],
         layout=after_correction.layout,
         colormap=cmap,
-        plotting_coordinates=after_correction.positions.T)
+        plotting_coordinates=after_correction.positions)
 
     ax2.set_title('Corrected Reads')
     ax2.set_axis_off()
@@ -570,9 +570,9 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
     plot_data = [before_correction.reads[:, gene_idx],
                  after_correction.reads[:, gene_idx],
                  before_correction.raw_counts[:, gene_idx][~before_correction.tissue_mask]]
-    coords = [before_correction.positions_tissue.T,
-              after_correction.positions_tissue.T,
-              before_correction.positions.T[~before_correction.tissue_mask]]
+    coords = [before_correction.positions_tissue,
+              after_correction.positions_tissue,
+              before_correction.positions[~before_correction.tissue_mask]]
     plot_titles = ['Raw Reads', 'Corrected Reads', 'Bleeding']
 
     fig, axes = plt.subplots(1, len(plot_data))
@@ -584,7 +584,7 @@ def plot_bleeding(before_correction: data.SpatialExpressionDataset,
             ax=ax,
             coords=coords[idx],
             values=plot_data[idx],
-            plotting_coordinates=before_correction.positions.T,
+            plotting_coordinates=before_correction.positions,
             layout=before_correction.layout
         )
 
@@ -614,7 +614,7 @@ def clean_bleed(dataset: data.SpatialExpressionDataset,
     if local_weight is None:
         local_weight = get_suggested_initial_local_weight(dataset)
 
-    basis_idxs, basis_mask = build_basis_indices(dataset.positions.T, dataset.tissue_mask)
+    basis_idxs, basis_mask = build_basis_indices(dataset.positions, dataset.tissue_mask)
 
     n_top = min(n_top, dataset.n_gene)
 
@@ -630,7 +630,7 @@ def clean_bleed(dataset: data.SpatialExpressionDataset,
     corrected_reads = np.round(
         fit_rates / fit_rates.sum(axis=0, keepdims=True) * dataset.raw_counts.sum(axis=0, keepdims=True))
 
-    cleaned_dataset = data.SpatialExpressionDataset(
+    cleaned_dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=corrected_reads,
         tissue_mask=dataset.tissue_mask,
         positions=dataset.positions,

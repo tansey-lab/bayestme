@@ -21,10 +21,10 @@ def test_plot_bleeding_correction():
         n_cols=12,
         n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
-        positions=locations.T,
+        positions=locations,
         gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
         layout=data.Layout.SQUARE
     )
