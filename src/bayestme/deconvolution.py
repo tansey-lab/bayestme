@@ -312,7 +312,7 @@ def plot_cell_num_scatterpie(
 
     plotting.plot_spatial_pie_charts(fig, ax,
                                      stdata.positions_tissue.T,
-                                     values=deconvolution_result.cell_num_trace.mean(axis=0),
+                                     values=deconvolution_result.cell_num_trace.mean(axis=0)[:, 1:],
                                      layout=stdata.layout,
                                      plotting_coordinates=stdata.positions.T)
     fig.savefig(output_path)
