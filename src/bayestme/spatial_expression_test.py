@@ -234,7 +234,7 @@ def test_plot_spatial_pattern_with_legend():
         n_cols=50,
         n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,

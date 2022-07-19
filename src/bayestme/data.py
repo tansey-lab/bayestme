@@ -15,7 +15,6 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
-
 IN_TISSUE_ATTR = 'in_tissue'
 SPATIAL_ATTR = 'spatial'
 LAYOUT_ATTR = 'layout'
@@ -46,9 +45,9 @@ def create_anndata_object(
     coordinates = coordinates.astype(int)
     adata = anndata.AnnData(counts, obsm={SPATIAL_ATTR: coordinates})
     adata.obs[IN_TISSUE_ATTR] = tissue_mask
-    adata.uns[LAYOUT_ATTR] = layout.value
+    adata.uns[LAYOUT_ATTR] = layout.name
     adata.var_names = gene_names
-    edges = utils.get_edges(coordinates, layout.value)
+    edges = utils.get_edges(coordinates[tissue_mask], layout.value)
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
         shape=(adata.n_obs, adata.n_obs), dtype=np.bool)
@@ -63,27 +62,12 @@ class SpatialExpressionDataset:
     and whether they come from tissue or non tissue spots.
     Also holds the names of the gene markers in the dataset.
     """
-    def __init__(self,
-                 raw_counts: np.ndarray,
-                 positions: Optional[np.ndarray],
-                 tissue_mask: Optional[np.ndarray],
-                 gene_names: np.ndarray,
-                 layout: Layout):
+
+    def __init__(self, adata: anndata.AnnData):
         """
-        :param raw_counts: An <N spots> x <N markers> matrix.
-        :param positions: An <N spots> x 2 matrix of spot coordinates.
-        :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
-        :param gene_names: An <M markers> length array of gene names.
-        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
-        in a hex grid layout.
+        :param adata: AnnData object
         """
-        self.anndata: anndata.AnnData = create_anndata_object(
-            counts=raw_counts,
-            coordinates=positions,
-            tissue_mask=tissue_mask,
-            gene_names=gene_names,
-            layout=layout
-        )
+        self.adata: anndata.AnnData = adata
 
     @property
     def reads(self) -> np.ndarray:
@@ -95,7 +79,7 @@ class SpatialExpressionDataset:
 
     @property
     def n_spot_in(self) -> int:
-        return self.anndata.obs[IN_TISSUE_ATTR].sum()
+        return self.adata.obs[IN_TISSUE_ATTR].sum()
 
     @property
     def n_gene(self) -> int:
@@ -119,7 +103,7 @@ class SpatialExpressionDataset:
 
     @property
     def edges(self) -> np.ndarray:
-        return np.array(self.adata.obsp[CONNECTIVITIES_ATTR].nonzero())
+        return np.array(self.adata.obsp[CONNECTIVITIES_ATTR].nonzero()).T
 
     @property
     def layout(self) -> Layout:
@@ -127,6 +111,32 @@ class SpatialExpressionDataset:
 
     def save(self, path):
         self.adata.write_h5ad(path)
+
+    @classmethod
+    def from_arrays(cls,
+                    raw_counts: np.ndarray,
+                    positions: Optional[np.ndarray],
+                    tissue_mask: Optional[np.ndarray],
+                    gene_names: np.ndarray,
+                    layout: Layout):
+        """
+        Construct SpatialExpressionDataset directly from numpy arrays.
+
+        :param raw_counts: An <N spots> x <N markers> matrix.
+        :param positions: An <N spots> x 2 matrix of spot coordinates.
+        :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
+        :param gene_names: An <M markers> length array of gene names.
+        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        in a hex grid layout.
+        """
+        adata = create_anndata_object(
+            counts=raw_counts,
+            coordinates=positions,
+            tissue_mask=tissue_mask,
+            gene_names=gene_names,
+            layout=layout
+        )
+        return cls(adata)
 
     @classmethod
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
@@ -167,13 +177,12 @@ class SpatialExpressionDataset:
         tissue_counts = filtered_count.sum()
         logger.info('\t {:.3f}% UMI counts bleeds out'.format((1 - tissue_counts / all_counts) * 100))
 
-        return cls(
+        return cls.from_arrays(
             raw_counts=raw_count.T,
             positions=positions.T,
             tissue_mask=tissue_mask,
             gene_names=features,
-            layout=layout
-        )
+            layout=layout)
 
     @classmethod
     def read_count_mat(cls, data_path, layout=Layout.SQUARE):
@@ -201,7 +210,7 @@ class SpatialExpressionDataset:
         positions = positions.astype(int)
         tissue_mask = np.ones(n_spots).astype(bool)
 
-        return cls(
+        return cls.from_arrays(
             raw_counts=count_mat,
             positions=positions,
             tissue_mask=tissue_mask,
@@ -215,26 +224,14 @@ class SpatialExpressionDataset:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            raw_counts = f['raw_counts'][:]
-            positions = f['positions'][:]
-            tissue_mask = f['tissue_mask'][:]
-            gene_names = np.array([x.decode('utf-8') for x in f['gene_names'][:]])
-            layout_name = f.attrs['layout']
-            layout = Layout[layout_name]
-
-            return cls(
-                raw_counts=raw_counts,
-                positions=positions,
-                tissue_mask=tissue_mask,
-                gene_names=gene_names,
-                layout=layout)
+        return cls(anndata.read_h5ad(path))
 
 
 class BleedCorrectionResult:
     """
     Data model for the results of bleeding correction.
     """
+
     def __init__(self,
                  corrected_reads: np.ndarray,
                  global_rates: np.ndarray,
@@ -282,6 +279,7 @@ class PhenotypeSelectionResult:
     """
     Data model for the results of one job in phenotype selection k-fold cross validation
     """
+
     def __init__(self,
                  mask: np.ndarray,
                  cell_prob_trace: np.ndarray,
@@ -365,6 +363,7 @@ class DeconvolutionResult:
     """
     Data model for the results of sampling from the deconvolution posterior distribution.
     """
+
     def __init__(self,
                  cell_prob_trace: np.ndarray,
                  expression_trace: np.ndarray,
@@ -431,6 +430,7 @@ class SpatialDifferentialExpressionResult:
     """
     Data model for results from sampling from the spatial differential expression posterior distribution.
     """
+
     def __init__(self,
                  w_samples: np.ndarray,
                  c_samples: np.ndarray,

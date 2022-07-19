@@ -68,7 +68,7 @@ def test_detect_marker_genes():
         n_cols=12,
         n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -97,7 +97,7 @@ def test_deconvolve_plots():
         n_cols=12,
         n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,

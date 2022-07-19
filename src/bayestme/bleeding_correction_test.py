@@ -122,7 +122,7 @@ def test_clean_bleed():
         n_cols=12,
         n_genes=5)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -171,7 +171,7 @@ def test_clean_bleed_plots():
         n_cols=12,
         n_genes=5)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -216,7 +216,7 @@ def test_create_top_n_gene_bleeding_plots():
         n_cols=12,
         n_genes=5)
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,

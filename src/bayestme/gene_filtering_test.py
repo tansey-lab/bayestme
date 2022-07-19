@@ -21,7 +21,7 @@ def test_select_top_genes_by_standard_deviation():
                            'keep_me2',
                            'filter'])
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -67,7 +67,7 @@ def test_filter_genes_by_spot_threshold():
                            'filter2',
                            'keep_me'])
 
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -111,7 +111,7 @@ def test_filter_ribosome_genes():
     gene_names = np.array(['RPL333',
                            'other',
                            'other2'])
-    dataset = data.SpatialExpressionDataset(
+    dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,

@@ -3,7 +3,7 @@ import tempfile
 import os
 import shutil
 
-from bayestme import data, synthetic_data
+from bayestme import data, synthetic_data, utils
 
 
 def generate_toy_stdataset() -> data.SpatialExpressionDataset:
@@ -20,11 +20,11 @@ def generate_toy_stdataset() -> data.SpatialExpressionDataset:
     tissue_mask = np.array([True for _ in range(3)])
 
     gene_names = np.array(['normal_ascii',
-                           ''  # blank string, 
+                           '',  # blank string,
                            '\t\t'  # whitespace
                            ])
 
-    return data.SpatialExpressionDataset(
+    return data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,
@@ -108,4 +108,8 @@ def test_create_anndata_object():
     np.testing.assert_array_equal(adata.X, bleed_counts)
     np.testing.assert_array_equal(adata.var_names, gene_names)
     np.testing.assert_array_equal(adata.obs[data.IN_TISSUE_ATTR], tissue_mask)
-    assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.value
+    np.testing.assert_array_equal(
+        np.sort(np.array(adata.obsp[data.CONNECTIVITIES_ATTR].nonzero()).T, axis=0),
+        np.sort(utils.get_edges(locations[tissue_mask], layout=data.Layout.SQUARE.value), axis=0)
+    )
+    assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.name

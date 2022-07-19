@@ -630,7 +630,7 @@ def clean_bleed(dataset: data.SpatialExpressionDataset,
     corrected_reads = np.round(
         fit_rates / fit_rates.sum(axis=0, keepdims=True) * dataset.raw_counts.sum(axis=0, keepdims=True))
 
-    cleaned_dataset = data.SpatialExpressionDataset(
+    cleaned_dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=corrected_reads,
         tissue_mask=dataset.tissue_mask,
         positions=dataset.positions,
