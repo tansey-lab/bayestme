@@ -5,31 +5,6 @@ from scipy.linalg import solve_triangular, cho_solve
 from sksparse.cholmod import cholesky
 
 
-def get_kth_order_trend_filtering_matrix(edge_adjacency_matrix, k):
-    """
-    Calculate the k-th order trend filtering matrix given the oriented edge
-    incidence matrix and the value of k.
-
-    :param edge_adjacency_matrix:
-    :param k:
-    :return:
-    """
-    if k < 0:
-        raise Exception('k must be at least 0th order.')
-    result = edge_adjacency_matrix
-    for i in range(k):
-        result = edge_adjacency_matrix.T.dot(result) if i % 2 == 0 else edge_adjacency_matrix.dot(result)
-    return result
-
-
-def sample_horseshoe_plus(size=1):
-    a = 1 / np.random.gamma(0.5, 1, size=size)
-    b = 1 / np.random.gamma(0.5, a)
-    c = 1 / np.random.gamma(0.5, b)
-    d = 1 / np.random.gamma(0.5, c)
-    return d, c, b, a
-
-
 def sample_mvn_from_precision(Q, mu=None, mu_part=None, sparse=True, chol_factor=False, Q_shape=None):
     """
     Fast sampling from a multivariate normal with precision parameterization.
@@ -93,9 +68,57 @@ def sample_horseshoe_plus(size=1):
     return d, c, b, a
 
 
+def is_first_order_discrete_difference_operator(a):
+    """
+    Test if a matrix is a discrete difference operator, meaning each row has one pair of
+    (-1, 1) values representing adjacency in a graph structure.
+
+    :type a: Matrix to test
+    :return: True if matrix is a first order discrete difference operator, False otherwise.
+    """
+    return (
+            np.all(np.sum(a, axis=1) == 0) and
+            np.all(np.max(a, axis=1) == 1) and
+            np.all(np.min(a, axis=1) == -1)
+    )
+
+
+def get_kth_order_discrete_difference_operator(first_order_discrete_difference_operator, k):
+    """
+    Calculate the k-th order trend filtering matrix given a first order discrete difference operator of shape
+    M x N.
+
+    :param first_order_discrete_difference_operator: Input first order discrete difference operator
+    :param k: Order of the output discrete difference operator
+    :return: If k is even, this returns an M x N size matrix, if k is odd, this returns an N x N size matrix
+    """
+    if not is_first_order_discrete_difference_operator(first_order_discrete_difference_operator):
+        raise ValueError('Expected edge_adjacency_matrix to be a '
+                         'first order discrete difference operator, instead got: {}'.format(
+            first_order_discrete_difference_operator))
+
+    if k < 0:
+        raise ValueError('k must be at least 0th order.')
+
+    result = first_order_discrete_difference_operator
+    for i in range(k):
+        result = first_order_discrete_difference_operator.T.dot(
+            result) if i % 2 == 0 else first_order_discrete_difference_operator.dot(result)
+    return result
+
+
+def sample_horseshoe_plus(size=1):
+    a = 1 / np.random.gamma(0.5, 1, size=size)
+    b = 1 / np.random.gamma(0.5, a)
+    c = 1 / np.random.gamma(0.5, b)
+    d = 1 / np.random.gamma(0.5, c)
+    return d, c, b, a
+
+
 def construct_edge_adjacency(neighbors):
     """
-    Build the oriented edge-adjacency matrix from a list of (v1, v2) edges.
+    Build the oriented edge-adjacency matrix in "discrete difference operator"
+    form an interable of (v1, v2) tuples representing edges.
 
     :param neighbors: E x 2 array, where E is the number of edges
     :return: An E x V sparse matrix, where E is the number of edges and V the number of vertices
@@ -111,33 +134,37 @@ def construct_edge_adjacency(neighbors):
     return edge_adjacency_matrix
 
 
-def construct_trendfilter(edge_adjacency_matrix, t, sparse=False):
+def construct_trendfilter(adjacency_matrix, k, sparse=False):
     """
-    Builds the t'th-order trend filtering matrix from an edge adjacency matrix.
-    t=0 is the fused lasso / total variation matrix
-    t=1 is the linear trend filtering / graph laplacian matrix
-    t=2 is the quadratic trend filtering matrix
-    etc.
+    Builds the k'th-order trend filtering matrix from an adjacency matrix.
+    k=0 is the fused lasso / total variation matrix
+    k=1 is the linear trend filtering / graph laplacian matrix
+    k=2 is the quadratic trend filtering matrix etc.
 
-    :param edge_adjacency_matrix:
-    :param t:
-    :param sparse:
-    :return:
+    :param adjacency_matrix: An adjacency matrix in first order discrete difference operator form.
+    :param k: Order of trend filtering
+    :param sparse: If true return a sparse matrix, otherwise return a dense np.ndarray
+    :return: Graph trend filtering matrix
     """
-    transformed_edge_adjacency_matrix = edge_adjacency_matrix.copy().astype('float')
-    for i in range(t):
+    if not is_first_order_discrete_difference_operator(adjacency_matrix):
+        raise ValueError('Expected edge_adjacency_matrix to be a '
+                         'first order discrete difference operator, instead got: {}'.format(adjacency_matrix))
+
+    transformed_edge_adjacency_matrix = adjacency_matrix.copy().astype('float')
+    for i in range(k):
         if i % 2 == 0:
-            transformed_edge_adjacency_matrix = edge_adjacency_matrix.T.dot(transformed_edge_adjacency_matrix)
+            transformed_edge_adjacency_matrix = adjacency_matrix.T.dot(transformed_edge_adjacency_matrix)
         else:
-            transformed_edge_adjacency_matrix = edge_adjacency_matrix.dot(transformed_edge_adjacency_matrix)
+            transformed_edge_adjacency_matrix = adjacency_matrix.dot(transformed_edge_adjacency_matrix)
 
     if sparse:
         # Add a coordinate sparsity penalty
-        extra = csc_matrix(np.eye(edge_adjacency_matrix.shape[1]))
+        extra = csc_matrix(np.eye(adjacency_matrix.shape[1]))
     else:
         # Add a single independent node to make the matrix full rank
-        extra = csc_matrix((np.array([1.]), (np.array([0], dtype=int), np.array([0], dtype=int))),
-                           shape=(1, transformed_edge_adjacency_matrix.shape[1]))
+        extra = csc_matrix(
+            (np.array([1.]), (np.array([0], dtype=int), np.array([0], dtype=int))),
+            shape=(1, transformed_edge_adjacency_matrix.shape[1]))
     transformed_edge_adjacency_matrix = vstack([transformed_edge_adjacency_matrix, extra])
     return transformed_edge_adjacency_matrix
 
@@ -152,24 +179,28 @@ def composite_trendfilter(edge_adjacency_matrix, k, anchor=0, sparse=False):
     :return:
     """
     if sparse:
-        dbayes = np.eye(edge_adjacency_matrix.shape[1])
+        composite_trendfilter_matrix = np.eye(edge_adjacency_matrix.shape[1])
     else:
         # Start with the simple mu_1 ~ N(0, sigma)
-        dbayes = np.zeros((1, edge_adjacency_matrix.shape[1]))
-        dbayes[0, anchor] = 1
+        composite_trendfilter_matrix = np.zeros((1, edge_adjacency_matrix.shape[1]))
+        composite_trendfilter_matrix[0, anchor] = 1
 
     if issparse(edge_adjacency_matrix):
-        dbayes = csc_matrix(dbayes)
+        composite_trendfilter_matrix = csc_matrix(composite_trendfilter_matrix)
 
     # Add in the k'th order diffs
     for k in range(k + 1):
-        kth_order_trend_filtering_matrix = get_kth_order_trend_filtering_matrix(edge_adjacency_matrix, k=k)
-        if issparse(dbayes):
-            dbayes = vstack([dbayes, kth_order_trend_filtering_matrix])
+        kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(edge_adjacency_matrix, k=k)
+        if issparse(composite_trendfilter_matrix):
+            composite_trendfilter_matrix = np.vstack(
+                [composite_trendfilter_matrix,
+                 kth_order_trend_filtering_matrix])
         else:
-            dbayes = np.concatenate([dbayes, kth_order_trend_filtering_matrix], axis=0)
+            composite_trendfilter_matrix = np.concatenate(
+                [composite_trendfilter_matrix,
+                 kth_order_trend_filtering_matrix], axis=0)
 
-    return dbayes
+    return composite_trendfilter_matrix
 
 
 def multinomial_rvs(count, p):

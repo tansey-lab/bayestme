@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing
+import numpy.linalg
 
 from bayestme import utils
 
@@ -8,6 +9,57 @@ def test_construct_edge_adjacency():
     edge_adjacency_matrix = utils.construct_edge_adjacency(np.array([[0, 1], [1, 2], [2, 3], [3, 4]]))
     numpy.testing.assert_equal(edge_adjacency_matrix.toarray(),
                                np.array([[1, -1, 0, 0, 0], [0, 1, -1, 0, 0], [0, 0, 1, -1, 0], [0, 0, 0, 1, -1]]))
+
+
+def test_composite_trendfilter():
+    edge_adjacency_matrix = np.array([[1, -1, 0, 0, 0], [0, 1, -1, 0, 0], [0, 0, 1, -1, 0], [0, 0, 0, 1, -1]])
+
+    result = utils.composite_trendfilter(edge_adjacency_matrix, k=2, sparse=False)
+
+    expected = np.array(
+        [[1, 0, 0, 0, 0, ],
+         [1, -1, 0, 0, 0],
+         [0, 1, -1, 0, 0],
+         [0, 0, 1, -1, 0],
+         [0, 0, 0, 1, -1],
+         [1, -1, 0, 0, 0],
+         [-1, 2, -1, 0, 0],
+         [0, -1, 2, -1, 0],
+         [0, 0, -1, 2, -1],
+         [0, 0, 0, -1, 1],
+         [2, -3, 1, 0, 0],
+         [-1, 3, -3, 1, 0],
+         [0, -1, 3, -3, 1],
+         [0, 0, -1, 3, -2]])
+
+    numpy.testing.assert_equal(result, expected)
+
+
+def test_construct_trendfilter():
+    edge_adjacency_matrix = np.array([[1, -1, 0, 0, 0], [0, 1, -1, 0, 0], [0, 0, 1, -1, 0], [0, 0, 0, 1, -1]])
+
+    result = utils.construct_trendfilter(edge_adjacency_matrix, k=2, sparse=False)
+
+    expected = np.array([
+        [2, -3, 1, 0, 0],
+        [-1, 3, -3, 1, 0],
+        [0, -1, 3, -3, 1],
+        [0, 0, -1, 3, -2],
+        [1, 0, 0, 0, 0]])
+
+    numpy.testing.assert_equal(result.todense(), expected)
+
+    # assert matrix is full rank
+    assert numpy.linalg.matrix_rank(result.todense(), 5)
+
+
+def test_get_kth_order_trend_filtering_matrix():
+    adjacency_matrix = np.array([[1, -1, 0, 0]])
+    result = utils.get_kth_order_discrete_difference_operator(adjacency_matrix, k=2)
+
+    expected = np.array([[0]])
+
+    numpy.testing.assert_equal(result, expected)
 
 
 def test_get_stddev_ordering():
