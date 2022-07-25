@@ -107,14 +107,6 @@ def get_kth_order_discrete_difference_operator(first_order_discrete_difference_o
     return result
 
 
-def sample_horseshoe_plus(size=1):
-    a = 1 / np.random.gamma(0.5, 1, size=size)
-    b = 1 / np.random.gamma(0.5, a)
-    c = 1 / np.random.gamma(0.5, b)
-    d = 1 / np.random.gamma(0.5, c)
-    return d, c, b, a
-
-
 def construct_edge_adjacency(neighbors):
     """
     Build the oriented edge-adjacency matrix in "discrete difference operator"
@@ -169,28 +161,34 @@ def construct_trendfilter(adjacency_matrix, k, sparse=False):
     return transformed_edge_adjacency_matrix
 
 
-def composite_trendfilter(edge_adjacency_matrix, k, anchor=0, sparse=False):
+def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False):
     """
+    Build the k^1 through k^n trendfilter matrices stacked on top of each other
+    in order to penalize multiple k values
 
-    :param edge_adjacency_matrix:
-    :param k:
-    :param anchor:
-    :param sparse:
-    :return:
+    :param adjacency_matrix: An adjacency matrix in first order discrete difference operator form.
+    :param k: Maximum order of trend filtering.
+    :param anchor: Node index to set to 1 in the first row of the resulting matrix
+    :param sparse: If true return a sparse matrix.
+    :return: Composite trendfilter matrix.
     """
+    if not is_first_order_discrete_difference_operator(adjacency_matrix):
+        raise ValueError('Expected edge_adjacency_matrix to be a '
+                         'first order discrete difference operator, instead got: {}'.format(adjacency_matrix))
+
     if sparse:
-        composite_trendfilter_matrix = np.eye(edge_adjacency_matrix.shape[1])
+        composite_trendfilter_matrix = np.eye(adjacency_matrix.shape[1])
     else:
         # Start with the simple mu_1 ~ N(0, sigma)
-        composite_trendfilter_matrix = np.zeros((1, edge_adjacency_matrix.shape[1]))
+        composite_trendfilter_matrix = np.zeros((1, adjacency_matrix.shape[1]))
         composite_trendfilter_matrix[0, anchor] = 1
 
-    if issparse(edge_adjacency_matrix):
+    if issparse(adjacency_matrix):
         composite_trendfilter_matrix = csc_matrix(composite_trendfilter_matrix)
 
     # Add in the k'th order diffs
     for k in range(k + 1):
-        kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(edge_adjacency_matrix, k=k)
+        kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(adjacency_matrix, k=k)
         if issparse(composite_trendfilter_matrix):
             composite_trendfilter_matrix = np.vstack(
                 [composite_trendfilter_matrix,
