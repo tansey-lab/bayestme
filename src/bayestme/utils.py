@@ -76,11 +76,18 @@ def is_first_order_discrete_difference_operator(a):
     :type a: Matrix to test
     :return: True if matrix is a first order discrete difference operator, False otherwise.
     """
-    return (
-            np.all(np.sum(a, axis=1) == 0) and
-            np.all(np.max(a, axis=1) == 1) and
-            np.all(np.min(a, axis=1) == -1)
-    )
+    if issparse(a):
+        return (
+                np.all(np.sum(a, axis=1).flatten() == 0) and
+                np.all(np.max(a, axis=1).todense().flatten() == 1) and
+                np.all(np.min(a, axis=1).todense().flatten() == -1)
+        )
+    else:
+        return (
+                np.all(np.sum(a, axis=1) == 0) and
+                np.all(np.max(a, axis=1) == 1) and
+                np.all(np.min(a, axis=1) == -1)
+        )
 
 
 def get_kth_order_discrete_difference_operator(first_order_discrete_difference_operator, k):

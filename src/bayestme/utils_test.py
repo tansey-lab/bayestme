@@ -3,6 +3,7 @@ import numpy.testing
 import numpy.linalg
 
 from bayestme import utils
+from scipy.sparse import issparse, csc_matrix
 
 
 def test_is_first_order_discrete_difference_operator():
@@ -13,6 +14,10 @@ def test_is_first_order_discrete_difference_operator():
     negative_input = np.array([[1, -1, 0, 0, 1], [0, 1, -1, 0, 0], [0, 0, 1, -1, 0], [0, 0, 0, 1, -1]])
 
     assert not utils.is_first_order_discrete_difference_operator(negative_input)
+
+    sparse_positive_input = csc_matrix(positive_input)
+
+    assert utils.is_first_order_discrete_difference_operator(sparse_positive_input)
 
 
 def test_construct_edge_adjacency():
