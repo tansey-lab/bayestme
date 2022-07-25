@@ -69,4 +69,5 @@ autodoc_mock_imports = [
     'statsmodels',
     'autograd_minimize',
     'sklearn',
-    'esda']
+    'esda',
+    'sksparse']
