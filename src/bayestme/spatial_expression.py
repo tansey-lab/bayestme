@@ -65,7 +65,7 @@ class SpatialDifferentialExpression:
         self.Omegas = np.ones((self.n_signals, self.n_cell_types, self.n_nodes))
         self.prior_vars = np.repeat(prior_var, 2)
         D = utils.construct_edge_adjacency(edges)
-        self.Delta = utils.composite_trendfilter(D, 2, sparse=True)
+        self.Delta = utils.construct_composite_trendfilter(D, 2, sparse=True)
         n_dims = self.n_spatial_patterns + 1
         self.DeltaT = block_diag([self.Delta.T for _ in range(n_dims)], format='csc')
         self.Delta = block_diag([self.Delta for _ in range(n_dims)], format='csc')
