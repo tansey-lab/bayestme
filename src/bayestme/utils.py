@@ -254,7 +254,7 @@ def get_posmap(pos):
     Return a matrix where the (i, j) entry stores the idx of the reads
     at spatial coordinates (i, j) on the tissue sample.
 
-    :param pos: a 2 x N matrix of coordinates
+    :param pos: A 2 x N matrix of coordinates.
     :return: An X x Y matrix of coordinates, where X and Y are
     the max coordinate values on their respective axes
     """
