@@ -197,7 +197,7 @@ def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False)
     for k in range(k + 1):
         kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(adjacency_matrix, k=k)
         if issparse(composite_trendfilter_matrix):
-            composite_trendfilter_matrix = np.vstack(
+            composite_trendfilter_matrix = vstack(
                 [composite_trendfilter_matrix,
                  kth_order_trend_filtering_matrix])
         else:

@@ -3,7 +3,7 @@ import numpy.testing
 import numpy.linalg
 
 from bayestme import utils
-from scipy.sparse import issparse, csc_matrix
+from scipy.sparse import csc_matrix
 
 
 def test_is_first_order_discrete_difference_operator():
