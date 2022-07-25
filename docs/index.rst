@@ -13,6 +13,7 @@ Contents
 
     install
     overview
+    data_format
     demo_notebooks
     command_line_interface
     api
