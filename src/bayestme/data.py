@@ -139,6 +139,23 @@ class SpatialExpressionDataset:
         return cls(adata)
 
     @classmethod
+    def read_legacy_h5(cls, path):
+        with h5py.File(path, 'r') as f:
+            raw_counts = f['raw_counts'][:]
+            positions = f['positions'][:]
+            tissue_mask = f['tissue_mask'][:]
+            gene_names = np.array([x.decode('utf-8') for x in f['gene_names'][:]])
+            layout_name = f.attrs['layout']
+            layout = Layout[layout_name]
+
+            return cls.from_arrays(
+                raw_counts=raw_counts,
+                positions=positions,
+                tissue_mask=tissue_mask,
+                gene_names=gene_names,
+                layout=layout)
+
+    @classmethod
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
         """
         Load data from spaceranger /outputs folder

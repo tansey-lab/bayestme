@@ -320,7 +320,8 @@ def plot_cell_num_scatterpie(
                                      values=deconvolution_result.cell_num_trace.mean(axis=0)[:, 1:],
                                      layout=stdata.layout,
                                      plotting_coordinates=stdata.positions)
-    fig.savefig(output_path)
+    fig.tight_layout()
+    fig.savefig(output_path, bbox_inches='tight')
     plt.close(fig)
 
 

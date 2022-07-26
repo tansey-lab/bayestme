@@ -491,7 +491,9 @@ def plot_bleed_vectors(
     vectors = (directions * contributions[..., None]).mean(axis=1)
     vectors = vectors / np.abs(vectors).max(axis=0, keepdims=True)  # Normalize everything to show relative bleed
     for i, ((y, x), (dy, dx)) in enumerate(zip(plotted_locations, vectors)):
-        ax.arrow(x, y, dx, dy, width=0.1 * np.sqrt(dx ** 2 + dy ** 2), head_width=0.2 * np.sqrt(dx ** 2 + dy ** 2),
+        ax.arrow(x, y, dx, dy,
+                 width=0.05,
+                 head_width=0.1,
                  color='black')
 
     ax.set_axis_off()

@@ -403,8 +403,8 @@ def select_significant_spatial_programs(
     for k in range(sde_result.n_components):
         cell_number_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
         n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0)[cell_number_mask]
-        pos_filter = stdata.positions_tissue.T[:, cell_number_mask].astype(int)
-        edges_filter = utils.get_edges(pos_filter.T, stdata.layout.value)
+        pos_filter = stdata.positions_tissue[cell_number_mask, :].astype(int)
+        edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
 
         for h in range(1, sde_result.n_spatial_patterns + 1):
             gene_proportions_with_pattern_in_k = get_proportion_of_spots_in_k_with_pattern_h_per_gene(
@@ -515,7 +515,7 @@ def plot_spatial_pattern(
     plotting.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
-        coords=stdata.positions_tissue.T,
+        coords=stdata.positions_tissue,
         values=w_plot,
         layout=stdata.layout,
         norm=norm,
