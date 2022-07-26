@@ -81,7 +81,8 @@ def plot_colored_spatial_polygon(
             orientation=orientation,
             facecolor=colormap(norm(v)) if normalize else colormap(v),
             alpha=1,
-            edgecolor='k')
+            edgecolor='k',
+            linewidth=0.3)
         ax.add_patch(polygon)
 
     # By scatter-plotting an invisible point on to all of our patches
