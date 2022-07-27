@@ -516,7 +516,7 @@ def plot_spatial_pattern(
         fig=fig,
         ax=ax,
         coords=stdata.positions_tissue,
-        values=w_plot,
+        values=w_plot[plot_mask],
         layout=stdata.layout,
         norm=norm,
         colormap=colormap)
