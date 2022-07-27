@@ -1,14 +1,11 @@
 import shutil
 import tempfile
 import os
-import numpy as np
 
 from bayestme import plotting, synthetic_data, data
 
 from matplotlib import pyplot as plt
-from matplotlib import colors
-import matplotlib.cm as cm
-from matplotlib.lines import Line2D
+
 
 def test_plot_gene_raw_counts():
     sq_stdata = synthetic_data.generate_fake_stdataset(n_genes=1, layout=data.Layout.SQUARE)
@@ -45,3 +42,5 @@ def test_plot_gene_raw_counts():
         fig.savefig(os.path.join(tempdir, 'test.pdf'))
     finally:
         shutil.rmtree(tempdir)
+
+
