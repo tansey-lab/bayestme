@@ -3,7 +3,7 @@ seaborn==0.11.2
 scipy>=1.7,<1.8
 scikit-image==0.19.2
 scikit-learn==1.1.1
-matplotlib>=3.5
+matplotlib==3.4.3
 autograd-minimize==0.2.2
 scikit-sparse==0.4.6
 statsmodels==0.13.2
