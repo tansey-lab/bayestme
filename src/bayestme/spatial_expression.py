@@ -555,7 +555,8 @@ def plot_spatial_pattern_with_legend(
         plot_threshold=plot_threshold,
         colormap=colormap
     )
-    fig.savefig(output_file)
+    fig.tight_layout()
+    fig.savefig(output_file, bbox_inches='tight')
     plt.close(fig)
 
 
