@@ -589,5 +589,5 @@ def plot_significant_spatial_patterns(
             gene_ids=gene_ids,
             k=k,
             h=h,
-            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format(k, h, output_format))
+            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format((k + 1), h, output_format))
         )
