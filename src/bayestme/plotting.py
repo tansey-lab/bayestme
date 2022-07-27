@@ -102,6 +102,9 @@ def get_wedge_dimensions_from_value_array(value_array: np.array):
     :param value_array: np.array of length N
     :return: list of 2-tuples of length N.
     """
+    if value_array.sum() == 0:
+        value_array = value_array + 1
+
     theta2_values = np.cumsum((value_array / value_array.sum()) * 360.0)
     theta1_values = np.concatenate([[0], theta2_values[:-1]])
 
