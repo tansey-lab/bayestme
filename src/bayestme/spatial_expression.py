@@ -461,7 +461,13 @@ def plot_spatial_pattern_legend(
         sde_result: data.SpatialDifferentialExpressionResult,
         gene_ids: np.array,
         k: int,
-        colormap):
+        colormap,
+        max_genes_to_plot: int = 8):
+    if max_genes_to_plot < len(gene_ids):
+        loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
+        top_gene_indices = np.argpartition(np.abs(loadings), (-1 * max_genes_to_plot))[(-1 * max_genes_to_plot):]
+        gene_ids = gene_ids[top_gene_indices]
+
     loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
     loadings /= np.max(np.abs(loadings)) * np.sign(loadings[np.argmax(np.abs(loadings))])
     genes_selected = gene_ids[abs(loadings) > 0.1]
@@ -534,6 +540,8 @@ def plot_spatial_pattern_with_legend(
         colormap=cm.coolwarm,
         plot_threshold: int = 2):
     fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [1, 3]})
+    fig.set_figwidth(fig.get_size_inches()[0] * 1.33)
+
     plot_spatial_pattern_legend(
         fig=fig,
         ax=ax1,
@@ -555,6 +563,7 @@ def plot_spatial_pattern_with_legend(
         plot_threshold=plot_threshold,
         colormap=colormap
     )
+    ax2.set_title(f'Cell Type {k + 1}, Spatial Program {h}')
     fig.tight_layout()
     fig.savefig(output_file, bbox_inches='tight')
     plt.close(fig)
@@ -580,5 +589,5 @@ def plot_significant_spatial_patterns(
             gene_ids=gene_ids,
             k=k,
             h=h,
-            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format(k, h, output_format))
+            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format((k + 1), h, output_format))
         )
