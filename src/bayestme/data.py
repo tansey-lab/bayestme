@@ -20,6 +20,13 @@ IN_TISSUE_ATTR = 'in_tissue'
 SPATIAL_ATTR = 'spatial'
 LAYOUT_ATTR = 'layout'
 CONNECTIVITIES_ATTR = 'connectivities'
+BAYESTME_ANNDATA_PREFIX = 'bayestme'
+N_CELL_TYPES_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_n_cell_types'
+CELL_TYPE_COUNT_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_counts'
+CELL_TYPE_PROB_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_probabilities'
+DECONVOLVE_GENE_EXPRESSION_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_gene_expression_by_cell_type'
+MARKER_GENE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_marker'
+OMEGA_DIFFERENCE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_omega_difference'
 
 
 class Layout(Enum):
@@ -113,6 +120,21 @@ class SpatialExpressionDataset:
     @property
     def layout(self) -> Layout:
         return Layout[self.adata.uns[LAYOUT_ATTR]]
+
+    @property
+    def n_cell_types(self) -> Optional[int]:
+        if N_CELL_TYPES_ATTR in self.adata.uns:
+            return self.adata.uns[N_CELL_TYPES_ATTR]
+
+    @property
+    def cell_type_probabilities(self) -> Optional[np.ndarray]:
+        if CELL_TYPE_PROB_ATTR in self.adata.obsm:
+            return self.adata.obsm[CELL_TYPE_PROB_ATTR]
+
+    @property
+    def cell_type_counts(self) -> Optional[np.ndarray]:
+        if CELL_TYPE_COUNT_ATTR in self.adata.obsm:
+            return self.adata.obsm[CELL_TYPE_COUNT_ATTR]
 
     def save(self, path):
         self.adata.write_h5ad(path)
