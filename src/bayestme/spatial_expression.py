@@ -1,3 +1,5 @@
+import pathlib
+
 import numpy as np
 import pypolyagamma
 import os
@@ -13,6 +15,7 @@ from matplotlib import colors
 from scipy.stats import pearsonr
 from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
+from collections import defaultdict
 
 from bayestme.utils import ilogit, stable_softmax, sample_mvn_from_precision
 from bayestme import utils, data, plotting
@@ -569,6 +572,55 @@ def plot_spatial_pattern_with_legend(
     plt.close(fig)
 
 
+def plot_spatial_pattern_and_all_constituent_genes(
+        stdata: data.SpatialExpressionDataset,
+        decon_result: data.DeconvolutionResult,
+        sde_result: data.SpatialDifferentialExpressionResult,
+        gene_ids: np.array,
+        k: int,
+        h: int,
+        program_id: int,
+        output_dir: str,
+        output_format: str,
+        colormap=cm.coolwarm,
+        plot_threshold: int = 2):
+    plot_dir = os.path.join(output_dir, f'spatial_differential_expression_cell_type_{k}')
+
+    pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
+
+    sde_fig, sde_ax = plt.subplots()
+
+    plot_spatial_pattern(
+        fig=sde_fig,
+        ax=sde_ax,
+        stdata=stdata,
+        decon_result=decon_result,
+        sde_result=sde_result,
+        gene_ids=gene_ids,
+        k=k,
+        h=h,
+        plot_threshold=plot_threshold,
+        colormap=colormap)
+    sde_ax.set_title(f'Cell Type {k + 1}, Spatial Program {program_id} Summary')
+    sde_fig.tight_layout()
+    sde_fig.savefig(os.path.join(plot_dir, f'spatial_program_{program_id}_summary.{output_format}'), bbox_inches='tight')
+    plt.close(sde_fig)
+
+    for gene_id in gene_ids:
+        gene_name = stdata.gene_names[gene_id]
+
+        gene_fig, gene_ax, cb, norm, hcoord, vcoord = plotting.plot_gene_in_tissue_counts(
+            stdata,
+            gene=gene_name)
+
+        gene_ax.set_axis_off()
+
+        gene_ax.set_title(f'{gene_name} Expression in Cell Type {k + 1}, Spatial Program {program_id}')
+
+        gene_fig.savefig(os.path.join(plot_dir, f'spatial_program_{program_id}_{gene_name}.{output_format}'))
+        plt.close(gene_fig)
+
+
 def plot_significant_spatial_patterns(
         stdata: data.SpatialExpressionDataset,
         decon_result: data.DeconvolutionResult,
@@ -581,13 +633,19 @@ def plot_significant_spatial_patterns(
         sde_result=sde_result,
     )
 
+    program_ids = defaultdict(lambda: 0)
+
     for k, h, gene_ids in significant_programs:
-        plot_spatial_pattern_with_legend(
+        program_ids[k] += 1
+
+        plot_spatial_pattern_and_all_constituent_genes(
             stdata=stdata,
             decon_result=decon_result,
             sde_result=sde_result,
             gene_ids=gene_ids,
             k=k,
             h=h,
-            output_file=os.path.join(output_dir, 'spatial_loading_cell_type_{}_{}.{}'.format((k + 1), h, output_format))
+            program_id=program_ids[k],
+            output_dir=output_dir,
+            output_format=output_format
         )

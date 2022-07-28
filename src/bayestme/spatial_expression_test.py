@@ -238,7 +238,9 @@ def test_plot_spatial_pattern_with_legend():
         raw_counts=bleed_counts,
         tissue_mask=tissue_mask,
         positions=locations,
-        gene_names=np.array(['looong name', 'big big name', 'eirbgoewqugberf:erferf', '304ofh308fh3wf:sdfsdfsdr', 'erferfserf:44', 'fsdrfsdrgdsrv98dvfj', 'f34fawefc']),
+        gene_names=np.array(
+            ['looong name', 'big big name', 'eirbgoewqugberf:erferf', '304ofh308fh3wf:sdfsdfsdr', 'erferfserf:44',
+             'fsdrfsdrgdsrv98dvfj', 'f34fawefc']),
         layout=data.Layout.SQUARE
     )
     deconvolution_results = generate_fake_deconvolve_results(
@@ -267,3 +269,106 @@ def test_plot_spatial_pattern_with_legend():
             output_file=os.path.join(tempdir, 'test.pdf'))
     finally:
         shutil.rmtree(tempdir)
+
+
+def test_plot_spatial_pattern_and_all_constituent_genes():
+    np.random.seed(100)
+    n_genes = 7
+    n_components = 3
+    n_samples = 10
+    n_spatial_patterns = 10
+
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=50,
+        n_cols=50,
+        n_genes=n_genes)
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(
+            ['looong name', 'big big name', 'eirbgoewqugberf:erferf', '304ofh308fh3wf:sdfsdfsdr', 'erferfserf:44',
+             'fsdrfsdrgdsrv98dvfj', 'f34fawefc']),
+        layout=data.Layout.SQUARE
+    )
+    deconvolution_results = generate_fake_deconvolve_results(
+        n_samples=n_samples,
+        n_tissue_spots=dataset.n_spot_in,
+        n_components=n_components,
+        n_genes=n_genes)
+
+    sde_results = generate_fake_sde_results(
+        n_samples=n_samples,
+        n_genes=n_genes,
+        n_components=n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_spot_in=dataset.n_spot_in)
+
+    tempdir = tempfile.mkdtemp()
+
+    try:
+        spatial_expression.plot_spatial_pattern_and_all_constituent_genes(
+            stdata=dataset,
+            decon_result=deconvolution_results,
+            sde_result=sde_results,
+            k=1,
+            h=1,
+            program_id=1,
+            gene_ids=np.array([0, 1, 2]),
+            output_dir=tempdir,
+            output_format='pdf')
+    finally:
+        shutil.rmtree(tempdir)
+
+
+def test_plot_significant_spatial_patterns():
+    with mock.patch('bayestme.spatial_expression.select_significant_spatial_programs'
+                    ) as mock_select_significant_spatial_programs:
+        mock_select_significant_spatial_programs.return_value = [
+            (1, 1, [1, 2, 3]),
+            (1, 7, [4, 5, 6])
+        ]
+
+        with mock.patch('bayestme.spatial_expression.plot_spatial_pattern_and_all_constituent_genes'
+                        ) as mock_plot_spatial_pattern_and_all_constituent_genes:
+            stdata = mock.MagicMock()
+            decon_result = mock.MagicMock()
+            sde_result = mock.MagicMock()
+
+            spatial_expression.plot_significant_spatial_patterns(
+                stdata=stdata,
+                decon_result=decon_result,
+                sde_result=sde_result,
+                output_dir='output_dir',
+                output_format='pdf'
+            )
+
+            mock_plot_spatial_pattern_and_all_constituent_genes.assert_has_calls(
+                [
+                    mock.call(
+                        stdata=stdata,
+                        decon_result=decon_result,
+                        sde_result=sde_result,
+                        gene_ids=[1, 2, 3],
+                        k=1,
+                        h=1,
+                        program_id=1,
+                        output_dir='output_dir',
+                        output_format='pdf'
+                    ),
+                    mock.call(
+                        stdata=stdata,
+                        decon_result=decon_result,
+                        sde_result=sde_result,
+                        gene_ids=[4, 5, 6],
+                        k=1,
+                        h=7,
+                        program_id=2,
+                        output_dir='output_dir',
+                        output_format='pdf'
+                    ),
+
+                ],
+                any_order=True
+            )
