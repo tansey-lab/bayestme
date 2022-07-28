@@ -322,7 +322,7 @@ def moran_i(
         neighbours[i] = nb
         weights[i] = [1] * len(nb)
 
-    w = pysal_Weights(neighbours, weights)
+    w = pysal_Weights(neighbours, weights, silence_warnings=True)
 
     result = np.zeros(data.shape[:-1])
     for k in range(data.shape[0]):
