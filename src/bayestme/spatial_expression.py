@@ -609,9 +609,21 @@ def plot_spatial_pattern_and_all_constituent_genes(
     for gene_id in gene_ids:
         gene_name = stdata.gene_names[gene_id]
 
-        gene_fig, gene_ax, cb, norm, hcoord, vcoord = plotting.plot_gene_in_tissue_counts(
-            stdata,
-            gene=gene_name)
+        theta_g_k = sde_result.theta_samples[:, :, gene_id, k]
+        nb_expectation = (ilogit(theta_g_k)/(1 - ilogit(theta_g_k))).mean(axis=0)
+
+        plot_value = (decon_result.beta_trace[:, k].mean(axis=0) *
+                      decon_result.expression_trace[:, k, gene_id].mean(axis=0) *
+                      nb_expectation)
+
+        gene_fig, gene_ax = plt.subplots()
+
+        plotting.plot_colored_spatial_polygon(
+            fig=gene_fig,
+            ax=gene_ax,
+            coords=stdata.positions_tissue,
+            values=plot_value,
+            layout=stdata.layout)
 
         gene_ax.set_axis_off()
 
