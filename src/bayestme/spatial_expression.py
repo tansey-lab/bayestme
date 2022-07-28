@@ -584,7 +584,7 @@ def plot_spatial_pattern_and_all_constituent_genes(
         output_format: str,
         colormap=cm.coolwarm,
         plot_threshold: int = 2):
-    plot_dir = os.path.join(output_dir, f'spatial_differential_expression_cell_type_{k}')
+    plot_dir = os.path.join(output_dir, f'cell_type_{k + 1}_program_{program_id}')
 
     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
 
