@@ -401,4 +401,4 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
             np.repeat(np.array([k + 1]), n_marker_genes) for k in range(deconvolution_result.n_components)
         ])
 
-    output.to_csv(output_path, header=True)
+    output.to_csv(output_path, header=True, index=False)
