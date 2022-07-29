@@ -199,35 +199,6 @@ def detect_marker_genes(
     return marker_gene_sets, difference
 
 
-def add_marker_gene_results_to_dataset(
-        stdata: data.SpatialExpressionDataset,
-        result: data.DeconvolutionResult,
-        n_marker_genes: int,
-        alpha: float,
-        marker_gene_method: MarkerGeneMethod):
-    """
-    Modify in-place stdata to annotate it with deconvolution results.
-
-    :param stdata: data.SpatialExpressionDataset to modify
-    :param result: data.DeconvolutionResult which will be added to stdata
-    :param n_marker_genes: Number of markers per cell type to select
-    :param alpha: Marker gene threshold parameter, defaults to 0.05
-    :param marker_gene_method: Enum representing which marker gene selection method to use.
-    """
-    marker_genes, omega_difference = detect_marker_genes(
-        deconvolution_result=result,
-        n_marker=n_marker_genes,
-        alpha=alpha,
-        method=marker_gene_method)
-
-    marker_gene_boolean = np.zeros((stdata.n_gene, result.n_components)).astype(np.bool)
-
-    marker_gene_boolean[marker_genes.T] = True
-
-    stdata.adata.varm[data.MARKER_GENE_ATTR] = marker_gene_boolean
-    stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = omega_difference.T
-
-
 def add_deconvolution_results_to_dataset(
         stdata: data.SpatialExpressionDataset,
         result: data.DeconvolutionResult):
@@ -236,19 +207,50 @@ def add_deconvolution_results_to_dataset(
 
     :param stdata: data.SpatialExpressionDataset to modify
     :param result: data.DeconvolutionResult to use
-
     """
     cell_num_matrix = result.cell_num_trace[:, :, 1:].mean(axis=0)
     cell_prob_matrix = result.cell_prob_trace[:, :, 1:].mean(axis=0)
 
-    stdata.adata.obsm[data.CELL_TYPE_PROB_ATTR] = cell_prob_matrix
-    stdata.adata.obsm[data.CELL_TYPE_COUNT_ATTR] = cell_num_matrix
+    cell_prob_matrix_full = np.zeros((stdata.n_spot, cell_prob_matrix.shape[1]))
+
+    cell_prob_matrix_full[stdata.tissue_mask] = cell_prob_matrix
+
+    cell_num_matrix_full = np.zeros((stdata.n_spot, cell_num_matrix.shape[1]))
+
+    cell_num_matrix_full[stdata.tissue_mask] = cell_num_matrix
+
+    stdata.adata.obsm[data.CELL_TYPE_PROB_ATTR] = cell_prob_matrix_full
+    stdata.adata.obsm[data.CELL_TYPE_COUNT_ATTR] = cell_num_matrix_full
 
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
 
     gene_expression = result.expression_trace.mean(axis=0).T
 
     stdata.adata.varm[data.DECONVOLVE_GENE_EXPRESSION_ATTR] = gene_expression
+
+
+def add_marker_gene_results_to_dataset(
+        stdata: data.SpatialExpressionDataset,
+        result: data.DeconvolutionResult,
+        marker_genes: np.ndarray,
+        omega_difference: np.ndarray):
+    """
+    Modify in-place stdata to annotate it with deconvolution results.
+
+    :param stdata: data.SpatialExpressionDataset to modify
+    :param result: data.DeconvolutionResult to use
+    :param marker_genes: data to add
+    :param omega_difference: data to add
+    """
+    stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
+
+    marker_gene_boolean = np.zeros((stdata.n_gene, result.n_components)).astype(np.bool)
+
+    for i in range(result.n_components):
+        marker_gene_boolean[:, i][marker_genes[i]] = True
+
+    stdata.adata.uns[data.MARKER_GENE_ATTR] = marker_gene_boolean
+    stdata.adata.uns[data.OMEGA_DIFFERENCE_ATTR] = omega_difference.T
 
 
 def plot_cell_num(

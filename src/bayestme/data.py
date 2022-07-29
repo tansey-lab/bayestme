@@ -94,6 +94,10 @@ class SpatialExpressionDataset:
         return self.adata.obs[IN_TISSUE_ATTR].sum()
 
     @property
+    def n_spot(self) -> int:
+        return self.adata.n_obs
+
+    @property
     def n_gene(self) -> int:
         return self.adata.n_vars
 
@@ -129,12 +133,36 @@ class SpatialExpressionDataset:
     @property
     def cell_type_probabilities(self) -> Optional[np.ndarray]:
         if CELL_TYPE_PROB_ATTR in self.adata.obsm:
-            return self.adata.obsm[CELL_TYPE_PROB_ATTR]
+            return self.adata.obsm[CELL_TYPE_PROB_ATTR][self.tissue_mask]
 
     @property
     def cell_type_counts(self) -> Optional[np.ndarray]:
         if CELL_TYPE_COUNT_ATTR in self.adata.obsm:
-            return self.adata.obsm[CELL_TYPE_COUNT_ATTR]
+            return self.adata.obsm[CELL_TYPE_COUNT_ATTR][self.tissue_mask]
+
+    @property
+    def marker_gene_names(self) -> Optional[np.ndarray]:
+        if MARKER_GENE_ATTR not in self.adata.varm:
+            return
+
+        output = np.empty(shape=(self.n_cell_types, self.adata.n_vars), dtype=str)
+
+        marker_gene_indices = self.marker_gene_indices
+
+        for i in range(self.n_cell_types):
+            output[i] = self.adata.var_names[marker_gene_indices[i]]
+        return output
+
+    @property
+    def marker_gene_indices(self) -> Optional[np.ndarray]:
+        if MARKER_GENE_ATTR not in self.adata.varm:
+            return
+        outputs = []
+
+        for i in range(self.n_cell_types):
+            outputs.append(np.arange(self.adata.n_vars)[self.adata.varm[MARKER_GENE_ATTR].T[i]])
+
+        return np.vstack(outputs)
 
     def save(self, path):
         self.adata.write_h5ad(path)

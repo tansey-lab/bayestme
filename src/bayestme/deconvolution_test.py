@@ -3,9 +3,10 @@ import tempfile
 import numpy as np
 import os
 import pandas
+import numpy.testing
 
 import bayestme.synthetic_data
-from bayestme import bleeding_correction, utils, deconvolution, data
+from bayestme import utils, deconvolution, data
 
 
 def create_toy_deconvolve_result(
@@ -127,6 +128,82 @@ def test_plot_marker_genes():
         )
     finally:
         shutil.rmtree(tempdir)
+
+
+def test_add_deconvolution_results_to_dataset():
+    n_components = 3
+    n_genes = 100
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene)
+
+    deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset,
+        result=deconvolve_results)
+
+    assert dataset.cell_type_probabilities is not None
+    assert dataset.cell_type_counts is not None
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_probabilities,
+        deconvolve_results.cell_prob_trace[:, :, 1:].mean(axis=0)
+    )
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_counts,
+        deconvolve_results.cell_num_trace[:, :, 1:].mean(axis=0)
+    )
+
+    assert dataset.n_cell_types == n_components
+
+
+def test_add_marker_gene_results_to_dataset():
+    n_components = 3
+    n_marker = 2
+    n_genes = 100
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene)
+
+    marker_genes, omega_difference = deconvolution.detect_marker_genes(
+        deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
+
+    deconvolution.add_marker_gene_results_to_dataset(
+        stdata=dataset,
+        result=deconvolve_results,
+        marker_genes=marker_genes,
+        omega_difference=omega_difference
+        )
+
+    np.testing.assert_equal(marker_genes, dataset.marker_gene_indices)
 
 
 def test_deconvolve_plots():
