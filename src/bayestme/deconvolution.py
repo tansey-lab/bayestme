@@ -134,6 +134,65 @@ class MarkerGeneMethod(Enum):
     FALSE_DISCOVERY_RATE = 2
 
 
+def get_marker_genes_rankings(
+        deconvolution_result: data.DeconvolutionResult,
+        alpha: float = 0.05,
+        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> (np.ndarray, np.ndarray):
+    """
+    Returns (marker_gene, omega_difference)
+
+    marker_gene: matrix of shape N components x N marker genes,
+    where the values are indices of the marker genes
+    in the gene name array.
+
+    omega_difference: matrix of shape N components x N genes
+    representing the average expression value / max expression value
+    for each gene within each component.
+
+    :param deconvolution_result: DeconvolutionResult object
+    :param n_marker: Number of markers per cell type to select
+    :param alpha: Marker gene threshold parameter, defaults to 0.05
+    :param method: Enum representing which marker gene selection method to use.
+    :return: Tuple of (marker_genes, omega_difference)
+    """
+    gene_expression = deconvolution_result.expression_trace.mean(axis=0)
+    n_components = gene_expression.shape[0]
+    n_marker = gene_expression.shape[1]
+    # omega size K by G
+    omega = np.zeros_like(gene_expression)
+    difference = np.zeros_like(gene_expression)
+    expression = np.zeros_like(gene_expression)
+    marker_gene = np.zeros((n_components, n_marker)).astype(int)
+    for k in range(n_components):
+        # max expression of each gene for each posterior sample
+        max_exp = deconvolution_result.expression_trace.max(axis=1)
+        omega[k] = (deconvolution_result.expression_trace[:, k] == max_exp).mean(axis=0)
+        difference[k] = (deconvolution_result.expression_trace[:, k] / max_exp).mean(axis=0)
+        mask = np.arange(n_components) != k
+        max_exp_g = gene_expression[mask].max(axis=0)
+        expression[k] = (gene_expression[k] - max_exp_g) / np.max(np.vstack([gene_expression, max_exp_g]), axis=0)
+        # fdr control
+        if method is MarkerGeneMethod.TIGHT:
+            marker_control = omega[k] > 1 - alpha
+            marker_idx_control = np.argwhere(marker_control).flatten()
+            if marker_idx_control.sum() < n_marker:
+                raise RuntimeError(
+                    'Less than {} genes satisfy omega > 1 - {}. Only {} genes satify the condition.'.format(
+                        n_marker, alpha, marker_idx_control.sum()))
+        elif method is MarkerGeneMethod.FALSE_DISCOVERY_RATE:
+            sorted_index = np.argsort(1 - omega[k])
+            fdr = np.cumsum(1 - omega[k][sorted_index]) / (np.arange(sorted_index.shape[0]) + 1)
+            marker_control = np.argwhere(fdr <= alpha).flatten()
+            marker_idx_control = sorted_index[marker_control]
+        else:
+            raise ValueError(method)
+        # sort adjointly by omega_kg (primary) and expression level (secondary)
+        top_marker = np.lexsort((expression[k][marker_idx_control], omega[k][marker_idx_control]))[::-1]
+        marker_gene[k] = marker_idx_control[top_marker]
+
+    return marker_gene, difference
+
+
 def detect_marker_genes(
         deconvolution_result: data.DeconvolutionResult,
         n_marker: int = 5,
