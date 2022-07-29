@@ -394,9 +394,7 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
 
     output['gene_name'] = stdata.gene_names[marker_genes.flatten()]
 
-    output['rank_in_cell_type'] = np.repeat(
-        np.arange(1, n_marker_genes + 1),
-        deconvolution_result.n_components)
+    output['rank_in_cell_type'] = np.concatenate([np.arange(1, n_marker_genes + 1)] * deconvolution_result.n_components)
 
     output['cell_type'] = np.concatenate(
         [
