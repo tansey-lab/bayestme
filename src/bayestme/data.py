@@ -196,7 +196,7 @@ class SpatialExpressionDataset:
 
         return cls.from_arrays(
             raw_counts=raw_count.T,
-            positions=positions.T,
+            positions=positions,
             tissue_mask=tissue_mask,
             gene_names=features,
             layout=layout)

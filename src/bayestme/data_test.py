@@ -113,3 +113,4 @@ def test_create_anndata_object():
         np.sort(utils.get_edges(locations[tissue_mask], layout=data.Layout.SQUARE.value), axis=0)
     )
     assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.name
+
