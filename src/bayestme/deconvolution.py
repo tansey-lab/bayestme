@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import matplotlib
+import pandas
 import seaborn as sns
 import os.path
 
@@ -375,3 +376,29 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         deconvolution_result=deconvolution_result,
         output_path=os.path.join(output_dir, f'cell_num_scatterpie.{output_format}')
     )
+
+
+def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
+                          deconvolution_result: data.DeconvolutionResult,
+                          output_path: str,
+                          n_marker_genes: int = 5,
+                          alpha: float = 0.05,
+                          marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT):
+    marker_genes, omega_difference = detect_marker_genes(
+        deconvolution_result=deconvolution_result,
+        n_marker=n_marker_genes,
+        alpha=alpha,
+        method=marker_gene_method)
+
+    output = pandas.DataFrame()
+
+    output['gene_name'] = stdata.gene_names[marker_genes.flatten()]
+
+    output['rank_in_cell_type'] = np.concatenate([np.arange(1, n_marker_genes + 1)] * deconvolution_result.n_components)
+
+    output['cell_type'] = np.concatenate(
+        [
+            np.repeat(np.array([k + 1]), n_marker_genes) for k in range(deconvolution_result.n_components)
+        ])
+
+    output.to_csv(output_path, header=True, index=False)
