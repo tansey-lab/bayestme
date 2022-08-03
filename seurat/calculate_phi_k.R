@@ -23,12 +23,12 @@ sc_sample <- CreateSeuratObject(counts = sc_sample.data, project = "sc_sample", 
 
 sc_sample[["percent.mt"]] <- PercentageFeatureSet(sc_sample, pattern = "^MT-")
 VlnPlot(sc_sample, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-ggsave("violin_plot.pdf")
+ggsave("violin_plot.pdf", width=14, height=7)
 
 plot1 <- FeatureScatter(sc_sample, feature1 = "nCount_RNA", feature2 = "percent.mt")
 plot2 <- FeatureScatter(sc_sample, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 plot1 + plot2
-ggsave("feature_scatter_plot.pdf")
+ggsave("feature_scatter_plot.pdf", width=14, height=7)
 
 sc_sample <- subset(sc_sample, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
 sc_sample <- NormalizeData(sc_sample)
@@ -39,7 +39,7 @@ top10 <- head(VariableFeatures(sc_sample), 10)
 plot1 <- VariableFeaturePlot(sc_sample)
 plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
 plot1 + plot2
-ggsave("variable_features_plot.pdf")
+
 ggsave("variable_features_plot.pdf", width=14, height=7)
 all.genes <- rownames(sc_sample)
 sc_sample <- ScaleData(sc_sample, features = all.genes)
@@ -47,8 +47,8 @@ sc_sample <- RunPCA(sc_sample, features = VariableFeatures(object = sc_sample))
 
 total_components = length(Stdev(object = sc_sample, reduction = "pca"))
 
-
 VizDimLoadings(sc_sample, dims = 1:min(10, total_components), reduction = "pca")
+
 ggsave("dim_loadings_plot.pdf", width=14, height=14)
 
 
