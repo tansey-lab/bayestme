@@ -69,7 +69,7 @@ n_principal_components = findPC(
     method = 'all',
     aggregate = 'voting', figure=T)
 
-print(paste("Using", n_principal_components, "principal components"))
+print(paste(c("Using", n_principal_components, "principal components")))
 
 ggsave("pc_selection_plot.pdf", width=14, height=7)
 
