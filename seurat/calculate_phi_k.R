@@ -56,7 +56,7 @@ sc_sample <- JackStraw(sc_sample, num.replicate = 100)
 sc_sample <- ScoreJackStraw(sc_sample, dims = 1:min(20, total_components))
 
 ElbowPlot(sc_sample)
-ggsave("elbow_plot_plot.pdf", width=14, height=7)
+ggsave("elbow_plot.pdf", width=14, height=7)
 
 
 JackStrawPlot(sc_sample, dims = 1:min(20, total_components))
@@ -68,6 +68,8 @@ n_principal_components = findPC(
     number = c(total_components),
     method = 'all',
     aggregate = 'voting', figure=T)
+
+print(paste("Using", n_principal_components, "principal components")
 
 ggsave("pc_selection_plot.pdf", width=14, height=7)
 
