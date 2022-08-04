@@ -86,6 +86,15 @@ def deconvolve(
     )
 
 
+def load_phi_truth(
+        stdata: data.SpatialExpressionDataset,
+        seurat_output: str):
+    """
+    Load outputs from seurat fine mapping to be used in deconvolution
+    """
+    df = pandas.read_csv(seurat_output, index=True)
+    
+
 class MarkerGeneMethod(Enum):
     TIGHT = 1
     FALSE_DISCOVERY_RATE = 2
