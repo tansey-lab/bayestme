@@ -51,7 +51,6 @@ VizDimLoadings(sc_sample, dims = 1:min(10, total_components), reduction = "pca")
 
 ggsave("dim_loadings_plot.pdf", width=14, height=14)
 
-
 sc_sample <- JackStraw(sc_sample, num.replicate = 100)
 sc_sample <- ScoreJackStraw(sc_sample, dims = 1:min(20, total_components))
 
