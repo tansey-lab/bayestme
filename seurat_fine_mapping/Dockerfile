@@ -1,7 +1,7 @@
 FROM satijalab/seurat:latest
 
-RUN R -e "install.packages(c('optparse', 'devtools'), dependencies=TRUE)" && \
-    R -e "devtools::install_github('haotian-zhuang/findPC')"
+RUN R -e "install.packages(c('optparse', 'remotes'), dependencies=TRUE)" && \
+    R -e "remotes::install_github('haotian-zhuang/findPC')"
 
 COPY /seurat_fine_mapping/entrypoint.sh /
 
