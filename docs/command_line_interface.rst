@@ -37,8 +37,9 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
 
 .. code::
 
-    usage: filter_genes [-h] [--output OUTPUT] [--input INPUT] [--filter-ribosomal-genes] [--n-top-by-standard-deviation N_TOP_BY_STANDARD_DEVIATION]
-                        [--spot-threshold SPOT_THRESHOLD]
+    usage: filter_genes [-h] [--output OUTPUT] [--input INPUT] [--filter-ribosomal-genes]
+                        [--n-top-by-standard-deviation N_TOP_BY_STANDARD_DEVIATION] [--spot-threshold SPOT_THRESHOLD]
+                        [--expression-truth EXPRESSION_TRUTH]
 
     Filter the genes based on one or more criteria
 
@@ -52,6 +53,9 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
                             Use the top N genes with the highest spatial variance.
       --spot-threshold SPOT_THRESHOLD
                             Filter genes appearing in greater than the provided threshold of tissue spots.
+      --expression-truth EXPRESSION_TRUTH
+                            Filter out genes not found in the expression truth dataset.
+
 
 Bleeding Correction
 -------------------

@@ -23,11 +23,3 @@ jobs:
           tags: jeffquinnmsk/bayestme:latest
           cache-from: type=registry,ref=jeffquinnmsk/bayestme:latest
           cache-to: type=inline
-      - name: Build and push BayesTME Seurat Fine-Mapping container
-        uses: docker/build-push-action@v3
-        with:
-          file: seurat_fine_mapping/Dockerfile
-          push: true
-          tags: jeffquinnmsk/bayestme-seurat-fine-mapping:latest
-          cache-from: type=registry,ref=jeffquinnmsk/bayestme-seurat-fine-mapping:latest
-          cache-to: type=inline
