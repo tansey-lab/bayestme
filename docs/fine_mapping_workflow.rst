@@ -14,8 +14,17 @@ via the ``--expression-truth`` option (CLI) or ``expression_truth=`` parameter i
 
 We have provided a docker container and script for running Seurat on 10Xgenomics/cellranger output,
 which will produce the appropriate relative expression values in a CSV output that can
-be read into the BayesTME pipeline.
+be read into the BayesTME pipeline. Example usage:
 
 .. code::
 
-    docker run jeffquinnmsk/bayestme-seurat-fine-mapping:latest Rscript /
+    docker run \
+        -v /path/to/local/cellranger/dir:/opt/data \ # path to raw_feature_bc_matrix directory in the cellranger output
+        -v /path/to/local/output/dir:/out/output \ # output dir for CSV and plot results
+        /jeffquinnmsk/bayestme-seurat-fine-mapping:latest \
+        --dataDir /opt/data \
+        --outputDir /opt/output
+
+
+The output CSV, at ``<output dir>/average_expression.csv`` will be provided as the
+argument to ``deconvolve --expression-truth``.

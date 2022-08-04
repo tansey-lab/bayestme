@@ -91,4 +91,4 @@ ggsave("heatmap_plot.pdf", width=14, height=14)
 
 avg_exp = AverageExpression(object=sc_sample, slot="counts")$RNA
 
-write.csv(avg_exp/colSums(avg_exp), "phi_k.csv")
+write.csv(avg_exp, "average_expression.csv")
