@@ -2,6 +2,7 @@ import numpy as np
 import re
 from enum import Enum
 import logging
+import pandas
 
 from . import data, utils
 
@@ -68,3 +69,34 @@ def filter_ribosome_genes(dataset: data.SpatialExpressionDataset):
         gene_names=filtered_gene_names,
         layout=dataset.layout
     )
+
+
+def filter_list_of_genes(dataset: data.SpatialExpressionDataset, genes_to_remove):
+    keep = ~np.array([g in genes_to_remove for g in dataset.gene_names], dtype=np.bool)
+
+    filtered_raw_counts = dataset.raw_counts[:, keep]
+    filtered_gene_names = dataset.gene_names[keep]
+
+    return data.SpatialExpressionDataset.from_arrays(
+        raw_counts=filtered_raw_counts,
+        positions=dataset.positions,
+        tissue_mask=dataset.tissue_mask,
+        gene_names=filtered_gene_names,
+        layout=dataset.layout
+    )
+
+
+def filter_stdata_to_match_expression_truth(stdata: data.SpatialExpressionDataset,
+                                            seurat_output: str):
+    """
+    Filter the stdata down to the intersection of genes between it and the expression truth file.
+
+    :param stdata: SpatialExpressionDataset object
+    :param seurat_output: CSV output from seurat fine mapping workflow
+    :return: Filtered stdata object
+    """
+    df = pandas.read_csv(seurat_output, index_col=0)
+
+    genes_in_st_but_not_in_scrna = set(stdata.gene_names.tolist()).difference(df.index)
+
+    return filter_list_of_genes(stdata, genes_in_st_but_not_in_scrna)

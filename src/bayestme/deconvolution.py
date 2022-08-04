@@ -10,7 +10,7 @@ from typing import Optional, List
 from matplotlib import pyplot as plt
 from matplotlib import colors
 import matplotlib.cm as cm
-from bayestme import model_bkg, data, plotting
+from bayestme import model_bkg, data, plotting, gene_filtering
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +19,26 @@ def load_expression_truth(
         stdata: data.SpatialExpressionDataset,
         seurat_output: str):
     """
-    Load outputs from seurat fine mapping to be used in deconvolution
+    Load outputs from seurat fine mapping to be used in deconvolution.
 
     :param stdata: SpatialExpressionDataset object
     :param seurat_output: CSV output from seurat fine mapping workflow
-    :return: n_components x n_genes size array, representing relative
-    expression of each gene in each cell type.
+    :return: Tuple of n_components x n_genes size array, representing relative
+    expression of each gene in each cell type
     """
     df = pandas.read_csv(seurat_output, index_col=0)
 
-    phi_k_truth = df.loc[stdata.gene_names].to_numpy()
+    genes_in_st_but_not_in_scrna = set(stdata.gene_names.tolist()).difference(df.index)
+
+    stdata_filtered = gene_filtering.filter_list_of_genes(stdata, genes_in_st_but_not_in_scrna)
+
+    phi_k_truth = df.loc[stdata_filtered.gene_names].to_numpy()
 
     # re-normalize so expression values sum to 1 within each component for
     # this subset of genes
     phi_k_truth_normalized = phi_k_truth / phi_k_truth.sum(axis=0)
 
-    return phi_k_truth_normalized.T
+    return phi_k_truth_normalized.T, stdata_filtered
 
 
 def deconvolve(
