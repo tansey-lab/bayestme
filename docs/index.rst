@@ -17,6 +17,7 @@ Contents
     demo_notebooks
     command_line_interface
     api
+    fine_mapping_workflow
 
     🚀 Github <https://github.com/tansey-lab/bayestme>
 
