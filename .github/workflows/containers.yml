@@ -27,7 +27,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: seurat_fine_mapping/Dockerfile
-          context: seurat_fine_mapping
           push: true
           tags: jeffquinnmsk/bayestme-seurat-fine-mapping:latest
           cache-from: type=registry,ref=jeffquinnmsk/bayestme-seurat-fine-mapping:latest

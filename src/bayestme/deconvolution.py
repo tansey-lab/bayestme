@@ -15,6 +15,28 @@ from bayestme import model_bkg, data, plotting
 logger = logging.getLogger(__name__)
 
 
+def load_expression_truth(
+        stdata: data.SpatialExpressionDataset,
+        seurat_output: str):
+    """
+    Load outputs from seurat fine mapping to be used in deconvolution
+
+    :param stdata: SpatialExpressionDataset object
+    :param seurat_output: CSV output from seurat fine mapping workflow
+    :return: n_components x n_genes size array, representing relative
+    expression of each gene in each cell type.
+    """
+    df = pandas.read_csv(seurat_output, index_col=0)
+
+    phi_k_truth = df.loc[stdata.gene_names].to_numpy()
+
+    # re-normalize so expression values sum to 1 within each component for
+    # this subset of genes
+    phi_k_truth_normalized = phi_k_truth / phi_k_truth.sum(axis=0)
+
+    return phi_k_truth_normalized.T
+
+
 def deconvolve(
         reads,
         edges,
@@ -26,7 +48,26 @@ def deconvolve(
         n_thin=10,
         random_seed=0,
         bkg=False,
-        lda=False) -> data.DeconvolutionResult:
+        lda=False,
+        expression_truth=None) -> data.DeconvolutionResult:
+    """
+    Run deconvolution
+
+    :param reads: Read count matrix
+    :param edges: Spot adjacency matrix
+    :param n_gene: Number of gene markers
+    :param n_components: Number of components or cell types
+    :param lam2: Lambda smoothing parameter
+    :param n_samples: Number of total samples from the posterior distribution
+    :param n_burnin: Number of burn in samples before samples are saved
+    :param n_thin: Proportion of samples to save
+    :param random_seed: Random seed
+    :param bkg:
+    :param lda: If true use LDA initialization
+    :param expression_truth: If provided, use ground truth per cell type relative expression values,
+    output from companion scRNA fine mapping.
+    :return: data.DeconvolutionResult
+    """
     # detetermine the number of spots
     n_nodes = reads.shape[0]
 
@@ -53,7 +94,8 @@ def deconvolve(
         n_gene=n_gene,
         lam_psi=lam2,
         background_noise=bkg,
-        lda_initialization=lda)
+        lda_initialization=lda,
+        truth_expression=expression_truth)
 
     cell_prob_trace = np.zeros((n_samples, n_nodes, n_components + 1))
     cell_num_trace = np.zeros((n_samples, n_nodes, n_components + 1))
