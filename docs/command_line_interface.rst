@@ -126,8 +126,9 @@ Deconvolution
 
 .. code::
 
-    usage: deconvolve [-h] [--input INPUT] [--output OUTPUT] [--n-gene N_GENE] [--n-components N_COMPONENTS] [--lam2 LAM2] [--n-samples N_SAMPLES]
-                      [--n-burnin N_BURNIN] [--n-thin N_THIN] [--random-seed RANDOM_SEED] [--bkg] [--lda]
+    usage: deconvolve [-h] [--input INPUT] [--output OUTPUT] [--n-gene N_GENE] [--n-components N_COMPONENTS] [--lam2 LAM2]
+                      [--n-samples N_SAMPLES] [--n-burnin N_BURNIN] [--n-thin N_THIN] [--random-seed RANDOM_SEED] [--bkg] [--lda]
+                      [--expression-truth EXPRESSION_TRUTH]
 
     Deconvolve data
 
@@ -147,6 +148,8 @@ Deconvolution
                             Random seed
       --bkg                 Turn background noise on
       --lda                 Turn LDA Initialization on
+      --expression-truth EXPRESSION_TRUTH
+                            Use expression ground truth from seurat companion scRNA fine mapping workflow
 
 
 Spatial Differential Expression
