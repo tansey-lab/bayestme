@@ -28,17 +28,13 @@ def load_expression_truth(
     """
     df = pandas.read_csv(seurat_output, index_col=0)
 
-    genes_in_st_but_not_in_scrna = set(stdata.gene_names.tolist()).difference(df.index)
-
-    stdata_filtered = gene_filtering.filter_list_of_genes(stdata, genes_in_st_but_not_in_scrna)
-
-    phi_k_truth = df.loc[stdata_filtered.gene_names].to_numpy()
+    phi_k_truth = df.loc[stdata.gene_names].to_numpy()
 
     # re-normalize so expression values sum to 1 within each component for
     # this subset of genes
     phi_k_truth_normalized = phi_k_truth / phi_k_truth.sum(axis=0)
 
-    return phi_k_truth_normalized.T, stdata_filtered
+    return phi_k_truth_normalized.T
 
 
 def deconvolve(
