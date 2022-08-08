@@ -308,16 +308,18 @@ def test_plot_spatial_pattern_and_all_constituent_genes():
     tempdir = tempfile.mkdtemp()
 
     try:
-        spatial_expression.plot_spatial_pattern_and_all_constituent_genes(
-            stdata=dataset,
-            decon_result=deconvolution_results,
-            sde_result=sde_results,
-            k=1,
-            h=1,
-            program_id=1,
-            gene_ids=np.array([0, 1, 2]),
-            output_dir=tempdir,
-            output_format='pdf')
+        for cell_type_name in [None, 'name']:
+            spatial_expression.plot_spatial_pattern_and_all_constituent_genes(
+                stdata=dataset,
+                decon_result=deconvolution_results,
+                sde_result=sde_results,
+                k=1,
+                h=1,
+                program_id=1,
+                gene_ids=np.array([0, 1, 2]),
+                output_dir=tempdir,
+                output_format='pdf',
+                cell_type_name=cell_type_name)
     finally:
         shutil.rmtree(tempdir)
 
@@ -355,7 +357,8 @@ def test_plot_significant_spatial_patterns():
                         h=1,
                         program_id=1,
                         output_dir='output_dir',
-                        output_format='pdf'
+                        output_format='pdf',
+                        cell_type_name=None
                     ),
                     mock.call(
                         stdata=stdata,
@@ -366,7 +369,63 @@ def test_plot_significant_spatial_patterns():
                         h=7,
                         program_id=2,
                         output_dir='output_dir',
-                        output_format='pdf'
+                        output_format='pdf',
+                        cell_type_name=None
+                    ),
+
+                ],
+                any_order=True
+            )
+
+
+def test_plot_significant_spatial_patterns_with_cell_type_names():
+    with mock.patch('bayestme.spatial_expression.select_significant_spatial_programs'
+                    ) as mock_select_significant_spatial_programs:
+        mock_select_significant_spatial_programs.return_value = [
+            (0, 1, [1, 2, 3]),
+            (1, 7, [4, 5, 6])
+        ]
+
+        with mock.patch('bayestme.spatial_expression.plot_spatial_pattern_and_all_constituent_genes'
+                        ) as mock_plot_spatial_pattern_and_all_constituent_genes:
+            stdata = mock.MagicMock()
+            decon_result = mock.MagicMock()
+            sde_result = mock.MagicMock()
+
+            spatial_expression.plot_significant_spatial_patterns(
+                stdata=stdata,
+                decon_result=decon_result,
+                sde_result=sde_result,
+                output_dir='output_dir',
+                output_format='pdf',
+                cell_type_names=['type1', 'type2']
+            )
+
+            mock_plot_spatial_pattern_and_all_constituent_genes.assert_has_calls(
+                [
+                    mock.call(
+                        stdata=stdata,
+                        decon_result=decon_result,
+                        sde_result=sde_result,
+                        gene_ids=[1, 2, 3],
+                        k=0,
+                        h=1,
+                        program_id=1,
+                        output_dir='output_dir',
+                        output_format='pdf',
+                        cell_type_name='type1'
+                    ),
+                    mock.call(
+                        stdata=stdata,
+                        decon_result=decon_result,
+                        sde_result=sde_result,
+                        gene_ids=[4, 5, 6],
+                        k=1,
+                        h=7,
+                        program_id=1,
+                        output_dir='output_dir',
+                        output_format='pdf',
+                        cell_type_name='type2'
                     ),
 
                 ],

@@ -6,24 +6,26 @@ from bayestme import data, gene_filtering
 logger = logging.getLogger(__name__)
 
 
-parser = argparse.ArgumentParser(description='Filter the genes based on one or more criteria')
-parser.add_argument('--output', type=str,
-                    help='Output file, a SpatialExpressionDataset in h5 format')
-parser.add_argument('--input', type=str,
-                    help='Input SpatialExpressionDataset in h5 format')
-parser.add_argument('--filter-ribosomal-genes', action='store_true',
-                    default=False,
-                    help='Filter ribosomal genes (based on gene name regex)')
-parser.add_argument('--n-top-by-standard-deviation', type=int, default=None,
-                    help='Use the top N genes with the highest spatial variance.')
-parser.add_argument('--spot-threshold', type=float, default=None,
-                    help='Filter genes appearing in greater than the provided threshold of tissue spots.')
-parser.add_argument('--expression-truth', type=str, default=None,
-                    help='Filter out genes not found in the expression truth dataset.')
+def get_parser():
+    parser = argparse.ArgumentParser(description='Filter the genes based on one or more criteria')
+    parser.add_argument('--output', type=str,
+                        help='Output file, a SpatialExpressionDataset in h5 format')
+    parser.add_argument('--input', type=str,
+                        help='Input SpatialExpressionDataset in h5 format')
+    parser.add_argument('--filter-ribosomal-genes', action='store_true',
+                        default=False,
+                        help='Filter ribosomal genes (based on gene name regex)')
+    parser.add_argument('--n-top-by-standard-deviation', type=int, default=None,
+                        help='Use the top N genes with the highest spatial variance.')
+    parser.add_argument('--spot-threshold', type=float, default=None,
+                        help='Filter genes appearing in greater than the provided threshold of tissue spots.')
+    parser.add_argument('--expression-truth', type=str, default=None,
+                        help='Filter out genes not found in the expression truth dataset.')
+    return parser
 
 
 def main():
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     dataset = data.SpatialExpressionDataset.read_h5(args.input)
 

@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+from typing import Optional, List
 from matplotlib.lines import Line2D
 from scipy.sparse import block_diag, spdiags
 from scipy.stats import nbinom
@@ -583,8 +584,11 @@ def plot_spatial_pattern_and_all_constituent_genes(
         output_dir: str,
         output_format: str,
         colormap=cm.coolwarm,
-        plot_threshold: int = 2):
-    plot_dir = os.path.join(output_dir, f'cell_type_{k + 1}_program_{program_id}')
+        plot_threshold: int = 2,
+        cell_type_name: str = None):
+    plot_dir = os.path.join(output_dir,
+                            f'cell_type_{k + 1}_program_{program_id}' if cell_type_name is None
+                            else f'{cell_type_name}_program_{program_id}')
 
     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
 
@@ -601,16 +605,18 @@ def plot_spatial_pattern_and_all_constituent_genes(
         h=h,
         plot_threshold=plot_threshold,
         colormap=colormap)
-    sde_ax.set_title(f'Cell Type {k + 1}, Spatial Program {program_id} Summary')
+    sde_ax.set_title(f'Cell Type {k + 1}, Spatial Program {program_id} Summary' if cell_type_name is None
+                     else f'{cell_type_name}, Spatial Program {program_id} Summary')
     sde_fig.tight_layout()
-    sde_fig.savefig(os.path.join(plot_dir, f'spatial_program_{program_id}_summary.{output_format}'), bbox_inches='tight')
+    sde_fig.savefig(os.path.join(plot_dir, f'spatial_program_{program_id}_summary.{output_format}'),
+                    bbox_inches='tight')
     plt.close(sde_fig)
 
     for gene_id in gene_ids:
         gene_name = stdata.gene_names[gene_id]
 
         theta_g_k = sde_result.theta_samples[:, :, gene_id, k]
-        nb_expectation = (ilogit(theta_g_k)/(1 - ilogit(theta_g_k))).mean(axis=0)
+        nb_expectation = (ilogit(theta_g_k) / (1 - ilogit(theta_g_k))).mean(axis=0)
 
         plot_value = (decon_result.beta_trace[:, k].mean(axis=0) *
                       decon_result.expression_trace[:, k, gene_id].mean(axis=0) *
@@ -627,7 +633,9 @@ def plot_spatial_pattern_and_all_constituent_genes(
 
         gene_ax.set_axis_off()
 
-        gene_ax.set_title(f'{gene_name} Expression in Cell Type {k + 1}, Spatial Program {program_id}')
+        gene_ax.set_title(
+            f'{gene_name} Expression in Cell Type {k + 1}, Spatial Program {program_id}' if cell_type_name is None
+            else f'{gene_name} Expression in {cell_type_name}, Spatial Program {program_id}')
 
         gene_fig.savefig(os.path.join(plot_dir, f'spatial_program_{program_id}_{gene_name}.{output_format}'))
         plt.close(gene_fig)
@@ -638,7 +646,8 @@ def plot_significant_spatial_patterns(
         decon_result: data.DeconvolutionResult,
         sde_result: data.SpatialDifferentialExpressionResult,
         output_dir,
-        output_format: str = 'pdf'):
+        output_format: str = 'pdf',
+        cell_type_names: Optional[List[str]] = None):
     significant_programs = select_significant_spatial_programs(
         stdata=stdata,
         decon_result=decon_result,
@@ -659,5 +668,6 @@ def plot_significant_spatial_patterns(
             h=h,
             program_id=program_ids[k],
             output_dir=output_dir,
-            output_format=output_format
+            output_format=output_format,
+            cell_type_name=None if cell_type_names is None else cell_type_names[k]
         )

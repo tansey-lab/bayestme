@@ -118,7 +118,8 @@ def plot_spatial_pie_charts(
         values: np.ndarray,
         layout: data.Layout,
         colormap: cm.ScalarMappable = cm.Set1,
-        plotting_coordinates=None):
+        plotting_coordinates=None,
+        cell_type_names=None):
     """
     Plot pie charts to show relative proportions of multiple scalar values at each spot
 
@@ -130,6 +131,7 @@ def plot_spatial_pie_charts(
     :param colormap: Colormap for the pie chart wedges, defaults to Set1
     :param plotting_coordinates: Expand the plotting window to include these coordinates,
                                  default is to just plot over coords.
+    :param cell_type_names: A array of length n_components, which provides cell type names.
     :return: matplotlib Figure object
     """
 
@@ -168,7 +170,11 @@ def plot_spatial_pie_charts(
     # create a patch (proxy artist) for every color
     patches = []
     for i in range(values.shape[1]):
-        patches.append(Patch(color=colormap(i), label=f'Cell Type {i + 1}'))
+        if cell_type_names is not None:
+            label = cell_type_names[i]
+        else:
+            label = f'Cell Type {i + 1}'
+        patches.append(Patch(color=colormap(i), label=label))
 
     # put those patched as legend-handles into the legend
     ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
