@@ -199,7 +199,7 @@ def plot_cell_num(
         output_format: str = 'pdf',
         cmap=cm.jet,
         seperate_pdf: bool = False,
-        cell_type_names=None):
+        cell_type_names: Optional[List[str]] = None):
     plot_object = result.cell_num_trace[:, :, 1:].mean(axis=0)
 
     if seperate_pdf:
@@ -256,7 +256,7 @@ def plot_cell_prob(
         output_format: str = 'pdf',
         cmap=cm.jet,
         seperate_pdf: bool = False,
-        cell_type_names=None):
+        cell_type_names: Optional[List[str]] = None):
     plot_object = result.cell_prob_trace[:, :, 1:].mean(axis=0)
 
     if seperate_pdf:
@@ -373,7 +373,7 @@ def plot_cell_num_scatterpie(
         stdata: data.SpatialExpressionDataset,
         deconvolution_result: data.DeconvolutionResult,
         output_path: str,
-        cell_type_names=None):
+        cell_type_names: Optional[List[str]] = None):
     """
     Create a "scatter pie" plot of the deconvolution cell counts.
 
@@ -402,7 +402,7 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
                        alpha: float = 0.05,
                        marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
                        output_format: str = 'pdf',
-                       cell_type_names=None):
+                       cell_type_names: Optional[List[str]] = None):
     """
     Create a suite of plots for deconvolution results.
 
