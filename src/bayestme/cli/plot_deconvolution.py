@@ -20,6 +20,10 @@ parser.add_argument('--marker-gene-method',
                     choices=list(deconvolution.MarkerGeneMethod),
                     default=deconvolution.MarkerGeneMethod.TIGHT,
                     help='Method for choosing marker genes.')
+parser.add_argument('--cell-type-names',
+                    default=None,
+                    help='A comma separated list of cell type names to use for plots.'
+                         'For example --cell-type-names "type 1, type 2, type 3"')
 
 
 def main():
@@ -28,10 +32,16 @@ def main():
     stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
 
+    if args.cell_type_names is not None:
+        cell_type_names = [name.strip() for name in args.cell_type_names.split(',')]
+    else:
+        cell_type_names = None
+
     deconvolution.plot_deconvolution(
         stdata=stdata,
         deconvolution_result=deconvolution_result,
         output_dir=args.output_dir,
         n_marker_genes=args.n_marker_genes,
         alpha=args.alpha,
-        marker_gene_method=args.marker_gene_method)
+        marker_gene_method=args.marker_gene_method,
+        cell_type_names=cell_type_names)

@@ -124,6 +124,41 @@ def test_deconvolve_plots():
         shutil.rmtree(tempdir)
 
 
+def test_deconvolve_plots_with_cell_type_names():
+    tempdir = tempfile.mkdtemp()
+    n_genes = 50
+    n_marker_genes = 5
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=5,
+        n_samples=100,
+        n_gene=dataset.n_gene)
+
+    try:
+        deconvolution.plot_deconvolution(
+            stdata=dataset,
+            deconvolution_result=deconvolve_results,
+            output_dir=tempdir,
+            n_marker_genes=n_marker_genes,
+            alpha=0.99,
+            cell_type_names=['type1', 'banana', 'threeve', 'quattro', 'ISPC']
+        )
+    finally:
+        shutil.rmtree(tempdir)
+
+
 def test_create_top_gene_lists():
     n_components = 3
     n_marker = 2
