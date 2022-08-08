@@ -2,22 +2,25 @@ import argparse
 
 from bayestme import data, bleeding_correction
 
-parser = argparse.ArgumentParser(description='Plot bleeding correction results')
-parser.add_argument('--raw-stdata', type=str,
-                    help='Input file, SpatialExpressionDataset in h5 format')
-parser.add_argument('--corrected-stdata', type=str,
-                    help='Input file, SpatialExpressionDataset in h5 format')
-parser.add_argument('--bleed-correction-results', type=str,
-                    help='Input file, BleedCorrectionResult in h5 format')
-parser.add_argument('--output-dir', type=str,
-                    help='Output directory')
-parser.add_argument('--n-top', type=int,
-                    default=10,
-                    help='Plot top n genes by stddev')
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Plot bleeding correction results')
+    parser.add_argument('--raw-stdata', type=str,
+                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--corrected-stdata', type=str,
+                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--bleed-correction-results', type=str,
+                        help='Input file, BleedCorrectionResult in h5 format')
+    parser.add_argument('--output-dir', type=str,
+                        help='Output directory')
+    parser.add_argument('--n-top', type=int,
+                        default=10,
+                        help='Plot top n genes by stddev')
+    return parser
 
 
 def main():
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     before_correction = data.SpatialExpressionDataset.read_h5(args.raw_stdata)
     after_correction = data.SpatialExpressionDataset.read_h5(args.corrected_stdata)

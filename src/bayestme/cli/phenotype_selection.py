@@ -3,57 +3,63 @@ import os
 
 from bayestme import phenotype_selection, data
 
-parser = argparse.ArgumentParser(description='Select values for number of cell types and lambda smoothing parameter '
-                                             'via k-fold cross-validation.')
-parser.add_argument('--stdata', type=str,
-                    help='Input file, SpatialExpressionDataset in h5 format')
-parser.add_argument('--job-index', type=int, default=None,
-                    help='Run only this job index, suitable for running the sampling in parallel across many machines')
-parser.add_argument('--n-fold',
-                    type=int,
-                    default=5,
-                    help='Number of times to run k-fold cross-validation.')
-parser.add_argument('--n-splits', type=int, default=15,
-                    help='Split dataset into k consecutive folds for each instance of k-fold cross-validation')
-parser.add_argument('--n-samples', type=int, default=100,
-                    help='Number of samples from the posterior distribution.')
-parser.add_argument('--n-burn', type=int, default=2000,
-                    help='Number of burn-in samples')
-parser.add_argument('--n-thin', type=int, default=5,
-                    help='Thinning factor for sampling')
-parser.add_argument('--n-gene',
-                    type=int,
-                    default=1000,
-                    help='Use N top genes by standard deviation to model deconvolution. '
-                         'If this number is less than the total number of genes the top N'
-                         ' by spatial variance will be selected')
-parser.add_argument('--n-components-min',
-                    type=int,
-                    default=2,
-                    help='Minimum number of cell types to try.')
-parser.add_argument('--n-components-max',
-                    type=int,
-                    default=12,
-                    help='Maximum number of cell types to try.')
-parser.add_argument('--lambda-values',
-                    type=float,
-                    action='append',
-                    help='Potential values of the lambda smoothing parameter to try. '
-                         'Defaults to (1, 1e1, 1e2, 1e3, 1e4, 1e5)')
-parser.add_argument('--max-ncell',
-                    type=int,
-                    default=120,
-                    help='Maximum cell count within a spot to model.')
-parser.add_argument('--background-noise', default=False, action='store_true')
-parser.add_argument('--lda-initialization', default=False, action='store_true')
-parser.add_argument('--output-dir', type=str,
-                    help='Output directory. N new files will be saved in this directory, '
-                         'where N is the number of cross-validation jobs.')
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Select values for number of cell types and lambda smoothing parameter '
+                                                 'via k-fold cross-validation.')
+    parser.add_argument('--stdata', type=str,
+                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--job-index', type=int, default=None,
+                        help='Run only this job index, suitable for running the sampling in parallel across many machines')
+    parser.add_argument('--n-fold',
+                        type=int,
+                        default=5,
+                        help='Number of times to run k-fold cross-validation.')
+    parser.add_argument('--n-splits', type=int, default=15,
+                        help='Split dataset into k consecutive folds for each instance of k-fold cross-validation')
+    parser.add_argument('--n-samples', type=int, default=100,
+                        help='Number of samples from the posterior distribution.')
+    parser.add_argument('--n-burn', type=int, default=2000,
+                        help='Number of burn-in samples')
+    parser.add_argument('--n-thin', type=int, default=5,
+                        help='Thinning factor for sampling')
+    parser.add_argument('--n-gene',
+                        type=int,
+                        default=1000,
+                        help='Use N top genes by standard deviation to model deconvolution. '
+                             'If this number is less than the total number of genes the top N'
+                             ' by spatial variance will be selected')
+    parser.add_argument('--n-components-min',
+                        type=int,
+                        default=2,
+                        help='Minimum number of cell types to try.')
+    parser.add_argument('--n-components-max',
+                        type=int,
+                        default=12,
+                        help='Maximum number of cell types to try.')
+    parser.add_argument('--lambda-values',
+                        type=float,
+                        action='append',
+                        help='Potential values of the lambda smoothing parameter to try. '
+                             'Defaults to (1, 1e1, 1e2, 1e3, 1e4, 1e5)')
+    parser.add_argument('--max-ncell',
+                        type=int,
+                        default=120,
+                        help='Maximum cell count within a spot to model.')
+    parser.add_argument('--background-noise', default=False, action='store_true')
+    parser.add_argument('--lda-initialization', default=False, action='store_true')
+    parser.add_argument('--output-dir', type=str,
+                        help='Output directory. N new files will be saved in this directory, '
+                             'where N is the number of cross-validation jobs.')
+
+    return parser
+
+
 DEFAULT_LAMBDAS = (1, 1e1, 1e2, 1e3, 1e4, 1e5)
 
 
 def main():
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
 
