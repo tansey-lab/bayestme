@@ -9,8 +9,51 @@ from typing import Tuple
 
 from matplotlib.colors import Normalize
 from matplotlib.patches import RegularPolygon, Wedge, Patch
+from matplotlib.colors import ListedColormap
 
 from bayestme import data
+
+
+# Extended version of cm.Set1 categorical colormap. See references:
+#
+#     ¹) Glasbey, C., van der Heijden, G., Toh, V. F. K. and Gray, A. (2007),
+#        Colour Displays for Categorical Images.
+#        Color Research and Application, 32: 304-309
+#
+#     ²) Luo, M. R., Cui, G. and Li, C. (2006),
+#        Uniform Colour Spaces Based on CIECAM02 Colour Appearance Model.
+#        Color Research and Application, 31: 320–330
+GLASBEY_30_COLORS = ['#e51415',
+                     '#347fba',
+                     '#4bb049',
+                     '#9a4da4',
+                     '#ff8000',
+                     '#ffff30',
+                     '#a85523',
+                     '#f782c0',
+                     '#9b9b9b',
+                     '#004100',
+                     '#00ffff',
+                     '#000090',
+                     '#5f0025',
+                     '#fff5ff',
+                     '#4d4d50',
+                     '#b59bff',
+                     '#6700f9',
+                     '#4c006f',
+                     '#00816c',
+                     '#72ff9c',
+                     '#6a6c00',
+                     '#e2c88c',
+                     '#63c3fe',
+                     '#da0084',
+                     '#593200',
+                     '#40bcab',
+                     '#b39c00',
+                     '#f200ff',
+                     '#930000',
+                     '#004d74']
+Glasbey30 = ListedColormap(colors=GLASBEY_30_COLORS, name="Glasbey30", N=30)
 
 
 def get_x_y_arrays_for_layout(coords: np.ndarray, layout: data.Layout) -> Tuple[np.array, np.array]:
@@ -117,7 +160,7 @@ def plot_spatial_pie_charts(
         coords: np.ndarray,
         values: np.ndarray,
         layout: data.Layout,
-        colormap: cm.ScalarMappable = cm.Set1,
+        colormap: cm.ScalarMappable = Glasbey30,
         plotting_coordinates=None,
         cell_type_names=None):
     """
@@ -128,7 +171,7 @@ def plot_spatial_pie_charts(
     :param coords: np.ndarray of int, shape of (N, 2)
     :param values: np.ndarray of int, shape of (N, M)
     :param layout: Layout enum
-    :param colormap: Colormap for the pie chart wedges, defaults to Set1
+    :param colormap: Colormap for the pie chart wedges, defaults to Glasbey30
     :param plotting_coordinates: Expand the plotting window to include these coordinates,
                                  default is to just plot over coords.
     :param cell_type_names: A array of length n_components, which provides cell type names.

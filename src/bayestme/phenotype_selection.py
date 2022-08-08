@@ -55,7 +55,7 @@ def plot_folds(stdata, folds, output_dir: str):
 
     patches = []
     for v, label in [(0, 'Heldout'), (1, 'Not Heldout')]:
-        patches.append(Patch(color=cm.Set1(v), label=label))
+        patches.append(Patch(color=plotting.Glasbey30(v), label=label))
 
     for k, mask in enumerate(folds):
         _, cb, _, _, _ = plotting.plot_colored_spatial_polygon(
@@ -64,7 +64,7 @@ def plot_folds(stdata, folds, output_dir: str):
             coords=stdata.positions_tissue.T,
             values=(~mask).astype(int),
             normalize=False,
-            colormap=cm.Set1,
+            colormap=plotting.Glasbey30,
             plotting_coordinates=stdata.positions,
             layout=stdata.layout
         )
