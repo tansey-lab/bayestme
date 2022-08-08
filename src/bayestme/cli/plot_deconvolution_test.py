@@ -60,7 +60,8 @@ def test_plot_deconvolution():
                 output_dir=tmpdir,
                 n_marker_genes=n_marker_genes,
                 alpha=0.05,
-                marker_gene_method=deconvolution.MarkerGeneMethod.TIGHT)
+                marker_gene_method=deconvolution.MarkerGeneMethod.TIGHT,
+                cell_type_names=None)
 
 
 def test_plot_deconvolution_with_cell_type_names():

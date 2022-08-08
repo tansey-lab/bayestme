@@ -357,7 +357,8 @@ def test_plot_significant_spatial_patterns():
                         h=1,
                         program_id=1,
                         output_dir='output_dir',
-                        output_format='pdf'
+                        output_format='pdf',
+                        cell_type_name=None
                     ),
                     mock.call(
                         stdata=stdata,
@@ -368,7 +369,8 @@ def test_plot_significant_spatial_patterns():
                         h=7,
                         program_id=2,
                         output_dir='output_dir',
-                        output_format='pdf'
+                        output_format='pdf',
+                        cell_type_name=None
                     ),
 
                 ],

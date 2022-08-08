@@ -471,7 +471,7 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
 
     output['rank_in_cell_type'] = np.concatenate([np.arange(1, n_marker_genes + 1)] * deconvolution_result.n_components)
 
-    if cell_type_names is not None:
+    if cell_type_names is None:
         output['cell_type'] = np.concatenate(
             [
                 np.repeat(np.array([k + 1]), n_marker_genes) for k in range(deconvolution_result.n_components)

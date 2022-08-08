@@ -69,7 +69,8 @@ def test_plot_spatial_expression():
                 stdata=mock.ANY,
                 decon_result=mock.ANY,
                 sde_result=mock.ANY,
-                output_dir=tmpdir)
+                output_dir=tmpdir,
+                cell_type_names=None)
 
 
 def test_plot_spatial_expression_with_cell_type_names():
