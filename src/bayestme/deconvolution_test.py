@@ -86,7 +86,9 @@ def test_detect_marker_genes():
     marker_genes, omega_difference = deconvolution.detect_marker_genes(
         deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
 
-    assert marker_genes.shape == (n_components, n_marker)
+    assert len(marker_genes) == n_components
+    for marker_gene_set in marker_genes:
+        assert len(marker_gene_set) == n_marker
     assert omega_difference.shape == (n_components, dataset.n_gene)
 
 

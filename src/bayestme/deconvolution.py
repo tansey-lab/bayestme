@@ -187,6 +187,12 @@ def detect_marker_genes(
             raise ValueError(method)
         # sort adjointly by omega_kg (primary) and expression level (secondary)
         top_marker = np.lexsort((expression[k][marker_idx_control], omega[k][marker_idx_control]))[::-1]
+
+        if n_marker > len(top_marker):
+            logger.warning(f'For cell type ({k}) fewer then ({n_marker}) genes '
+                           f'met the marker gene criteria, will only use '
+                           f'{len(top_marker)} marker genes for this cell type.')
+
         marker_gene_sets.append(marker_idx_control[top_marker[:n_marker]])
 
     return marker_gene_sets, difference
@@ -322,9 +328,9 @@ def plot_marker_genes(
         cell_type_labels = ['Cell Type {}'.format(i + 1) for i in range(deconvolution_results.n_components)]
 
     fig, (ax_genes, ax_legend) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [n_marker, 2]})
-    INCHES_PER_COLUMN = 0.75
+    inches_per_column = 0.75
 
-    fig.set_figwidth(max(fig.get_size_inches()[0], (n_marker * INCHES_PER_COLUMN)))
+    fig.set_figwidth(max(fig.get_size_inches()[0], (n_marker * inches_per_column)))
 
     offset = 0
     divider_lines = []
@@ -337,7 +343,7 @@ def plot_marker_genes(
             np.arange(n_marker),
             np.ones(n_marker) * (k + 1),
             c=difference[k][all_gene_indices],
-            s=norm(abs(difference[k][all_gene_indices])) * INCHES_PER_COLUMN * fig.dpi * 3,
+            s=norm(abs(difference[k][all_gene_indices])) * inches_per_column * fig.dpi * 3,
             cmap=colormap,
             norm=norm)
         offset = offset + len(marker_gene_set)
@@ -358,7 +364,7 @@ def plot_marker_genes(
                       np.arange(len(legend_values)),
                       cmap=colormap,
                       c=legend_values,
-                      s=legend_values * INCHES_PER_COLUMN * fig.dpi * 3,
+                      s=legend_values * inches_per_column * fig.dpi * 3,
                       norm=norm)
 
     ax_legend.set_yticks(np.arange(len(legend_values)))
