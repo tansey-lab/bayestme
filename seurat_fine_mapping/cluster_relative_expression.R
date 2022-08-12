@@ -92,3 +92,6 @@ ggsave("heatmap_plot.pdf", width=14, height=14)
 avg_exp = AverageExpression(object=sc_sample, slot="counts")$RNA
 
 write.csv(avg_exp, "average_expression.csv")
+
+clusters = sc_sample[[c("seurat_clusters")]]
+write.csv(clusters, "umi_to_cluster.csv")
