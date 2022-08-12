@@ -314,53 +314,62 @@ def plot_marker_genes(
         output_file: str,
         cell_type_labels: Optional[List[str]] = None,
         colormap: cm.ScalarMappable = cm.BuPu):
-    n_marker = sum(len(x) for x in marker_genes)
-    all_gene_names = stdata.gene_names[np.concatenate(marker_genes)]
+    all_gene_indices = np.concatenate(marker_genes)
+    all_gene_names = stdata.gene_names[all_gene_indices]
+    n_marker = len(all_gene_indices)
 
     if cell_type_labels is None:
         cell_type_labels = ['Cell Type {}'.format(i + 1) for i in range(deconvolution_results.n_components)]
 
-    fig, (ax_genes, ax_legend) = plt.subplots(1, 2, figsize=(), gridspec_kw={'width_ratios': [n_marker, 3]})
+    fig, (ax_genes, ax_legend) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [n_marker, 2]})
+    INCHES_PER_COLUMN = 0.75
+
+    fig.set_figwidth(max(fig.get_size_inches()[0], (n_marker * INCHES_PER_COLUMN)))
 
     offset = 0
     divider_lines = []
     for k, marker_gene_set in enumerate(marker_genes):
         divider_lines.append(offset)
-        vmin = min(-1e-4, difference[k][marker_gene_set].min())
-        vmax = max(1e-4, difference[k][marker_gene_set].max())
+        vmin = min(-1e-4, difference[k][all_gene_indices].min())
+        vmax = max(1e-4, difference[k][all_gene_indices].max())
         norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
         ax_genes.scatter(
-            np.arange(offset, offset + len(marker_gene_set)),
-            np.ones(len(marker_gene_set)) * (k + 1),
-            c=difference[k][marker_gene_set],
-            s=abs(difference[k][marker_gene_set]),
+            np.arange(n_marker),
+            np.ones(n_marker) * (k + 1),
+            c=difference[k][all_gene_indices],
+            s=norm(abs(difference[k][all_gene_indices])) * INCHES_PER_COLUMN * fig.dpi * 3,
             cmap=colormap,
             norm=norm)
         offset = offset + len(marker_gene_set)
     divider_lines.append(offset)
 
-    ax_genes.set_xticks(np.arange(n_marker) + 0.2)
+    ax_genes.set_xticks(np.arange(n_marker))
     ax_genes.set_xticklabels(all_gene_names, fontweight='bold', rotation=45, ha='right', va='top')
     ax_genes.set_yticks([x + 1 for x in range(deconvolution_results.n_components)])
     ax_genes.set_yticklabels(cell_type_labels, rotation=0, fontweight='bold')
     ax_genes.invert_yaxis()
     ax_genes.margins(x=0.02, y=0.1)
     for x in divider_lines:
-        ax_genes.axvline((x + 1) - 0.5, ls='--', c='k', alpha=0.5)
+        ax_genes.axvline(x - 0.5, ls='--', c='k', alpha=0.5)
 
-    scatter_plot = np.array([0.25, 0.5, 0.75, 1])
+    legend_values = np.array([0.25, 0.5, 0.75, 1])
     norm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
-    ax_legend.scatter(np.ones(4), scatter_plot * 4, cmap='BuPu', c=scatter_plot, s=scatter_plot, norm=norm)
+    ax_legend.scatter(np.ones(len(legend_values)),
+                      np.arange(len(legend_values)),
+                      cmap=colormap,
+                      c=legend_values,
+                      s=legend_values * INCHES_PER_COLUMN * fig.dpi * 3,
+                      norm=norm)
 
-    ax_legend.set_yticks([1, 2, 3, 4, 5])
-    ax_legend.set_yticklabels(['0.25', '0.5', '0.75', '1', ''])
+    ax_legend.set_yticks(np.arange(len(legend_values)))
+    ax_legend.set_yticklabels(['0.25', '0.5', '0.75', '1'], fontweight='bold')
     ax_legend.yaxis.tick_right()
     ax_legend.set_xticks([])
     ax_legend.spines["top"].set_visible(False)
     ax_legend.spines["right"].set_visible(False)
     ax_legend.spines["bottom"].set_visible(False)
     ax_legend.spines["left"].set_visible(False)
-    ax_legend.set_ylabel('Loading', rotation=270, fontweight='bold')
+    ax_legend.set_ylabel('Loading', rotation=270, labelpad=50, fontweight='bold', fontsize='25')
     ax_legend.yaxis.set_label_position("right")
     ax_legend.margins(y=0.2)
 
