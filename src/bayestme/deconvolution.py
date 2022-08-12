@@ -1,8 +1,6 @@
 import logging
 import numpy as np
-import matplotlib
 import pandas
-import seaborn as sns
 import os.path
 
 from enum import Enum
@@ -10,7 +8,7 @@ from typing import Optional, List
 from matplotlib import pyplot as plt
 from matplotlib import colors
 import matplotlib.cm as cm
-from bayestme import model_bkg, data, plotting, gene_filtering
+from bayestme import model_bkg, data, plotting
 
 logger = logging.getLogger(__name__)
 
