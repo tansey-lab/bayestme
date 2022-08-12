@@ -235,9 +235,9 @@ def test_create_top_gene_lists():
 
     result = pandas.read_csv(os.path.join(tempdir, 'file.csv'))
 
-    assert result.iloc[0].gene_name == marker_genes[0, 0]
+    assert result.iloc[0].gene_name == marker_genes[0][0]
 
-    assert result.iloc[len(result) - 1].gene_name == marker_genes[marker_genes.shape[0] - 1, marker_genes.shape[1] - 1]
+    assert result.iloc[len(result) - 1].gene_name == marker_genes[len(marker_genes) - 1][len(marker_genes[-1]) - 1]
 
 
 def test_load_phi_truth():

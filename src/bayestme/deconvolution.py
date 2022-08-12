@@ -486,7 +486,7 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
         result = pandas.DataFrame()
         result['gene_name'] = stdata.gene_names[marker_gene_set]
 
-        result['rank_in_cell_type'] = np.arange(1, len(marker_gene_set))
+        result['rank_in_cell_type'] = np.arange(0, len(marker_gene_set))
 
         if cell_type_names is None:
             result['cell_type'] = np.repeat(np.array([k + 1]), n_marker_genes)
