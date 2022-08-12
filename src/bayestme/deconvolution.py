@@ -137,7 +137,7 @@ def detect_marker_genes(
         deconvolution_result: data.DeconvolutionResult,
         n_marker: int = 5,
         alpha: float = 0.05,
-        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> (np.ndarray, np.ndarray):
+        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> (List[np.ndarray], np.ndarray):
     """
     Returns (marker_gene, omega_difference)
 
@@ -161,7 +161,7 @@ def detect_marker_genes(
     omega = np.zeros_like(gene_expression)
     difference = np.zeros_like(gene_expression)
     expression = np.zeros_like(gene_expression)
-    marker_gene = np.zeros((n_components, n_marker)).astype(int)
+    marker_gene_sets = []
     for k in range(n_components):
         # max expression of each gene for each posterior sample
         max_exp = deconvolution_result.expression_trace.max(axis=1)
@@ -187,9 +187,9 @@ def detect_marker_genes(
             raise ValueError(method)
         # sort adjointly by omega_kg (primary) and expression level (secondary)
         top_marker = np.lexsort((expression[k][marker_idx_control], omega[k][marker_idx_control]))[::-1]
-        marker_gene[k] = marker_idx_control[top_marker[:n_marker]]
+        marker_gene_sets.append(marker_idx_control[top_marker[:n_marker]])
 
-    return marker_gene, difference
+    return marker_gene_sets, difference
 
 
 def plot_cell_num(
@@ -307,66 +307,67 @@ def plot_cell_prob(
 
 
 def plot_marker_genes(
-        marker_gene: np.ndarray,
+        marker_genes: List[np.ndarray],
         difference: np.ndarray,
         stdata: data.SpatialExpressionDataset,
         deconvolution_results: data.DeconvolutionResult,
         output_file: str,
-        cell_type_labels: Optional[List[str]] = None):
-    n_marker = marker_gene.flatten().shape[0]
-    n_marker_genes_per_component = marker_gene.shape[1]
-    marker_gene_names = stdata.gene_names[marker_gene.flatten()]
+        cell_type_labels: Optional[List[str]] = None,
+        colormap: cm.ScalarMappable = cm.BuPu):
+    n_marker = sum(len(x) for x in marker_genes)
+    all_gene_names = stdata.gene_names[np.concatenate(marker_genes)]
 
     if cell_type_labels is None:
         cell_type_labels = ['Cell Type {}'.format(i + 1) for i in range(deconvolution_results.n_components)]
 
-    with sns.axes_style('white'):
-        plt.rc('font', weight='bold')
-        plt.rc('grid', lw=3)
-        plt.rc('lines', lw=1)
-        plt.rc('xtick', labelsize=20)
-        plt.rc('ytick', labelsize=20)
-        matplotlib.rcParams['pdf.fonttype'] = 42
-        matplotlib.rcParams['ps.fonttype'] = 42
-        fig = plt.figure(figsize=(n_marker + 1, deconvolution_results.n_components + 1))
-        stbox = [0, 0, 0.87, 1]
-        scbox = [0.878, 0, 0.015, 1]
-        stframe = plt.axes(stbox)
-        scframe = plt.axes(scbox)
-        for k in range(deconvolution_results.n_components):
-            vmin = min(-1e-4, difference[k][marker_gene.flatten()].min())
-            vmax = max(1e-4, difference[k][marker_gene.flatten()].max())
-            norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
-            img = stframe.scatter(np.arange(n_marker), np.ones(n_marker) * (k + 1),
-                                  c=difference[k][marker_gene.flatten()],
-                                  s=abs(difference[k][marker_gene.flatten()]) * 1200, cmap='BuPu',
-                                  norm=norm)
-        scatter_plot = np.array([0.25, 0.5, 0.75, 1])
-        norm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
-        scframe.scatter(np.ones(4), scatter_plot * 4, cmap='BuPu', c=scatter_plot, s=scatter_plot * 1200, norm=norm)
-        for i in range(deconvolution_results.n_components):
-            stframe.axvline((i + 1) * n_marker_genes_per_component - 0.5, ls='--', c='k', alpha=0.5)
-        scframe.set_yticks([1, 2, 3, 4, 5])
-        scframe.set_yticklabels(['0.25', '0.5', '0.75', '1', ''], fontsize=35)
-        scframe.yaxis.tick_right()
-        scframe.set_xticks([])
-        scframe.spines["top"].set_visible(False)
-        scframe.spines["right"].set_visible(False)
-        scframe.spines["bottom"].set_visible(False)
-        scframe.spines["left"].set_visible(False)
-        scframe.set_ylabel('Loading', fontsize=45, rotation=270, labelpad=48, fontweight='bold')
-        scframe.yaxis.set_label_position("right")
-        scframe.margins(y=0.2)
-        stframe.set_xticks(np.arange(marker_gene.flatten().shape[0]) + 0.2)
-        stframe.set_xticklabels(marker_gene_names, fontsize=40, fontweight='bold', rotation=45, ha='right', va='top')
-        stframe.set_yticks([x + 1 for x in range(deconvolution_results.n_components)])
-        stframe.set_yticklabels(cell_type_labels, fontsize=45, rotation=0, fontweight='bold')
-        stframe.invert_yaxis()
-        stframe.margins(x=0.02, y=0.1)
+    fig, (ax_genes, ax_legend) = plt.subplots(1, 2, figsize=(), gridspec_kw={'width_ratios': [n_marker, 3]})
 
-        plt.tight_layout()
-        plt.savefig(output_file, bbox_inches='tight')
-        plt.close()
+    offset = 0
+    divider_lines = []
+    for k, marker_gene_set in enumerate(marker_genes):
+        divider_lines.append(offset)
+        vmin = min(-1e-4, difference[k][marker_gene_set].min())
+        vmax = max(1e-4, difference[k][marker_gene_set].max())
+        norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+        ax_genes.scatter(
+            np.arange(offset, offset + len(marker_gene_set)),
+            np.ones(len(marker_gene_set)) * (k + 1),
+            c=difference[k][marker_gene_set],
+            s=abs(difference[k][marker_gene_set]),
+            cmap=colormap,
+            norm=norm)
+        offset = offset + len(marker_gene_set)
+    divider_lines.append(offset)
+
+    ax_genes.set_xticks(np.arange(n_marker) + 0.2)
+    ax_genes.set_xticklabels(all_gene_names, fontweight='bold', rotation=45, ha='right', va='top')
+    ax_genes.set_yticks([x + 1 for x in range(deconvolution_results.n_components)])
+    ax_genes.set_yticklabels(cell_type_labels, rotation=0, fontweight='bold')
+    ax_genes.invert_yaxis()
+    ax_genes.margins(x=0.02, y=0.1)
+    for x in divider_lines:
+        ax_genes.axvline((x + 1) - 0.5, ls='--', c='k', alpha=0.5)
+
+    scatter_plot = np.array([0.25, 0.5, 0.75, 1])
+    norm = colors.TwoSlopeNorm(vmin=0, vcenter=0.5, vmax=1)
+    ax_legend.scatter(np.ones(4), scatter_plot * 4, cmap='BuPu', c=scatter_plot, s=scatter_plot, norm=norm)
+
+    ax_legend.set_yticks([1, 2, 3, 4, 5])
+    ax_legend.set_yticklabels(['0.25', '0.5', '0.75', '1', ''])
+    ax_legend.yaxis.tick_right()
+    ax_legend.set_xticks([])
+    ax_legend.spines["top"].set_visible(False)
+    ax_legend.spines["right"].set_visible(False)
+    ax_legend.spines["bottom"].set_visible(False)
+    ax_legend.spines["left"].set_visible(False)
+    ax_legend.set_ylabel('Loading', rotation=270, fontweight='bold')
+    ax_legend.yaxis.set_label_position("right")
+    ax_legend.margins(y=0.2)
+
+    fig.tight_layout()
+    fig.savefig(output_file, bbox_inches='tight')
+
+    plt.close(fig)
 
 
 def plot_cell_num_scatterpie(
@@ -438,7 +439,7 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         method=marker_gene_method)
 
     plot_marker_genes(
-        marker_gene=marker_genes,
+        marker_genes=marker_genes,
         difference=omega_difference,
         deconvolution_results=deconvolution_result,
         stdata=stdata,
@@ -459,28 +460,23 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
                           alpha: float = 0.05,
                           marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
                           cell_type_names=None):
-    marker_genes, omega_difference = detect_marker_genes(
+    marker_genes, _ = detect_marker_genes(
         deconvolution_result=deconvolution_result,
         n_marker=n_marker_genes,
         alpha=alpha,
         method=marker_gene_method)
 
-    output = pandas.DataFrame()
+    results = []
+    for k, marker_gene_set in enumerate(marker_genes):
+        result = pandas.DataFrame()
+        result['gene_name'] = stdata.gene_names[marker_gene_set]
 
-    output['gene_name'] = stdata.gene_names[marker_genes.flatten()]
+        result['rank_in_cell_type'] = np.arange(1, len(marker_gene_set))
 
-    output['rank_in_cell_type'] = np.concatenate([np.arange(1, n_marker_genes + 1)] * deconvolution_result.n_components)
+        if cell_type_names is None:
+            result['cell_type'] = np.repeat(np.array([k + 1]), n_marker_genes)
+        else:
+            result['cell_type'] = np.repeat(np.array(cell_type_names[k]), n_marker_genes)
+        results.append(result)
 
-    if cell_type_names is None:
-        output['cell_type'] = np.concatenate(
-            [
-                np.repeat(np.array([k + 1]), n_marker_genes) for k in range(deconvolution_result.n_components)
-            ])
-    else:
-        output['cell_type'] = np.concatenate(
-            [
-                np.repeat(np.array(cell_type_names[k]), n_marker_genes) for k in
-                range(deconvolution_result.n_components)
-            ])
-
-    output.to_csv(output_path, header=True, index=False)
+    pandas.concat(results).to_csv(output_path, header=True, index=False)
