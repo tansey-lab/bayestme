@@ -169,7 +169,7 @@ def sample_multivariate_normal(Q, mu=None, mu_part=None, sparse=True, precision=
                         (or of the precision matrix if precision=True).
     :param Q_shape:
     :param kwargs:
-    :return:
+    :return: One sample from the multivariate normal
     """
     if not np.any((mu is None, mu_part is None)):
         raise ValueError("mu and mu_part are mutually exclusive optional parameters")
