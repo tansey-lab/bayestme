@@ -2,7 +2,7 @@ import numpy as np
 from pypolyagamma import PyPolyaGamma
 from scipy.sparse import spdiags, kron, csc_matrix
 
-from bayestme import utils
+from bayestme import utils, fast_multivariate_normal
 
 
 class GraphFusedBinomialTree:
@@ -80,9 +80,13 @@ class GraphFusedBinomialTree:
         self.Sigma_inv = self.Sigma0_inv + self.Omega + correction
         self.mu = np.zeros(self.Sigma_inv.shape[0])
         self.mu[diagonals] = Successes.T.reshape(-1) - Trials.T.reshape(-1) / 2
-        self.Thetas = utils.sample_mvn_from_precision(self.Sigma_inv, mu_part=self.mu, sparse=True,
-                                                      Q_shape=self.Sigma_inv.shape).reshape(self.Thetas.shape[1],
-                                                                                            self.Thetas.shape[0]).T
+        self.Thetas = fast_multivariate_normal.sample_multivariate_normal_from_precision(
+            self.Sigma_inv,
+            mu_part=self.mu,
+            sparse=True,
+            force_psd=True,
+            Q_shape=self.Sigma_inv.shape).reshape(self.Thetas.shape[1],
+                                                  self.Thetas.shape[0]).T
 
         # Sample Horseshoe+ prior parameters
         deltas = self.Delta.dot(self.Thetas)
