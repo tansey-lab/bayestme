@@ -18,8 +18,8 @@ from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
 from collections import defaultdict
 
-from bayestme.utils import ilogit, stable_softmax, sample_mvn_from_precision
-from bayestme import utils, data, plotting
+from bayestme.utils import ilogit, stable_softmax
+from bayestme import utils, data, plotting, fast_multivariate_normal
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,8 @@ class SpatialDifferentialExpression:
                 # Calculate the mean term
                 mu_part = X[k, h].T.dot((Y_igk[:, g, k] - n_obs[:, g, k]) / 2)
                 # Sample the offset and spatial weights
-                c, v = sample_mvn_from_precision(Precision, mu_part=mu_part, sparse=False)
+                c, v = fast_multivariate_normal.sample_multivariate_normal_from_precision(
+                    Precision, mu_part=mu_part, sparse=False, force_psd=True)
                 self.C[g, k] = c
                 self.V[g, k] = v
 
@@ -143,7 +144,8 @@ class SpatialDifferentialExpression:
                 mu_part = b_j
 
                 # Sample the spatial pattern
-                self.W[k, j, cell_type_filter[k]] = sample_mvn_from_precision(Precision, mu_part=mu_part, sparse=False)
+                self.W[k, j, cell_type_filter[k]] = fast_multivariate_normal.sample_multivariate_normal_from_precision(
+                    Precision, mu_part=mu_part, sparse=False, force_psd=True)
 
     def sample_sigmainv(self, stability=1e-6, lam2=1):
         for i in range(self.W.shape[0]):
