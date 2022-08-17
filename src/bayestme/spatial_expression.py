@@ -1,7 +1,6 @@
 import pathlib
 
 import numpy as np
-import pypolyagamma
 import os
 import logging
 import matplotlib
@@ -17,6 +16,7 @@ from scipy.stats import pearsonr
 from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
 from collections import defaultdict
+from polyagamma import random_polyagamma
 
 from bayestme.utils import ilogit, stable_softmax
 from bayestme import utils, data, plotting, fast_multivariate_normal
@@ -65,7 +65,6 @@ class SpatialDifferentialExpression:
         self.Theta = np.transpose(Theta, [2, 1, 0])
 
         # PG variables
-        self.pg = pypolyagamma.PyPolyaGamma(seed=42)
         self.Omegas = np.ones((self.n_signals, self.n_cell_types, self.n_nodes))
         self.prior_vars = np.repeat(prior_var, 2)
         D = utils.construct_edge_adjacency(edges)
@@ -92,8 +91,8 @@ class SpatialDifferentialExpression:
         obs_mask_flat = obs_mask.reshape(-1)
         trials_flat = Trials.reshape(-1)[obs_mask_flat].astype(float)
         thetas_flat = Theta_r.reshape(-1)[obs_mask_flat]
-        omegas_flat = self.Omegas.reshape(-1)[obs_mask_flat]
-        self.pg.pgdrawv(trials_flat, thetas_flat, omegas_flat)
+        omegas_flat = random_polyagamma(trials_flat, thetas_flat, size=obs_mask_flat.sum())
+
         self.Omegas[obs_mask] = np.clip(omegas_flat, 1e-13, None)
         self.Omegas[~obs_mask] = 0.
 

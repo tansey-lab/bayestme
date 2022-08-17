@@ -1,5 +1,5 @@
 import numpy as np
-from pypolyagamma import PyPolyaGamma
+from polyagamma import random_polyagamma
 from scipy.sparse import spdiags, kron, csc_matrix
 
 from bayestme import utils, fast_multivariate_normal
@@ -10,9 +10,6 @@ class GraphFusedBinomialTree:
         self.n_classes = n_classes
         self.edges = edges
         self.trend_order = trend_order
-
-        # Setup the random sampler for the Polya-Gamma latent variables
-        self.pg = PyPolyaGamma(seed=pg_seed)
 
         # Initialize the graph trend filtering matrix
         self.D = utils.construct_edge_adjacency(self.edges)
@@ -54,8 +51,8 @@ class GraphFusedBinomialTree:
         with np.errstate(divide='ignore'):
             trials_flat = Trials.reshape(-1)[obs_mask_flat]
             thetas_flat = self.Thetas.reshape(-1)[obs_mask_flat]
-            omegas_flat = self.Omegas.reshape(-1)[obs_mask_flat]
-            self.pg.pgdrawv(trials_flat, thetas_flat, omegas_flat)
+            omegas_flat = random_polyagamma(trials_flat, thetas_flat,
+                                            size=obs_mask_flat.sum())
             self.Omegas[obs_mask] = omegas_flat
             self.Omegas[~obs_mask] = 0.
 
