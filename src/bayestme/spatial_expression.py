@@ -34,6 +34,7 @@ class SpatialDifferentialExpression:
         'lam2',
         'edges',
         'prior_var',
+        'prior_vars',
         'alpha'
     ]
     variable_state = [
@@ -75,6 +76,7 @@ class SpatialDifferentialExpression:
         self.lam2 = lam2
         self.edges = edges
         self.prior_var = prior_var
+        self.prior_vars = np.repeat(self.prior_var, 2)
         if rng is None:
             self.rng = np.random.default_rng()
         else:
@@ -104,7 +106,6 @@ class SpatialDifferentialExpression:
 
         # PG variables
         self.Omegas = np.ones((self.n_signals, self.n_cell_types, self.n_nodes))
-        self.prior_vars = np.repeat(self.prior_var, 2)
         D = utils.construct_edge_adjacency(self.edges)
         self.Delta = utils.construct_composite_trendfilter(D, 2, sparse=True)
         n_dims = self.n_spatial_patterns + 1
