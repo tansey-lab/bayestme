@@ -1,3 +1,4 @@
+import copy
 import shutil
 import numpy as np
 from numpy import testing
@@ -69,17 +70,34 @@ def test_spatial_detection():
         n_components=n_components,
         n_genes=n_genes)
 
+    alpha = np.ones(n_spatial_patterns + 1)
+    alpha[0] = 10
+    alpha[1:] = 1 / n_spatial_patterns
+
+    n_nodes = dataset.n_spot_in
+    n_signals = dataset.n_gene
+    prior_vars = np.repeat(100.0, 2)
+
+    sde = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolution_results.n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=1000.0
+    )
+
+    sde.initialize()
+
     sde_result = spatial_expression.run_spatial_expression(
-        dataset=dataset,
+        sde=sde,
         deconvolve_results=deconvolution_results,
-        n_spatial_patterns=10,
         n_samples=n_samples,
         n_burn=1,
         n_thin=1,
         n_cell_min=5,
-        alpha0=1,
-        prior_var=100.0,
-        lam2=1000,
         simple=True)
 
     assert sde_result.c_samples.shape == (n_samples, n_genes, n_components)
@@ -88,6 +106,83 @@ def test_spatial_detection():
     assert sde_result.theta_samples.shape == (n_samples, dataset.n_spot_in, n_genes, n_components)
     assert sde_result.v_samples.shape == (n_samples, n_genes, n_components)
     assert sde_result.w_samples.shape == (n_samples, n_components, n_spatial_patterns + 1, dataset.n_spot_in)
+
+
+def test_spatial_detection_seed_determinism():
+    n_genes = 7
+    n_components = 3
+    n_samples = 10
+    n_spatial_patterns = 10
+
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    deconvolution_results = generate_fake_deconvolve_results(
+        n_samples=n_samples,
+        n_tissue_spots=dataset.n_spot_in,
+        n_components=n_components,
+        n_genes=n_genes)
+
+    alpha = np.ones(n_spatial_patterns + 1)
+    alpha[0] = 10
+    alpha[1:] = 1 / n_spatial_patterns
+
+    n_nodes = dataset.n_spot_in
+    n_signals = dataset.n_gene
+    prior_vars = np.repeat(100.0, 2)
+
+    sde_1 = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolution_results.n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=1000.0,
+        rng=np.random.default_rng(seed=99)
+    )
+    sde_1.initialize()
+
+    sde_1_state = sde_1.get_state()
+
+    tmpdir = tempfile.mkdtemp()
+
+    sde_1_state.save(os.path.join(tmpdir, 'state.h5'))
+
+    sde_1_state = data.SpatialDifferentialExpressionSamplerState.read_h5(os.path.join(tmpdir, 'state.h5'))
+
+    sde_2 = spatial_expression.SpatialDifferentialExpression.load_from_state(sde_1_state)
+
+    assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
+
+    sde_result_1 = spatial_expression.run_spatial_expression(
+        sde=sde_1,
+        deconvolve_results=deconvolution_results,
+        n_samples=n_samples,
+        n_burn=1,
+        n_thin=1,
+        n_cell_min=5,
+        simple=True)
+
+    sde_result_2 = spatial_expression.run_spatial_expression(
+        sde=sde_2,
+        deconvolve_results=deconvolution_results,
+        n_samples=n_samples,
+        n_burn=1,
+        n_thin=1,
+        n_cell_min=5,
+        simple=True)
+
+    assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
+    np.testing.assert_array_equal(sde_result_1.c_samples, sde_result_2.c_samples)
+    np.testing.assert_array_equal(sde_result_1.w_samples, sde_result_2.w_samples)
+    np.testing.assert_array_equal(sde_result_1.v_samples, sde_result_2.v_samples)
+    np.testing.assert_array_equal(sde_result_1.theta_samples, sde_result_2.theta_samples)
+    np.testing.assert_array_equal(sde_result_1.h_samples, sde_result_2.h_samples)
+    np.testing.assert_array_equal(sde_result_1.gamma_samples, sde_result_2.gamma_samples)
 
 
 def test_get_n_cell_correlation():

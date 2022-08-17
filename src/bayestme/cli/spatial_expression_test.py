@@ -67,16 +67,12 @@ def test_spatial_expression():
                 )
                 spatial_expression.main()
                 run_spatial_expression.assert_called_once_with(
-                    dataset=mock.ANY,
+                    sde=mock.ANY,
                     deconvolve_results=mock.ANY,
-                    n_spatial_patterns=10,
                     n_samples=20,
                     n_burn=100,
                     n_thin=2,
                     n_cell_min=5,
-                    alpha0=10,
-                    prior_var=100.0,
-                    lam2=1000,
                     simple=True
                 )
 

@@ -500,7 +500,7 @@ class SpatialDifferentialExpressionSamplerState:
 
     def save(self, path):
         with h5py.File(path, 'w') as f:
-            f.attrs['pickled_bit_generator'] = self.pickled_bit_generator
+            f.attrs['pickled_bit_generator'] = np.void(self.pickled_bit_generator)
             f.attrs['n_cell_types'] = self.n_cell_types
             f.attrs['n_nodes'] = self.n_nodes
             f.attrs['n_signals'] = self.n_signals
@@ -542,7 +542,7 @@ class SpatialDifferentialExpressionSamplerState:
         :return: SpatialExpressionDataset
         """
         with h5py.File(path, 'r') as f:
-            pickled_bit_generator = f.attrs['pickled_bit_generator']
+            pickled_bit_generator = f.attrs['pickled_bit_generator'].tobytes()
             n_cell_types = f.attrs['n_cell_types']
             n_nodes = f.attrs['n_nodes']
             n_signals = f.attrs['n_signals']
