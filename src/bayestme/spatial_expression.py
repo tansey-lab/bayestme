@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class SpatialDifferentialExpression:
-
     constant_state = [
         'n_cell_types',
         'n_nodes',
@@ -87,7 +86,13 @@ class SpatialDifferentialExpression:
         self.alpha[0] = alpha_0
         self.alpha[1:] = 1 / self.n_spatial_patterns
 
+        self._checkpoint = None
         self.variable_state_initialization()
+
+        self.checkpoint_variable_state()
+
+    def checkpoint_variable_state(self):
+        self._checkpoint = {k: self.__dict__[k] for k in type(self).variable_state}
 
     def variable_state_initialization(self):
         self.W = np.zeros((self.n_cell_types, self.n_spatial_patterns + 1, self.n_nodes))
@@ -228,18 +233,14 @@ class SpatialDifferentialExpression:
         self.sample_spatial_assignments(n_obs, Y_igk)
         self.sample_pattern_probs()
 
+        return self.W, self.C, self.Gamma, self.H, self.V, self.Theta
+
     def spatial_detection(self, cell_num_trace, beta_trace, expression_trace, reads_trace, n_samples=100, n_burn=100,
                           n_thin=5, ncell_min=5, simple=False):
         if len(cell_num_trace.shape) == 3:
             n_posterior_sample = cell_num_trace.shape[0]
         else:
             n_posterior_sample = 0
-        self.W_samples = np.zeros((n_samples, self.n_cell_types, self.n_spatial_patterns + 1, self.n_nodes))
-        self.C_samples = np.zeros((n_samples, self.n_signals, self.n_cell_types))
-        self.Gamma_samples = np.zeros((n_samples, self.n_cell_types, self.n_spatial_patterns + 1))
-        self.H_samples = np.zeros((n_samples, self.n_signals, self.n_cell_types), dtype=int)
-        self.V_samples = np.zeros((n_samples, self.n_signals, self.n_cell_types))
-        self.Theta_samples = np.zeros((n_samples, self.n_nodes, self.n_signals, self.n_cell_types))
 
         if n_posterior_sample > 0:
             cell_type_filter = (cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min).T
@@ -268,15 +269,9 @@ class SpatialDifferentialExpression:
                     lambdas = cell_num_trace[step - n_burn, :, 1:, None] * rate[step - n_burn, None]
                     n_obs_vector = np.transpose(lambdas, [0, 2, 1])
             for i in range(n_iter):
-                self.sample(n_obs_vector, Y_igk, cell_type_filter)
+                W, C, Gamma, H, V, Theta = self.sample(n_obs_vector, Y_igk, cell_type_filter)
             if step >= n_burn:
-                idx = step - n_burn
-                self.W_samples[idx] = self.W
-                self.C_samples[idx] = self.C
-                self.Gamma_samples[idx] = self.Gamma
-                self.H_samples[idx] = self.H
-                self.V_samples[idx] = self.V
-                self.Theta_samples[idx] = self.Theta
+                yield W, C, Gamma, H, V, Theta
 
 
 def run_spatial_expression(
@@ -301,24 +296,37 @@ def run_spatial_expression(
         lam2=lam2
     )
 
-    sde.spatial_detection(
-        deconvolve_results.cell_num_trace,
-        deconvolve_results.beta_trace,
-        deconvolve_results.expression_trace,
-        deconvolve_results.reads_trace,
-        n_samples=n_samples,
-        n_burn=n_burn,
-        n_thin=n_thin,
-        ncell_min=n_cell_min,
-        simple=simple)
+    W_samples = np.zeros((n_samples, deconvolve_results.n_components, n_spatial_patterns + 1, dataset.n_spot_in))
+    C_samples = np.zeros((n_samples, dataset.n_gene, deconvolve_results.n_components))
+    Gamma_samples = np.zeros((n_samples, deconvolve_results.n_components, n_spatial_patterns + 1))
+    H_samples = np.zeros((n_samples, dataset.n_gene, deconvolve_results.n_components), dtype=int)
+    V_samples = np.zeros((n_samples, dataset.n_gene, deconvolve_results.n_components))
+    Theta_samples = np.zeros((n_samples, dataset.n_spot_in, dataset.n_gene, deconvolve_results.n_components))
+
+    for idx, (W, C, Gamma, H, V, Theta) in enumerate(sde.spatial_detection(
+            deconvolve_results.cell_num_trace,
+            deconvolve_results.beta_trace,
+            deconvolve_results.expression_trace,
+            deconvolve_results.reads_trace,
+            n_samples=n_samples,
+            n_burn=n_burn,
+            n_thin=n_thin,
+            ncell_min=n_cell_min,
+            simple=simple)):
+        W_samples[idx] = W
+        C_samples[idx] = C
+        Gamma_samples[idx] = Gamma
+        H_samples[idx] = H
+        V_samples[idx] = V
+        Theta_samples[idx] = Theta
 
     return data.SpatialDifferentialExpressionResult(
-        w_samples=sde.W_samples,
-        c_samples=sde.C_samples,
-        gamma_samples=sde.Gamma_samples,
-        h_samples=sde.H_samples,
-        v_samples=sde.V_samples,
-        theta_samples=sde.Theta_samples
+        w_samples=W_samples,
+        c_samples=C_samples,
+        gamma_samples=Gamma_samples,
+        h_samples=H_samples,
+        v_samples=V_samples,
+        theta_samples=Theta_samples
     )
 
 
