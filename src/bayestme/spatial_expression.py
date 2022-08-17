@@ -25,6 +25,36 @@ logger = logging.getLogger(__name__)
 
 
 class SpatialDifferentialExpression:
+
+    constant_state = [
+        'n_cell_types',
+        'n_nodes',
+        'n_signals',
+        'n_spatial_patterns',
+        'lam2',
+        'edges',
+        'prior_var',
+        'alpha'
+    ]
+    variable_state = [
+        'W',
+        'Gamma',
+        'H',
+        'C',
+        'V',
+        'Theta',
+        'Omegas',
+        'prior_vars',
+        'Delta',
+        'DeltaT',
+        'Tau2',
+        'Tau2_a',
+        'Tau2_b',
+        'Tau2_c',
+        'Sigma0_inv',
+        'Cov_mats',
+    ]
+
     def __init__(self,
                  n_cell_types,
                  n_spatial_patterns,
@@ -32,7 +62,8 @@ class SpatialDifferentialExpression:
                  edges,
                  alpha_0=10,
                  prior_var=100.0,
-                 lam2=1):
+                 lam2=1,
+                 rng: Optional[np.random.Generator] = None):
         # number of cell type from cell-typing results
         self.n_cell_types = n_cell_types
         # number of spots
@@ -42,22 +73,29 @@ class SpatialDifferentialExpression:
         # number of spatial pattern per cell-type
         self.n_spatial_patterns = n_spatial_patterns
         self.lam2 = lam2
+        self.edges = edges
+        self.prior_var = prior_var
+        if rng is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = rng
 
         # spatial patterns setup
         self.alpha = np.ones(self.n_spatial_patterns + 1)
         self.alpha[0] = alpha_0
         self.alpha[1:] = 1 / self.n_spatial_patterns
 
-        # spatial pattern weights setup
-        np.random.seed(0)
+        self.variable_state_initialization()
+
+    def variable_state_initialization(self):
         self.W = np.zeros((self.n_cell_types, self.n_spatial_patterns + 1, self.n_nodes))
-        self.Gamma = np.array([np.random.dirichlet(self.alpha) for _ in range(self.n_cell_types)])
+        self.Gamma = np.array([self.rng.dirichlet(self.alpha) for _ in range(self.n_cell_types)])
         self.H = np.array(
-            [np.random.choice(self.n_spatial_patterns + 1, p=g, size=(self.n_signals)) for g in self.Gamma]).T
+            [self.rng.choice(self.n_spatial_patterns + 1, p=g, size=(self.n_signals)) for g in self.Gamma]).T
 
         # Sample the spatial signal multipliers
-        self.C = np.random.normal(0, 0.01, size=(self.n_signals, self.n_cell_types))
-        self.V = np.random.normal(0, 0.01, size=(self.n_signals, self.n_cell_types))
+        self.C = self.rng.normal(0, 0.01, size=(self.n_signals, self.n_cell_types))
+        self.V = self.rng.normal(0, 0.01, size=(self.n_signals, self.n_cell_types))
 
         # Calculate the success probabilities
         Theta = np.array([[W_k[h] * v + c for h, v, c in zip(self.H[:, k], self.V[:, k], self.C[:, k])] for k, W_k in
@@ -66,8 +104,8 @@ class SpatialDifferentialExpression:
 
         # PG variables
         self.Omegas = np.ones((self.n_signals, self.n_cell_types, self.n_nodes))
-        self.prior_vars = np.repeat(prior_var, 2)
-        D = utils.construct_edge_adjacency(edges)
+        self.prior_vars = np.repeat(self.prior_var, 2)
+        D = utils.construct_edge_adjacency(self.edges)
         self.Delta = utils.construct_composite_trendfilter(D, 2, sparse=True)
         n_dims = self.n_spatial_patterns + 1
         self.DeltaT = block_diag([self.Delta.T for _ in range(n_dims)], format='csc')
@@ -111,7 +149,7 @@ class SpatialDifferentialExpression:
                 mu_part = X[k, h].T.dot((Y_igk[:, g, k] - n_obs[:, g, k]) / 2)
                 # Sample the offset and spatial weights
                 c, v = fast_multivariate_normal.sample_multivariate_normal_from_precision(
-                    Precision, mu_part=mu_part, sparse=False, force_psd=True)
+                    Precision, mu_part=mu_part, sparse=False, force_psd=True, rng=self.rng)
                 self.C[g, k] = c
                 self.V[g, k] = v
 
@@ -121,7 +159,7 @@ class SpatialDifferentialExpression:
                 mask = self.H[:, k] == j
                 if mask.sum() == 0:
                     # Pick a random instance to use as data rather than sampling from the prior
-                    mask[np.random.choice(self.H.shape[0])] = True
+                    mask[self.rng.choice(self.H.shape[0])] = True
 
                 # for each cell-type, only look at the spots where contains sufficint number of cell from that 
                 # cell-type (defined by cell_type_filter) to inference spatial pattern
@@ -144,16 +182,16 @@ class SpatialDifferentialExpression:
 
                 # Sample the spatial pattern
                 self.W[k, j, cell_type_filter[k]] = fast_multivariate_normal.sample_multivariate_normal_from_precision(
-                    Precision, mu_part=mu_part, sparse=False, force_psd=True)
+                    Precision, mu_part=mu_part, sparse=False, force_psd=True, rng=self.rng)
 
     def sample_sigmainv(self, stability=1e-6, lam2=1):
         for i in range(self.W.shape[0]):
             deltas = self.Delta.dot(self.W[i].reshape(-1))
             rate = deltas ** 2 / (2 * lam2) + 1 / self.Tau2_c.clip(stability, 1 / stability)
-            self.Tau2 = 1 / np.random.gamma(1, 1 / rate.clip(stability, 1 / stability)).clip(stability, 1 / stability)
-            self.Tau2_c = 1 / np.random.gamma(1, 1 / (1 / self.Tau2 + 1 / self.Tau2_b).clip(stability, 1 / stability))
-            self.Tau2_b = 1 / np.random.gamma(1, 1 / (1 / self.Tau2_c + 1 / self.Tau2_a).clip(stability, 1 / stability))
-            self.Tau2_a = 1 / np.random.gamma(1, 1 / (1 / self.Tau2_b + 1).clip(stability, 1 / stability))
+            self.Tau2 = 1 / self.rng.gamma(1, 1 / rate.clip(stability, 1 / stability)).clip(stability, 1 / stability)
+            self.Tau2_c = 1 / self.rng.gamma(1, 1 / (1 / self.Tau2 + 1 / self.Tau2_b).clip(stability, 1 / stability))
+            self.Tau2_b = 1 / self.rng.gamma(1, 1 / (1 / self.Tau2_c + 1 / self.Tau2_a).clip(stability, 1 / stability))
+            self.Tau2_a = 1 / self.rng.gamma(1, 1 / (1 / self.Tau2_b + 1).clip(stability, 1 / stability))
             lam_Tau = spdiags(1 / (lam2 * self.Tau2), 0, self.Tau2.shape[0], self.Tau2.shape[0], format='csc')
             self.Sigma0_inv = self.DeltaT.dot(lam_Tau).dot(self.Delta)
             for j in range(1, self.W.shape[1]):
@@ -168,13 +206,13 @@ class SpatialDifferentialExpression:
                 logprobs = logprobs.sum(axis=1)
                 logprior = np.log(self.Gamma[k])
                 p = stable_softmax(logprobs + logprior)
-                self.H[g, k] = np.random.choice(self.n_spatial_patterns + 1, p=p)
+                self.H[g, k] = self.rng.choice(self.n_spatial_patterns + 1, p=p)
 
     def sample_pattern_probs(self):
         # Conjugate Dirichlet update
         # print(H.shape, alpha.shape, H.max())
         for k, H_k in enumerate(self.H.T):
-            self.Gamma[k] = np.random.dirichlet(
+            self.Gamma[k] = self.rng.dirichlet(
                 np.array([(H_k == s).sum() for s in range(self.alpha.shape[0])]) + self.alpha)
 
     def sample(self, n_obs, Y_igk, cell_type_filter):

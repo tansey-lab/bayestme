@@ -1,5 +1,7 @@
 import numpy as np
 import scipy as sp
+
+from typing import Optional
 from scipy.sparse import csc_matrix
 from scipy.linalg import solve_triangular
 from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError
@@ -7,8 +9,17 @@ from warnings import warn
 from numpy.linalg import LinAlgError
 
 
-def sample_multivariate_normal_from_precision(Q, mu=None, mu_part=None, sparse=True, chol_factor=False, Q_shape=None,
-                                              force_psd=False, force_psd_eps=1e-6, force_psd_attempts=4):
+def sample_multivariate_normal_from_precision(
+        Q,
+        mu=None,
+        mu_part=None,
+        sparse=True,
+        chol_factor=False,
+        Q_shape=None,
+        force_psd=False,
+        force_psd_eps=1e-6,
+        force_psd_attempts=4,
+        rng: Optional[np.random.Generator] = None):
     """
     Fast sampling from a multivariate normal with precision parameterization.
     Supports sparse arrays.
@@ -27,8 +38,12 @@ def sample_multivariate_normal_from_precision(Q, mu=None, mu_part=None, sparse=T
     :param force_psd_attempts: If force_psd is true, this is the number of attempts to force
                                the precision matrix to be positive definite. Each attempt a diagonal term that
                                is 10 times larger than the previous one is added.
+    :param rng: numpy.random.Generator to use
     :return: One sample from the multivariate normal distribution
     """
+    if rng is None:
+        rng = np.random.default_rng()
+
     if sparse and not Q_shape:
         raise ValueError('Need to provide one of q_shape if sparse.')
 
@@ -46,7 +61,7 @@ def sample_multivariate_normal_from_precision(Q, mu=None, mu_part=None, sparse=T
                 factor = cholesky(Q) if not chol_factor else Q
 
                 # Solve L'h = z ==> L'^-1 z = h, this is a sample from the prior.
-                z = np.random.normal(size=Q.shape[0] if not chol_factor else Q_shape[0])
+                z = rng.normal(size=Q.shape[0] if not chol_factor else Q_shape[0])
 
                 # Reorder h by the permutation used in cholesky(Q).
                 result = factor.solve_Lt(z, False)[np.argsort(factor.P())]
@@ -61,7 +76,7 @@ def sample_multivariate_normal_from_precision(Q, mu=None, mu_part=None, sparse=T
                 # a standard normal.
                 # Ordering should be good here since linalg.cholesky solves LL'=Q
                 Lt = np.linalg.cholesky(Q).T if not chol_factor else Q.T
-                z = np.random.normal(size=Q.shape[0])
+                z = rng.normal(size=Q.shape[0])
                 result = solve_triangular(Lt, z, lower=False)
                 if mu_part is not None:
                     result += sp.linalg.cho_solve((Lt, False), mu_part)
@@ -82,8 +97,16 @@ def sample_multivariate_normal_from_precision(Q, mu=None, mu_part=None, sparse=T
             return result
 
 
-def sample_multivariate_normal_from_covariance(Q, mu=None, mu_part=None, sparse=True, chol_factor=False,
-                                               force_psd=False, force_psd_eps=1e-6, force_psd_attempts=4):
+def sample_multivariate_normal_from_covariance(
+        Q,
+        mu=None,
+        mu_part=None,
+        sparse=True,
+        chol_factor=False,
+        force_psd=False,
+        force_psd_eps=1e-6,
+        force_psd_attempts=4,
+        rng: Optional[np.random.Generator] = None):
     """
     Fast sampling from a multivariate normal with covariance parameterization.
     Supports sparse arrays.
@@ -101,8 +124,11 @@ def sample_multivariate_normal_from_covariance(Q, mu=None, mu_part=None, sparse=
     :param force_psd_attempts: If force_psd is true, this is the number of attempts to force
                                the covariance matrix to be positive definite. Each attempt a diagonal term that
                                is 10 times larger than the previous one is added.
+    :param rng: numpy.random.Generator to use
     :return: One sample from the multivariate normal distribution
     """
+    if rng is None:
+        rng = np.random.default_rng()
 
     attempt = 0
     eps = force_psd_eps
@@ -118,7 +144,7 @@ def sample_multivariate_normal_from_covariance(Q, mu=None, mu_part=None, sparse=
                     factor = cholesky(Q)
 
                 # Get the sample as mu + Lz for z ~ N(0, I)
-                z = np.random.normal(size=Q.shape[0])
+                z = rng.normal(size=Q.shape[0])
                 result = factor.L().dot(z)[np.argsort(factor.P())]
                 if mu_part is not None:
                     result += Q.dot(mu_part)
@@ -133,7 +159,7 @@ def sample_multivariate_normal_from_covariance(Q, mu=None, mu_part=None, sparse=
                     Lt = np.linalg.cholesky(Q)
 
                 # Get the sample as mu + Lz for z ~ N(0, I)
-                z = np.random.normal(size=Q.shape[0])
+                z = rng.normal(size=Q.shape[0])
                 result = Lt.dot(z)
                 if mu_part is not None:
                     result += Q.dot(mu_part)
@@ -154,7 +180,15 @@ def sample_multivariate_normal_from_covariance(Q, mu=None, mu_part=None, sparse=
             return result
 
 
-def sample_multivariate_normal(Q, mu=None, mu_part=None, sparse=True, precision=False, chol_factor=False, Q_shape=None, **kwargs):
+def sample_multivariate_normal(
+        Q,
+        mu=None,
+        mu_part=None,
+        sparse=True,
+        precision=False,
+        chol_factor=False,
+        Q_shape=None,
+        **kwargs):
     """
     Fast sampling from a multivariate normal with covariance or precision
     parameterization. Supports sparse arrays.
