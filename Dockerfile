@@ -8,8 +8,6 @@ COPY requirements.txt /opt/requirements.txt
 
 RUN pip3 install -r /opt/requirements.txt
 RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
-RUN pip3 install cython
-RUN pip3 install https://github.com/slinderman/pypolyagamma/archive/refs/tags/1.2.3.tar.gz
 
 COPY src/ /app/src/
 
