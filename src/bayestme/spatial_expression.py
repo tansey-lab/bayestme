@@ -1,4 +1,6 @@
+import copy
 import pathlib
+import pickle
 
 import numpy as np
 import os
@@ -32,7 +34,6 @@ class SpatialDifferentialExpression:
         'n_spatial_patterns',
         'lam2',
         'edges',
-        'prior_var',
         'prior_vars',
         'alpha'
     ]
@@ -44,7 +45,6 @@ class SpatialDifferentialExpression:
         'V',
         'Theta',
         'Omegas',
-        'prior_vars',
         'Delta',
         'DeltaT',
         'Tau2',
@@ -56,43 +56,109 @@ class SpatialDifferentialExpression:
     ]
 
     def __init__(self,
-                 n_cell_types,
-                 n_spatial_patterns,
-                 Obs,
-                 edges,
-                 alpha_0=10,
-                 prior_var=100.0,
-                 lam2=1,
+                 n_cell_types: int,
+                 n_spatial_patterns: int,
+                 n_nodes: int,
+                 n_signals: int,
+                 edges: np.ndarray,
+                 alpha: np.ndarray,
+                 prior_vars: np.ndarray,
+                 lam2: float = 1,
                  rng: Optional[np.random.Generator] = None):
         # number of cell type from cell-typing results
         self.n_cell_types = n_cell_types
         # number of spots
-        self.n_nodes = Obs.shape[0]
+        self.n_nodes = n_nodes
         # number of genes
-        self.n_signals = Obs.shape[1]
+        self.n_signals = n_signals
         # number of spatial pattern per cell-type
         self.n_spatial_patterns = n_spatial_patterns
         self.lam2 = lam2
         self.edges = edges
-        self.prior_var = prior_var
-        self.prior_vars = np.repeat(self.prior_var, 2)
+        self.prior_vars = prior_vars
         if rng is None:
             self.rng = np.random.default_rng()
         else:
             self.rng = rng
 
         # spatial patterns setup
-        self.alpha = np.ones(self.n_spatial_patterns + 1)
-        self.alpha[0] = alpha_0
-        self.alpha[1:] = 1 / self.n_spatial_patterns
+        self.alpha = alpha
 
         self._checkpoint = None
+        self._rng_state_checkpoint = pickle.dumps(self.rng.bit_generator)
+        self.has_checkpoint = False
         self.variable_state_initialization()
 
-        self.checkpoint_variable_state()
-
     def checkpoint_variable_state(self):
-        self._checkpoint = {k: self.__dict__[k] for k in type(self).variable_state}
+        self._checkpoint = {k: copy.deepcopy(self.__dict__[k]) for k in type(self).variable_state}
+        self._rng_state_checkpoint = pickle.dumps(self.rng.bit_generator)
+        self.has_checkpoint = True
+
+    def clear_checkpoint(self):
+        self._checkpoint = None
+        self._rng_state_checkpoint = None
+        self.has_checkpoint = False
+
+    def reset_to_checkpoint(self):
+        if not self.has_checkpoint:
+            raise RuntimeError('No checkpoint to reset to')
+
+        self.rng = np.random.Generator(pickle.loads(self._rng_state_checkpoint))
+        for k in type(self).variable_state:
+            self.__dict__[k] = self._checkpoint[k]
+        self.clear_checkpoint()
+
+    def get_state(self) -> data.SpatialDifferentialExpressionSamplerState:
+        # If we have a checkpoint, that means the current state is not meaningful. Like
+        # if sampling crashed mid iteration, for example. So we restore this checkpoint
+        # and return that state.
+        if self.has_checkpoint:
+            self.reset_to_checkpoint()
+
+        return data.SpatialDifferentialExpressionSamplerState(
+            pickled_bit_generator=pickle.dumps(self.rng.bit_generator),
+            n_cell_types=self.n_cell_types,
+            n_nodes=self.n_nodes,
+            n_signals=self.n_signals,
+            n_spatial_patterns=self.n_spatial_patterns,
+            lam2=self.lam2,
+            edges=self.edges,
+            alpha=self.alpha,
+            W=self.W,
+            Gamma=self.Gamma,
+            H=self.H,
+            C=self.C,
+            V=self.V,
+            Theta=self.Theta,
+            Omegas=self.Omegas,
+            prior_vars=self.prior_vars,
+            Delta=self.Delta,
+            DeltaT=self.DeltaT,
+            Tau2=self.Tau2,
+            Tau2_a=self.Tau2_a,
+            Tau2_b=self.Tau2_b,
+            Tau2_c=self.Tau2_c,
+            Sigma0_inv=self.Sigma0_inv,
+            Cov_mats=self.Cov_mats,
+        )
+
+    @classmethod
+    def load_from_state(cls, sampler_state: data.SpatialDifferentialExpressionSamplerState):
+        ins = cls(
+            n_cell_types=sampler_state.n_cell_types,
+            n_spatial_patterns=sampler_state.n_spatial_patterns,
+            n_signals=sampler_state.n_signals,
+            n_nodes=sampler_state.n_nodes,
+            edges=sampler_state.edges,
+            alpha=sampler_state.alpha,
+            prior_vars=sampler_state.prior_vars,
+            lam2=sampler_state.lam2,
+            rng=np.random.Generator(pickle.loads(sampler_state.pickled_bit_generator))
+        )
+
+        for k in cls.variable_state:
+            ins.__dict__[k] = sampler_state.__dict__[k]
+        return ins
 
     def variable_state_initialization(self):
         self.W = np.zeros((self.n_cell_types, self.n_spatial_patterns + 1, self.n_nodes))
@@ -222,6 +288,7 @@ class SpatialDifferentialExpression:
                 np.array([(H_k == s).sum() for s in range(self.alpha.shape[0])]) + self.alpha)
 
     def sample(self, n_obs, Y_igk, cell_type_filter):
+        self.checkpoint_variable_state()
         self.sample_pg(n_obs, Y_igk)
         self.sample_spatial_patterns(n_obs, Y_igk, cell_type_filter)
         self.sample_sigmainv(stability=1e-6, lam2=self.lam2)
@@ -232,6 +299,7 @@ class SpatialDifferentialExpression:
         self.Theta = np.transpose(self.Theta, [2, 1, 0])
         self.sample_spatial_assignments(n_obs, Y_igk)
         self.sample_pattern_probs()
+        self.clear_checkpoint()
 
         return self.W, self.C, self.Gamma, self.H, self.V, self.Theta
 
@@ -285,16 +353,29 @@ def run_spatial_expression(
         alpha0: int,
         prior_var: float,
         lam2: int,
-        simple=True) -> data.SpatialDifferentialExpressionResult:
-    sde = SpatialDifferentialExpression(
-        n_cell_types=deconvolve_results.n_components,
-        n_spatial_patterns=n_spatial_patterns,
-        Obs=dataset.reads,
-        edges=dataset.edges,
-        alpha_0=alpha0,
-        prior_var=prior_var,
-        lam2=lam2
-    )
+        simple=True,
+        sde_state: data.SpatialDifferentialExpressionSamplerState = None) -> data.SpatialDifferentialExpressionResult:
+    if sde_state is not None:
+        sde = SpatialDifferentialExpression.load_from_state(sde_state)
+    else:
+        alpha = np.ones(n_spatial_patterns + 1)
+        alpha[0] = alpha0
+        alpha[1:] = 1 / n_spatial_patterns
+
+        n_nodes = dataset.n_spot_in
+        n_signals = dataset.n_gene
+        prior_vars = np.repeat(prior_var, 2)
+
+        sde = SpatialDifferentialExpression(
+            n_cell_types=deconvolve_results.n_components,
+            n_spatial_patterns=n_spatial_patterns,
+            n_nodes=n_nodes,
+            n_signals=n_signals,
+            edges=dataset.edges,
+            alpha=alpha,
+            prior_vars=prior_vars,
+            lam2=lam2
+        )
 
     W_samples = np.zeros((n_samples, deconvolve_results.n_components, n_spatial_patterns + 1, dataset.n_spot_in))
     C_samples = np.zeros((n_samples, dataset.n_gene, deconvolve_results.n_components))

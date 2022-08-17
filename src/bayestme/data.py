@@ -6,6 +6,7 @@ import glob
 import logging
 import h5py
 import anndata
+import scipy.sparse.csc
 from scipy.sparse import csr_matrix
 
 from enum import Enum
@@ -441,6 +442,160 @@ class DeconvolutionResult:
                 reads_trace=reads_trace,
                 lam2=lam2,
                 n_components=n_components)
+
+
+class SpatialDifferentialExpressionSamplerState:
+    """
+    Data model for internal SDE gibbs sampler state
+    """
+    def __init__(self,
+                 pickled_bit_generator: bytes,
+                 n_cell_types: int,
+                 n_nodes: int,
+                 n_signals: int,
+                 n_spatial_patterns: int,
+                 lam2: float,
+                 edges: np.ndarray,
+                 alpha: np.ndarray,
+                 W: np.ndarray,
+                 Gamma: np.ndarray,
+                 H: np.ndarray,
+                 C: np.ndarray,
+                 V: np.ndarray,
+                 Theta: np.ndarray,
+                 Omegas: np.ndarray,
+                 prior_vars: np.ndarray,
+                 Delta: scipy.sparse.csc.csc_matrix,
+                 DeltaT: scipy.sparse.csc.csc_matrix,
+                 Tau2: np.ndarray,
+                 Tau2_a: np.ndarray,
+                 Tau2_b: np.ndarray,
+                 Tau2_c: np.ndarray,
+                 Sigma0_inv: scipy.sparse.csc.csc_matrix,
+                 Cov_mats: np.ndarray):
+        self.pickled_bit_generator = pickled_bit_generator
+        self.n_cell_types = n_cell_types
+        self.n_nodes = n_nodes
+        self.n_signals = n_signals
+        self.n_spatial_patterns = n_spatial_patterns
+        self.lam2 = lam2
+        self.edges = edges
+        self.alpha = alpha
+        self.W = W
+        self.Gamma = Gamma
+        self.H = H
+        self.C = C
+        self.V = V
+        self.Theta = Theta
+        self.Omegas = Omegas
+        self.prior_vars = prior_vars
+        self.Delta = Delta
+        self.DeltaT = DeltaT
+        self.Tau2 = Tau2
+        self.Tau2_a = Tau2_a
+        self.Tau2_b = Tau2_b
+        self.Tau2_c = Tau2_c
+        self.Sigma0_inv = Sigma0_inv
+        self.Cov_mats = Cov_mats
+
+    def save(self, path):
+        with h5py.File(path, 'w') as f:
+            f.attrs['pickled_bit_generator'] = self.pickled_bit_generator
+            f.attrs['n_cell_types'] = self.n_cell_types
+            f.attrs['n_nodes'] = self.n_nodes
+            f.attrs['n_signals'] = self.n_signals
+            f.attrs['n_spatial_patterns'] = self.n_spatial_patterns
+            f.attrs['lam2'] = self.lam2
+            f['edges'] = self.edges
+            f['alpha'] = self.alpha
+            f['W'] = self.W
+            f['Gamma'] = self.Gamma
+            f['H'] = self.H
+            f['C'] = self.C
+            f['V'] = self.V
+            f['Theta'] = self.Theta
+            f['Omegas'] = self.Omegas
+            f['prior_vars'] = self.prior_vars
+            f['Tau2'] = self.Tau2
+            f['Tau2_a'] = self.Tau2_a
+            f['Tau2_b'] = self.Tau2_b
+            f['Tau2_c'] = self.Tau2_c
+            f['Cov_mats'] = self.Cov_mats
+            anndata._io.h5ad.write_sparse_as_dense(
+                f,
+                'Delta',
+                self.Delta)
+            anndata._io.h5ad.write_sparse_as_dense(
+                f,
+                'DeltaT',
+                self.DeltaT)
+            anndata._io.h5ad.write_sparse_as_dense(
+                f,
+                'Sigma0_inv',
+                self.Sigma0_inv)
+
+    @classmethod
+    def read_h5(cls, path):
+        """
+        Read this class from an h5 archive
+        :param path: Path to h5 file.
+        :return: SpatialExpressionDataset
+        """
+        with h5py.File(path, 'r') as f:
+            pickled_bit_generator = f.attrs['pickled_bit_generator']
+            n_cell_types = f.attrs['n_cell_types']
+            n_nodes = f.attrs['n_nodes']
+            n_signals = f.attrs['n_signals']
+            n_spatial_patterns = f.attrs['n_spatial_patterns']
+            lam2 = f.attrs['lam2']
+            edges = f['edges'][:]
+            alpha = f['alpha'][:]
+            W = f['W'][:]
+            Gamma = f['Gamma'][:]
+            H = f['H'][:]
+            C = f['C'][:]
+            V = f['V'][:]
+            Theta = f['Theta'][:]
+            Omegas = f['Omegas'][:]
+            prior_vars = f['prior_vars'][:]
+            Tau2 = f['Tau2'][:]
+            Tau2_a = f['Tau2_a'][:]
+            Tau2_b = f['Tau2_b'][:]
+            Tau2_c = f['Tau2_c'][:]
+            Cov_mats = f['Cov_mats'][:]
+            Delta = anndata._io.h5ad.read_dense_as_csc(
+                f['Delta'])
+            DeltaT = anndata._io.h5ad.read_dense_as_csc(
+                f['DeltaT'])
+            Sigma0_inv = anndata._io.h5ad.read_dense_as_csc(
+                f['Sigma0_inv'])
+
+            return cls(
+                pickled_bit_generator=pickled_bit_generator,
+                n_cell_types=n_cell_types,
+                n_nodes=n_nodes,
+                n_signals=n_signals,
+                n_spatial_patterns=n_spatial_patterns,
+                lam2=lam2,
+                edges=edges,
+                alpha=alpha,
+                W=W,
+                Gamma=Gamma,
+                H=H,
+                C=C,
+                V=V,
+                Theta=Theta,
+                Omegas=Omegas,
+                prior_vars=prior_vars,
+                Tau2=Tau2,
+                Tau2_a=Tau2_a,
+                Tau2_b=Tau2_b,
+                Tau2_c=Tau2_c,
+                Cov_mats=Cov_mats,
+                Delta=Delta,
+                DeltaT=DeltaT,
+                Sigma0_inv=Sigma0_inv
+            )
 
 
 class SpatialDifferentialExpressionResult:
