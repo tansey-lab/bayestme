@@ -47,7 +47,6 @@ def test_deconvolve():
         n_samples=3,
         n_burnin=1,
         n_thin=1,
-        random_seed=0,
         bkg=False,
         lda=False
     )
