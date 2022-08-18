@@ -185,7 +185,8 @@ class SpatialDifferentialExpression:
         n_dims = self.n_spatial_patterns + 1
         self.DeltaT = block_diag([self.Delta.T for _ in range(n_dims)], format='csc')
         self.Delta = block_diag([self.Delta for _ in range(n_dims)], format='csc')
-        self.Tau2, self.Tau2_c, self.Tau2_b, self.Tau2_a = utils.sample_horseshoe_plus(size=self.Delta.shape[0])
+        self.Tau2, self.Tau2_c, self.Tau2_b, self.Tau2_a = utils.sample_horseshoe_plus(
+            size=self.Delta.shape[0], rng=self.rng)
         self.Tau2 = self.Tau2.clip(0, 9)
         lam_Tau = spdiags(1 / (self.lam2 * self.Tau2), 0, self.Tau2.shape[0], self.Tau2.shape[0], format='csc')
         self.Sigma0_inv = self.DeltaT.dot(lam_Tau).dot(self.Delta)

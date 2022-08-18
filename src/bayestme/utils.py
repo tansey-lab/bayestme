@@ -1,4 +1,6 @@
 import numpy as np
+
+from typing import Optional
 from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.stats import poisson
 
@@ -15,11 +17,14 @@ def stable_softmax(x, axis=-1):
     return softmax
 
 
-def sample_horseshoe_plus(size=1):
-    a = 1 / np.random.gamma(0.5, 1, size=size)
-    b = 1 / np.random.gamma(0.5, a)
-    c = 1 / np.random.gamma(0.5, b)
-    d = 1 / np.random.gamma(0.5, c)
+def sample_horseshoe_plus(size=1, rng: Optional[np.random.Generator] = None):
+    if rng is None:
+        rng = np.random.default_rng()
+
+    a = 1 / rng.gamma(0.5, 1, size=size)
+    b = 1 / rng.gamma(0.5, a)
+    c = 1 / rng.gamma(0.5, b)
+    d = 1 / rng.gamma(0.5, c)
     return d, c, b, a
 
 

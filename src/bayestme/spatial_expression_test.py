@@ -1,6 +1,8 @@
 import copy
 import shutil
 import numpy as np
+import numpy.testing
+import scipy.sparse
 from numpy import testing
 import tempfile
 import os
@@ -183,6 +185,193 @@ def test_spatial_detection_seed_determinism():
     np.testing.assert_array_equal(sde_result_1.theta_samples, sde_result_2.theta_samples)
     np.testing.assert_array_equal(sde_result_1.h_samples, sde_result_2.h_samples)
     np.testing.assert_array_equal(sde_result_1.gamma_samples, sde_result_2.gamma_samples)
+
+
+def test_spatial_detection_seed_checkpointing():
+    tmpdir = tempfile.mkdtemp()
+    n_genes = 7
+    n_components = 3
+    n_samples = 10
+    n_spatial_patterns = 10
+
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    deconvolution_results = generate_fake_deconvolve_results(
+        n_samples=n_samples,
+        n_tissue_spots=dataset.n_spot_in,
+        n_components=n_components,
+        n_genes=n_genes)
+
+    alpha = np.ones(n_spatial_patterns + 1)
+    alpha[0] = 10
+    alpha[1:] = 1 / n_spatial_patterns
+
+    n_nodes = dataset.n_spot_in
+    n_signals = dataset.n_gene
+    prior_vars = np.repeat(100.0, 2)
+
+    sde_1 = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolution_results.n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=1000.0,
+        rng=np.random.default_rng(seed=99)
+    )
+
+    sde_1.initialize()
+
+    ncell_min = 5
+    cell_type_filter = (deconvolution_results.cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min).T
+    rate = np.array([deconvolution_results.beta_trace[i][:, None] * deconvolution_results.expression_trace[i]
+                     for i in range(deconvolution_results.cell_num_trace.shape[0])])
+    reads = deconvolution_results.reads_trace.mean(axis=0).astype(int)
+    lambdas = deconvolution_results.cell_num_trace.mean(axis=0)[:, 1:, None] * rate.mean(axis=0)[None]
+    Y_igk = reads
+    n_obs_vector = np.transpose(lambdas, [0, 2, 1])
+
+    sde_1.sample(n_obs_vector, Y_igk, cell_type_filter)
+
+    sde_1_state = sde_1.get_state()
+
+    sde_1_state.save(os.path.join(tmpdir, 'state.h5'))
+
+    sde_1_state = data.SpatialDifferentialExpressionSamplerState.read_h5(os.path.join(tmpdir, 'state.h5'))
+
+    sde_2 = spatial_expression.SpatialDifferentialExpression.load_from_state(sde_1_state)
+
+    sample_spatial_weights_mock = mock.MagicMock()
+    sample_spatial_weights_mock.side_effect = ValueError('test')
+
+    with mock.patch.object(sde_1, 'sample_spatial_weights', sample_spatial_weights_mock):
+        try:
+            sde_1.sample(n_obs_vector, Y_igk, cell_type_filter)
+        except ValueError:
+            pass
+
+    sde_1.reset_to_checkpoint()
+
+    W, C, Gamma, H, V, Theta = sde_1.sample(n_obs_vector, Y_igk, cell_type_filter)
+
+    W_1, C_1, Gamma_1, H_1, V_1, Theta_1 = sde_2.sample(n_obs_vector, Y_igk, cell_type_filter)
+
+    numpy.testing.assert_equal(W, W_1)
+    numpy.testing.assert_equal(C, C_1)
+    numpy.testing.assert_equal(Gamma, Gamma_1)
+    numpy.testing.assert_equal(H, H_1)
+    numpy.testing.assert_equal(V, V_1)
+    numpy.testing.assert_equal(Theta, Theta_1)
+
+    shutil.rmtree(tmpdir)
+
+
+def test_spatial_detection_sampler_state_serialization_equivalency():
+    tmpdir = tempfile.mkdtemp()
+    n_genes = 7
+    n_components = 3
+    n_samples = 10
+    n_spatial_patterns = 10
+
+    dataset = bayestme.synthetic_data.generate_fake_stdataset(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+
+    deconvolution_results = generate_fake_deconvolve_results(
+        n_samples=n_samples,
+        n_tissue_spots=dataset.n_spot_in,
+        n_components=n_components,
+        n_genes=n_genes)
+
+    alpha = np.ones(n_spatial_patterns + 1)
+    alpha[0] = 10
+    alpha[1:] = 1 / n_spatial_patterns
+
+    n_nodes = dataset.n_spot_in
+    n_signals = dataset.n_gene
+    prior_vars = np.repeat(100.0, 2)
+
+    sde_1 = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolution_results.n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=1000.0,
+        rng=np.random.default_rng(seed=99)
+    )
+
+    sde_2 = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolution_results.n_components,
+        n_spatial_patterns=n_spatial_patterns,
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=1000.0,
+        rng=np.random.default_rng(seed=99)
+    )
+
+    sde_1.initialize()
+    sde_2.initialize()
+
+    ncell_min = 5
+    cell_type_filter = (deconvolution_results.cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min).T
+    rate = np.array([deconvolution_results.beta_trace[i][:, None] * deconvolution_results.expression_trace[i]
+                     for i in range(deconvolution_results.cell_num_trace.shape[0])])
+    reads = deconvolution_results.reads_trace.mean(axis=0).astype(int)
+    lambdas = deconvolution_results.cell_num_trace.mean(axis=0)[:, 1:, None] * rate.mean(axis=0)[None]
+    Y_igk = reads
+    n_obs_vector = np.transpose(lambdas, [0, 2, 1])
+
+    sde_1_outputs = []
+    sde_2_outputs = []
+
+    for i in range(5):
+
+        assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
+
+        for field in spatial_expression.SpatialDifferentialExpression.variable_state + spatial_expression.SpatialDifferentialExpression.constant_state:
+
+            if scipy.sparse.issparse(sde_2.__dict__[field]):
+                numpy.testing.assert_equal(sde_1.__dict__[field].todense(), sde_2.__dict__[field].todense())
+            else:
+                numpy.testing.assert_equal(sde_1.__dict__[field], sde_2.__dict__[field])
+
+        sde_1_outputs.append(sde_1.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
+
+        sde_2_state = sde_2.get_state()
+
+        sde_2_state.save(os.path.join(tmpdir, f'state_{i}.h5'))
+
+        sde_2_state = data.SpatialDifferentialExpressionSamplerState.read_h5(os.path.join(tmpdir, f'state_{i}.h5'))
+        sde_2 = spatial_expression.SpatialDifferentialExpression.load_from_state(sde_2_state)
+
+        sde_2_outputs.append(sde_2.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
+
+        assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
+
+        for field in spatial_expression.SpatialDifferentialExpression.variable_state + spatial_expression.SpatialDifferentialExpression.constant_state:
+
+            if scipy.sparse.issparse(sde_2.__dict__[field]):
+                numpy.testing.assert_equal(sde_1.__dict__[field].todense(), sde_2.__dict__[field].todense())
+            else:
+                numpy.testing.assert_equal(sde_1.__dict__[field], sde_2.__dict__[field])
+
+    for (samples_1, samples_2) in zip(sde_1_outputs, sde_2_outputs):
+        for (a, b) in zip(samples_1, samples_2):
+            numpy.testing.assert_equal(a, b)
+
+    shutil.rmtree(tmpdir)
 
 
 def test_get_n_cell_correlation():
