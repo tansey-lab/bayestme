@@ -307,9 +307,16 @@ class SpatialDifferentialExpression:
         self.sample_pattern_probs()
         self.clear_checkpoint()
 
-        return self.W, self.C, self.Gamma, self.H, self.V, self.Theta
+        return (copy.deepcopy(self.W), copy.deepcopy(self.C), copy.deepcopy(self.Gamma),
+                copy.deepcopy(self.H), copy.deepcopy(self.V), copy.deepcopy(self.Theta))
 
-    def spatial_detection(self, cell_num_trace, beta_trace, expression_trace, reads_trace, n_samples=100, n_burn=100,
+    def spatial_detection(self,
+                          cell_num_trace,
+                          beta_trace,
+                          expression_trace,
+                          reads_trace,
+                          n_samples=100,
+                          n_burn=100,
                           n_thin=5, ncell_min=5, simple=False):
         if len(cell_num_trace.shape) == 3:
             n_posterior_sample = cell_num_trace.shape[0]

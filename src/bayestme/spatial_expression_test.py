@@ -337,16 +337,6 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
     sde_2_outputs = []
 
     for i in range(5):
-
-        assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
-
-        for field in spatial_expression.SpatialDifferentialExpression.variable_state + spatial_expression.SpatialDifferentialExpression.constant_state:
-
-            if scipy.sparse.issparse(sde_2.__dict__[field]):
-                numpy.testing.assert_equal(sde_1.__dict__[field].todense(), sde_2.__dict__[field].todense())
-            else:
-                numpy.testing.assert_equal(sde_1.__dict__[field], sde_2.__dict__[field])
-
         sde_1_outputs.append(sde_1.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
 
         sde_2_state = sde_2.get_state()
@@ -357,15 +347,6 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
         sde_2 = spatial_expression.SpatialDifferentialExpression.load_from_state(sde_2_state)
 
         sde_2_outputs.append(sde_2.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
-
-        assert sde_2.rng.bit_generator.state == sde_1.rng.bit_generator.state
-
-        for field in spatial_expression.SpatialDifferentialExpression.variable_state + spatial_expression.SpatialDifferentialExpression.constant_state:
-
-            if scipy.sparse.issparse(sde_2.__dict__[field]):
-                numpy.testing.assert_equal(sde_1.__dict__[field].todense(), sde_2.__dict__[field].todense())
-            else:
-                numpy.testing.assert_equal(sde_1.__dict__[field], sde_2.__dict__[field])
 
     for (samples_1, samples_2) in zip(sde_1_outputs, sde_2_outputs):
         for (a, b) in zip(samples_1, samples_2):
