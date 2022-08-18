@@ -1,5 +1,13 @@
 import argparse
+import logging
+
+import numpy as np
+import os
+
 from bayestme import data, spatial_expression
+
+
+MODEL_DUMP_PATH = 'sde_model_dump.h5'
 
 
 def get_parser():
@@ -58,18 +66,47 @@ def main():
     deconvolve_results: data.DeconvolutionResult = data.DeconvolutionResult.read_h5(
         args.deconvolve_results)
 
-    results = spatial_expression.run_spatial_expression(
-        dataset=dataset,
-        deconvolve_results=deconvolve_results,
+    alpha = np.ones(args.n_spatial_patterns + 1)
+    alpha[0] = args.alpha0
+    alpha[1:] = 1 / args.n_spatial_patterns
+
+    n_nodes = dataset.n_spot_in
+    n_signals = dataset.n_gene
+    prior_vars = np.repeat(args.prior_var, 2)
+
+    sde = spatial_expression.SpatialDifferentialExpression(
+        n_cell_types=deconvolve_results.n_components,
         n_spatial_patterns=args.n_spatial_patterns,
-        n_samples=args.n_samples,
-        n_burn=args.n_burn,
-        n_thin=args.n_thin,
-        n_cell_min=args.n_cell_min,
-        alpha0=args.alpha0,
-        prior_var=args.prior_var,
-        lam2=args.lam2,
-        simple=args.simple
+        n_nodes=n_nodes,
+        n_signals=n_signals,
+        edges=dataset.edges,
+        alpha=alpha,
+        prior_vars=prior_vars,
+        lam2=args.lam2
     )
+
+    sde.initialize()
+
+    sampler_state_path = os.path.join(os.path.dirname(args.output), MODEL_DUMP_PATH)
+
+    try:
+        results = spatial_expression.run_spatial_expression(
+            sde=sde,
+            deconvolve_results=deconvolve_results,
+            n_samples=args.n_samples,
+            n_burn=args.n_burn,
+            n_thin=args.n_thin,
+            n_cell_min=args.n_cell_min,
+            simple=args.simple
+        )
+    except Exception as e:
+        logging.exception(f'Exception raised during posterior sampling, will save current sampler state '
+                          f'to {sampler_state_path} for debugging.')
+        if sde.has_checkpoint:
+            sde.reset_to_checkpoint()
+
+        sde.get_state().save(sampler_state_path)
+
+        raise e
 
     results.save(args.output)
