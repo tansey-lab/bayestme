@@ -207,29 +207,26 @@ def add_deconvolution_results_to_dataset(
     stdata.adata.obsm[data.CELL_TYPE_COUNT_ATTR] = cell_num_matrix_full
 
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
+    stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
 
 
 def add_marker_gene_results_to_dataset(
         stdata: data.SpatialExpressionDataset,
-        result: data.DeconvolutionResult,
         marker_genes: List[np.ndarray]):
     """
-    Modify in-place stdata to annotate it with deconvolution results.
+    Modify stdata in place to to annotate it with marker gene selection results.
 
     :param stdata: data.SpatialExpressionDataset to modify
-    :param result: data.DeconvolutionResult to use
     :param marker_genes: Selected marker genes to add to dataset
     """
-    stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
-
-    marker_gene_boolean = np.zeros((stdata.n_gene, result.n_components)).astype(int)
+    marker_gene_boolean = np.zeros((stdata.n_gene, stdata.n_cell_types)).astype(int)
     marker_gene_boolean[:, :] = -1
 
-    for i in range(result.n_components):
+    for i in range(stdata.n_cell_types):
         marker_gene_boolean[:, i][marker_genes[i]] = np.arange(marker_genes[i].size)
 
     stdata.adata.varm[data.MARKER_GENE_ATTR] = marker_gene_boolean
-    stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
+
 
 
 def plot_cell_num(
@@ -446,22 +443,14 @@ def plot_cell_num_scatterpie(
 
 
 def plot_deconvolution(stdata: data.SpatialExpressionDataset,
-                       deconvolution_result: data.DeconvolutionResult,
                        output_dir: str,
-                       n_marker_genes: int = 5,
-                       alpha: float = 0.05,
-                       marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
                        output_format: str = 'pdf',
                        cell_type_names: Optional[List[str]] = None):
     """
     Create a suite of plots for deconvolution results.
 
     :param stdata: SpatialExpressionDataset to plot
-    :param deconvolution_result: DeconvolutionResult to plot
     :param output_dir: Output directory where plots will be saved
-    :param n_marker_genes: Number of marker genes to choose
-    :param alpha: Alpha parameter for selecting marker genes
-    :param marker_gene_method: Method for marker genes selection
     :param output_format: File format of plots
     :param cell_type_names: Cell type names to use in plot, an array of length n_components
     """

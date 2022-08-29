@@ -83,3 +83,12 @@ def main():
     )
 
     results.save(args.output)
+
+    deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset,
+        result=results
+    )
+
+    dataset.save(args.input)
+
+

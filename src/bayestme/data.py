@@ -497,6 +497,9 @@ class DeconvolutionResult:
         Return a matrix of average ratio of expression/ maximum expression
         for each marker in each component
 
+        This statistic represents the "overexpression" of a gene in a cell type, and is
+        used for scaling the dot size in our marker gene plot.
+
         :return: An <N cell types> x <N markers> floating point matrix.
         """
         difference = np.zeros(shape=self.expression_trace.shape[1:], dtype=np.float64)
@@ -512,6 +515,9 @@ class DeconvolutionResult:
         Return a matrix of average expression in this cell type, minus the max expression in all other cell types,
         divided by the maximum expression in all cell types. A higher number for this statistic represents a better
         candidate marker gene.
+
+        This statistic is used as a tiebreaker criteria for marker gene selection when omega_kg values are
+        equal.
 
         :return: An <N cell types> x <N markers> floating point matrix.
         """
