@@ -83,7 +83,7 @@ def test_detect_marker_genes_tight():
         n_samples=100,
         n_gene=dataset.n_gene)
 
-    marker_genes = deconvolution.detect_marker_genes(
+    marker_genes = deconvolution.select_marker_genes(
         deconvolution_result=deconvolve_results,
         n_marker=n_marker,
         alpha=0.6,
@@ -116,7 +116,7 @@ def test_detect_marker_genes_fdr():
         n_samples=100,
         n_gene=dataset.n_gene)
 
-    marker_genes = deconvolution.detect_marker_genes(
+    marker_genes = deconvolution.select_marker_genes(
         deconvolution_result=deconvolve_results,
         n_marker=n_marker,
         alpha=0.99,
@@ -228,17 +228,16 @@ def test_add_marker_gene_results_to_dataset():
         n_samples=100,
         n_gene=dataset.n_gene)
 
-    marker_genes = deconvolution.detect_marker_genes(
+    marker_genes = deconvolution.select_marker_genes(
         deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
 
     deconvolution.add_marker_gene_results_to_dataset(
         stdata=dataset,
         result=deconvolve_results,
-        marker_genes=marker_genes,
-        omega_difference=deconvolve_results.omega_difference
-        )
+        marker_genes=marker_genes)
 
-    np.testing.assert_equal(marker_genes, dataset.marker_gene_indices)
+    for expected, observed in zip(marker_genes, dataset.marker_gene_indices):
+        np.testing.assert_equal(expected, observed)
 
 
 def test_deconvolve_plots():
@@ -332,7 +331,7 @@ def test_create_top_gene_lists():
         n_samples=100,
         n_gene=dataset.n_gene)
 
-    marker_genes = deconvolution.detect_marker_genes(
+    marker_genes = deconvolution.select_marker_genes(
         deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
 
     tempdir = tempfile.mkdtemp()

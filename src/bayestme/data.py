@@ -10,7 +10,7 @@ import scipy.sparse.csc
 from scipy.sparse import csr_matrix
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from . import utils
 
@@ -24,7 +24,6 @@ BAYESTME_ANNDATA_PREFIX = 'bayestme'
 N_CELL_TYPES_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_n_cell_types'
 CELL_TYPE_COUNT_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_counts'
 CELL_TYPE_PROB_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_probabilities'
-DECONVOLVE_GENE_EXPRESSION_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_gene_expression_by_cell_type'
 MARKER_GENE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_marker'
 OMEGA_DIFFERENCE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_omega_difference'
 
@@ -141,28 +140,30 @@ class SpatialExpressionDataset:
             return self.adata.obsm[CELL_TYPE_COUNT_ATTR][self.tissue_mask]
 
     @property
-    def marker_gene_names(self) -> Optional[np.ndarray]:
+    def marker_gene_names(self) -> Optional[List[np.ndarray]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
 
-        output = np.empty(shape=(self.n_cell_types, self.adata.n_vars), dtype=str)
-
-        marker_gene_indices = self.marker_gene_indices
+        outputs = []
 
         for i in range(self.n_cell_types):
-            output[i] = self.adata.var_names[marker_gene_indices[i]]
-        return output
+            outputs.append(self.adata.var_names[self.marker_gene_indices[i]])
+
+        return outputs
 
     @property
-    def marker_gene_indices(self) -> Optional[np.ndarray]:
+    def marker_gene_indices(self) -> Optional[List[np.ndarray]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
         outputs = []
 
         for i in range(self.n_cell_types):
-            outputs.append(np.arange(self.adata.n_vars)[self.adata.varm[MARKER_GENE_ATTR].T[i]])
+            marker_gene_indices = self.adata.varm[MARKER_GENE_ATTR].T[i] >= 0
+            marker_gene_order = self.adata.varm[MARKER_GENE_ATTR].T[i][marker_gene_indices]
 
-        return np.vstack(outputs)
+            outputs.append(np.arange(self.adata.n_vars)[marker_gene_indices][marker_gene_order])
+
+        return outputs
 
     def save(self, path):
         self.adata.write_h5ad(path)

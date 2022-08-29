@@ -134,43 +134,24 @@ class MarkerGeneMethod(Enum):
     FALSE_DISCOVERY_RATE = 2
 
 
-def detect_marker_genes(
+def select_marker_genes(
         deconvolution_result: data.DeconvolutionResult,
         n_marker: int = 5,
         alpha: float = 0.05,
-        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> (List[np.ndarray], np.ndarray):
+        method: MarkerGeneMethod = MarkerGeneMethod.TIGHT) -> List[np.ndarray]:
     """
-    Returns (marker_gene, omega_difference)
-
-    marker_gene: matrix of shape N components x N marker genes,
-    where the values are indices of the marker genes
-    in the gene name array.
-
-    omega_difference: matrix of shape N components x N genes
-    representing the average expression value / max expression value
-    for each gene within each component.
+    Returns a list of length <N components>, where
+    the values are indices of the marker genes in the gene name array for
+    that component.
 
     :param deconvolution_result: DeconvolutionResult object
     :param n_marker: Number of markers per cell type to select
     :param alpha: Marker gene threshold parameter, defaults to 0.05
     :param method: Enum representing which marker gene selection method to use.
-    :return: Tuple of (marker_genes, omega_difference)
+    :return: List of arrays of gene indices
     """
-    gene_expression = deconvolution_result.expression_trace.mean(axis=0)
-    n_components = gene_expression.shape[0]
-    # omega size K by G
-    omega = np.zeros_like(gene_expression)
-    difference = np.zeros_like(gene_expression)
-    expression = np.zeros_like(gene_expression)
     marker_gene_sets = []
-    for k in range(n_components):
-        # max expression of each gene for each posterior sample
-        max_exp = deconvolution_result.expression_trace.max(axis=1)
-        omega[k] = (deconvolution_result.expression_trace[:, k] == max_exp).mean(axis=0)
-        difference[k] = (deconvolution_result.expression_trace[:, k] / max_exp).mean(axis=0)
-        mask = np.arange(n_components) != k
-        max_exp_g = gene_expression[mask].max(axis=0)
-        expression[k] = (gene_expression[k] - max_exp_g) / np.max(np.vstack([gene_expression, max_exp_g]), axis=0)
+    for k in range(deconvolution_result.n_components):
         # fdr control
         if method is MarkerGeneMethod.TIGHT:
             marker_control = deconvolution_result.omega[k] > 1 - alpha
@@ -206,7 +187,7 @@ def add_deconvolution_results_to_dataset(
         stdata: data.SpatialExpressionDataset,
         result: data.DeconvolutionResult):
     """
-    Modify in-place stdata to annotate it with selected marker genes
+    Modify stdata in-place to annotate it with selected marker genes
 
     :param stdata: data.SpatialExpressionDataset to modify
     :param result: data.DeconvolutionResult to use
@@ -227,33 +208,28 @@ def add_deconvolution_results_to_dataset(
 
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
 
-    gene_expression = result.expression_trace.mean(axis=0).T
-
-    stdata.adata.varm[data.DECONVOLVE_GENE_EXPRESSION_ATTR] = gene_expression
-
 
 def add_marker_gene_results_to_dataset(
         stdata: data.SpatialExpressionDataset,
         result: data.DeconvolutionResult,
-        marker_genes: np.ndarray,
-        omega_difference: np.ndarray):
+        marker_genes: List[np.ndarray]):
     """
     Modify in-place stdata to annotate it with deconvolution results.
 
     :param stdata: data.SpatialExpressionDataset to modify
     :param result: data.DeconvolutionResult to use
-    :param marker_genes: data to add
-    :param omega_difference: data to add
+    :param marker_genes: Selected marker genes to add to dataset
     """
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
 
-    marker_gene_boolean = np.zeros((stdata.n_gene, result.n_components)).astype(np.bool)
+    marker_gene_boolean = np.zeros((stdata.n_gene, result.n_components)).astype(int)
+    marker_gene_boolean[:, :] = -1
 
     for i in range(result.n_components):
-        marker_gene_boolean[:, i][marker_genes[i]] = True
+        marker_gene_boolean[:, i][marker_genes[i]] = np.arange(marker_genes[i].size)
 
-    stdata.adata.uns[data.MARKER_GENE_ATTR] = marker_gene_boolean
-    stdata.adata.uns[data.OMEGA_DIFFERENCE_ATTR] = omega_difference.T
+    stdata.adata.varm[data.MARKER_GENE_ATTR] = marker_gene_boolean
+    stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
 
 
 def plot_cell_num(
@@ -282,7 +258,7 @@ def plot_cell_num(
                 coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
-                colormap=cm.jet)
+                colormap=cmap)
             ax.set_axis_off()
 
             fig.savefig(os.path.join(output_dir, f'cell_type_counts_{i}.{output_format}'))
@@ -306,7 +282,7 @@ def plot_cell_num(
                 coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
-                colormap=cm.jet
+                colormap=cmap
             )
             ax.set_axis_off()
         fig.savefig(os.path.join(output_dir, f'cell_type_counts.{output_format}'))
@@ -338,7 +314,7 @@ def plot_cell_prob(
                 coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
-                colormap=cm.jet)
+                colormap=cmap)
             ax.set_axis_off()
 
             fig.savefig(os.path.join(output_dir, f'cell_type_probability_{i}.{output_format}'))
@@ -363,7 +339,7 @@ def plot_cell_prob(
                 coords=stdata.positions_tissue,
                 values=plot_object[:, i],
                 layout=stdata.layout,
-                colormap=cm.jet
+                colormap=cmap
             )
             ax.set_axis_off()
         fig.savefig(os.path.join(output_dir, f'cell_type_probabilities.{output_format}'))
@@ -505,7 +481,7 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
         seperate_pdf=False,
         cell_type_names=cell_type_names)
 
-    marker_genes = detect_marker_genes(
+    marker_genes = select_marker_genes(
         deconvolution_result=deconvolution_result,
         n_marker=n_marker_genes,
         alpha=alpha,
@@ -533,7 +509,7 @@ def create_top_gene_lists(stdata: data.SpatialExpressionDataset,
                           alpha: float = 0.05,
                           marker_gene_method: MarkerGeneMethod = MarkerGeneMethod.TIGHT,
                           cell_type_names=None):
-    marker_genes = detect_marker_genes(
+    marker_genes = select_marker_genes(
         deconvolution_result=deconvolution_result,
         n_marker=n_marker_genes,
         alpha=alpha,
