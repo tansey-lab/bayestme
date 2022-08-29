@@ -165,6 +165,13 @@ class SpatialExpressionDataset:
 
         return outputs
 
+    @property
+    def omega_difference(self) -> Optional[np.ndarray]:
+        if OMEGA_DIFFERENCE_ATTR not in self.adata.varm:
+            return
+
+        return self.adata.varm[OMEGA_DIFFERENCE_ATTR].T
+
     def save(self, path):
         self.adata.write_h5ad(path)
 

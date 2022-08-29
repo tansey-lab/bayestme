@@ -228,19 +228,17 @@ def add_marker_gene_results_to_dataset(
     stdata.adata.varm[data.MARKER_GENE_ATTR] = marker_gene_boolean
 
 
-
 def plot_cell_num(
         stdata: data.SpatialExpressionDataset,
-        result: data.DeconvolutionResult,
         output_dir: str,
         output_format: str = 'pdf',
         cmap=cm.jet,
         seperate_pdf: bool = False,
         cell_type_names: Optional[List[str]] = None):
-    plot_object = result.cell_num_trace[:, :, 1:].mean(axis=0)
+    plot_object = stdata.cell_type_counts
 
     if seperate_pdf:
-        for i in range(result.n_components):
+        for i in range(stdata.n_cell_types):
             fig, ax = plt.subplot()
 
             if cell_type_names is not None:
@@ -261,9 +259,9 @@ def plot_cell_num(
             fig.savefig(os.path.join(output_dir, f'cell_type_counts_{i}.{output_format}'))
             plt.close(fig)
     else:
-        fig, axes = plt.subplots(ncols=result.n_components,
+        fig, axes = plt.subplots(ncols=stdata.n_cell_types,
                                  subplot_kw=dict(adjustable='box', aspect='equal'))
-        fig.set_figwidth(fig.get_size_inches()[0] * result.n_components)
+        fig.set_figwidth(fig.get_size_inches()[0] * stdata.n_cell_types)
 
         for i, ax in enumerate(axes):
 
@@ -288,16 +286,15 @@ def plot_cell_num(
 
 def plot_cell_prob(
         stdata: data.SpatialExpressionDataset,
-        result: data.DeconvolutionResult,
         output_dir: str,
         output_format: str = 'pdf',
         cmap=cm.jet,
         seperate_pdf: bool = False,
         cell_type_names: Optional[List[str]] = None):
-    plot_object = result.cell_prob_trace[:, :, 1:].mean(axis=0)
+    plot_object = stdata.cell_type_probabilities
 
     if seperate_pdf:
-        for i in range(result.n_components):
+        for i in range(stdata.n_cell_types):
             fig, ax = plt.subplot()
             if cell_type_names is not None:
                 title = cell_type_names[i]
@@ -318,10 +315,10 @@ def plot_cell_prob(
             plt.close(fig)
     else:
         fig, axes = plt.subplots(
-            ncols=result.n_components,
+            ncols=stdata.n_cell_types,
             subplot_kw=dict(adjustable='box', aspect='equal'))
 
-        fig.set_figwidth(fig.get_size_inches()[0] * result.n_components)
+        fig.set_figwidth(fig.get_size_inches()[0] * stdata.n_cell_types)
 
         for i, ax in enumerate(axes):
             if cell_type_names is not None:
@@ -344,19 +341,16 @@ def plot_cell_prob(
 
 
 def plot_marker_genes(
-        marker_genes: List[np.ndarray],
-        difference: np.ndarray,
         stdata: data.SpatialExpressionDataset,
-        deconvolution_results: data.DeconvolutionResult,
         output_file: str,
         cell_type_labels: Optional[List[str]] = None,
         colormap: cm.ScalarMappable = cm.BuPu):
-    all_gene_indices = np.concatenate(marker_genes)
+    all_gene_indices = np.concatenate(stdata.marker_gene_indices)
     all_gene_names = stdata.gene_names[all_gene_indices]
     n_marker = len(all_gene_indices)
 
     if cell_type_labels is None:
-        cell_type_labels = ['Cell Type {}'.format(i + 1) for i in range(deconvolution_results.n_components)]
+        cell_type_labels = ['Cell Type {}'.format(i + 1) for i in range(stdata.n_cell_types)]
 
     fig, (ax_genes, ax_legend) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [n_marker, 2]})
     inches_per_column = 0.75
@@ -365,16 +359,16 @@ def plot_marker_genes(
 
     offset = 0
     divider_lines = []
-    for k, marker_gene_set in enumerate(marker_genes):
+    for k, marker_gene_set in enumerate(stdata.marker_gene_indices):
         divider_lines.append(offset)
-        vmin = min(-1e-4, difference[k][all_gene_indices].min())
-        vmax = max(1e-4, difference[k][all_gene_indices].max())
+        vmin = min(-1e-4, stdata.omega_difference[k][all_gene_indices].min())
+        vmax = max(1e-4, stdata.omega_difference[k][all_gene_indices].max())
         norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
         ax_genes.scatter(
             np.arange(n_marker),
             np.ones(n_marker) * (k + 1),
-            c=difference[k][all_gene_indices],
-            s=norm(abs(difference[k][all_gene_indices])) * inches_per_column * fig.dpi * 3,
+            c=stdata.omega_difference[k][all_gene_indices],
+            s=norm(abs(stdata.omega_difference[k][all_gene_indices])) * inches_per_column * fig.dpi * 3,
             cmap=colormap,
             norm=norm)
         offset = offset + len(marker_gene_set)
@@ -382,7 +376,7 @@ def plot_marker_genes(
 
     ax_genes.set_xticks(np.arange(n_marker))
     ax_genes.set_xticklabels(all_gene_names, fontweight='bold', rotation=45, ha='right', va='top')
-    ax_genes.set_yticks([x + 1 for x in range(deconvolution_results.n_components)])
+    ax_genes.set_yticks([x + 1 for x in range(stdata.n_cell_types)])
     ax_genes.set_yticklabels(cell_type_labels, rotation=0, fontweight='bold')
     ax_genes.invert_yaxis()
     ax_genes.margins(x=0.02, y=0.1)
@@ -418,14 +412,12 @@ def plot_marker_genes(
 
 def plot_cell_num_scatterpie(
         stdata: data.SpatialExpressionDataset,
-        deconvolution_result: data.DeconvolutionResult,
         output_path: str,
         cell_type_names: Optional[List[str]] = None):
     """
     Create a "scatter pie" plot of the deconvolution cell counts.
 
     :param stdata: SpatialExpressionDataset to plot
-    :param deconvolution_result: DeconvolutionResult to plot
     :param output_path: Where to save plot
     :param cell_type_names: Cell type names to use in plot, an array of length n_components
     """
@@ -433,7 +425,7 @@ def plot_cell_num_scatterpie(
 
     plotting.plot_spatial_pie_charts(fig, ax,
                                      stdata.positions_tissue,
-                                     values=deconvolution_result.cell_num_trace.mean(axis=0)[:, 1:],
+                                     values=stdata.cell_type_counts,
                                      layout=stdata.layout,
                                      plotting_coordinates=stdata.positions,
                                      cell_type_names=cell_type_names)
@@ -456,7 +448,6 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
     """
     plot_cell_num(
         stdata=stdata,
-        result=deconvolution_result,
         output_dir=output_dir,
         output_format=output_format,
         seperate_pdf=False,
@@ -464,29 +455,18 @@ def plot_deconvolution(stdata: data.SpatialExpressionDataset,
 
     plot_cell_prob(
         stdata=stdata,
-        result=deconvolution_result,
         output_dir=output_dir,
         output_format=output_format,
         seperate_pdf=False,
         cell_type_names=cell_type_names)
 
-    marker_genes = select_marker_genes(
-        deconvolution_result=deconvolution_result,
-        n_marker=n_marker_genes,
-        alpha=alpha,
-        method=marker_gene_method)
-
     plot_marker_genes(
-        marker_genes=marker_genes,
-        difference=deconvolution_result.omega_difference,
-        deconvolution_results=deconvolution_result,
         stdata=stdata,
         output_file=os.path.join(output_dir, f'marker_genes.{output_format}'),
         cell_type_labels=cell_type_names)
 
     plot_cell_num_scatterpie(
         stdata=stdata,
-        deconvolution_result=deconvolution_result,
         output_path=os.path.join(output_dir, f'cell_num_scatterpie.{output_format}'),
         cell_type_names=cell_type_names)
 

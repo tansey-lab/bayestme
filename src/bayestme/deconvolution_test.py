@@ -233,7 +233,6 @@ def test_add_marker_gene_results_to_dataset():
 
     deconvolution.add_marker_gene_results_to_dataset(
         stdata=dataset,
-        result=deconvolve_results,
         marker_genes=marker_genes)
 
     for expected, observed in zip(marker_genes, dataset.marker_gene_indices):
@@ -261,14 +260,20 @@ def test_deconvolve_plots():
         n_components=5,
         n_samples=100,
         n_gene=dataset.n_gene)
+    
+    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
+
+    marker_genes = deconvolution.select_marker_genes(
+        deconvolution_result=deconvolve_results,
+        n_marker=5,
+        alpha=0.99)
+
+    deconvolution.add_marker_gene_results_to_dataset(stdata=dataset, marker_genes=marker_genes)
 
     try:
         deconvolution.plot_deconvolution(
             stdata=dataset,
-            deconvolution_result=deconvolve_results,
-            output_dir=tempdir,
-            n_marker_genes=n_marker_genes,
-            alpha=0.99
+            output_dir=tempdir
         )
     finally:
         shutil.rmtree(tempdir)
