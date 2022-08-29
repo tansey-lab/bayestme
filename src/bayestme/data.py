@@ -32,7 +32,8 @@ def create_anndata_object(
         coordinates: Optional[np.ndarray],
         tissue_mask: Optional[np.ndarray],
         gene_names: np.ndarray,
-        layout: Layout):
+        layout: Layout,
+        barcodes: Optional[np.array] = None):
     """
     Create an AnnData object from spatial expression data.
 
@@ -41,6 +42,7 @@ def create_anndata_object(
     :param tissue_mask: N length boolean array indicating in-tissue or out of tissue
     :param gene_names: N length string array of gene names
     :param layout: Layout enum
+    :param barcodes: List of UMI barcodes
     :return: AnnData object containing all information provided.
     """
     coordinates = coordinates.astype(int)
@@ -48,6 +50,8 @@ def create_anndata_object(
     adata.obs[IN_TISSUE_ATTR] = tissue_mask
     adata.uns[LAYOUT_ATTR] = layout.name
     adata.var_names = gene_names
+    if barcodes is not None:
+        adata.obs_names = barcodes
     edges = utils.get_edges(coordinates[tissue_mask], layout.value)
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
@@ -119,7 +123,8 @@ class SpatialExpressionDataset:
                     positions: Optional[np.ndarray],
                     tissue_mask: Optional[np.ndarray],
                     gene_names: np.ndarray,
-                    layout: Layout):
+                    layout: Layout,
+                    barcodes: Optional[np.array] = None):
         """
         Construct SpatialExpressionDataset directly from numpy arrays.
 
@@ -128,6 +133,7 @@ class SpatialExpressionDataset:
         :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
         :param gene_names: An <M markers> length array of gene names.
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        :param barcodes: List of UMI barcodes
         in a hex grid layout.
         """
         adata = create_anndata_object(
@@ -135,7 +141,8 @@ class SpatialExpressionDataset:
             coordinates=positions,
             tissue_mask=tissue_mask,
             gene_names=gene_names,
-            layout=layout
+            layout=layout,
+            barcodes=barcodes
         )
         return cls(adata)
 
@@ -200,7 +207,8 @@ class SpatialExpressionDataset:
             positions=positions,
             tissue_mask=tissue_mask,
             gene_names=features,
-            layout=layout)
+            layout=layout,
+            barcodes=barcodes[0].to_numpy())
 
     @classmethod
     def read_count_mat(cls, data_path, layout=Layout.SQUARE):
