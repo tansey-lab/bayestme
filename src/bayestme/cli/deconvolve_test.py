@@ -59,10 +59,10 @@ def test_deconvolve():
                     n_samples=100,
                     n_burnin=500,
                     n_thin=2,
-                    random_seed=0,
                     bkg=False,
                     lda=False,
-                    expression_truth=None
+                    expression_truth=None,
+                    rng=mock.ANY
                 )
     finally:
         shutil.rmtree(tmpdir)
@@ -120,10 +120,10 @@ def test_deconvolve_with_expression_truth():
                         n_samples=100,
                         n_burnin=500,
                         n_thin=2,
-                        random_seed=0,
                         bkg=False,
                         lda=False,
-                        expression_truth=mock.ANY
+                        expression_truth=mock.ANY,
+                        rng=mock.ANY
                     )
     finally:
         shutil.rmtree(tmpdir)
