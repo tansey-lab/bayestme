@@ -92,6 +92,38 @@ def test_serialize_deserialize_deconvolution_results_dataset():
         shutil.rmtree(tmpdir)
 
 
+def test_deconvolution_results_properties():
+    n_samples = 100
+    n_nodes = 25
+    n_components = 4
+    n_gene = 100
+    cell_prob_trace = np.random.random((n_samples, n_nodes, n_components + 1))
+    cell_num_trace = np.random.random((n_samples, n_nodes, n_components + 1))
+    expression_trace = np.random.random((n_samples, n_components, n_gene))
+    beta_trace = np.random.random((n_samples, n_components))
+    reads_trace = np.random.random((n_samples, n_nodes, n_gene, n_components))
+    lam2 = 1000
+
+    dataset = data.DeconvolutionResult(
+        cell_prob_trace=cell_prob_trace,
+        expression_trace=expression_trace,
+        beta_trace=beta_trace,
+        cell_num_trace=cell_num_trace,
+        reads_trace=reads_trace,
+        lam2=lam2,
+        n_components=n_components
+    )
+
+    assert dataset.omega.shape == (n_components, n_gene)
+    assert np.all(dataset.omega.sum(axis=0) == np.array(1.0))
+
+    assert dataset.omega_difference.shape == (n_components, n_gene)
+    assert np.all(dataset.omega_difference <= 1.0)
+
+    assert dataset.relative_expression.shape == (n_components, n_gene)
+    assert np.all(dataset.relative_expression <= 1.0) and np.all(dataset.relative_expression >= -1.0)
+
+
 def test_create_anndata_object():
     n_genes = 10
     locations, tissue_mask, true_rates, true_counts, bleed_counts = synthetic_data.generate_simulated_bleeding_reads_data(

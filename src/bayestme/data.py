@@ -476,6 +476,53 @@ class DeconvolutionResult:
             f.attrs['lam2'] = self.lam2
             f.attrs['n_components'] = self.n_components
 
+    @property
+    def omega(self):
+        """
+        Return a matrix of ω_kg from equation 6 of the preprint
+
+        :return: An <N cell types> x <N markers> floating point matrix.
+        """
+        omega = np.zeros(shape=self.expression_trace.shape[1:], dtype=np.float64)
+        max_exp = self.expression_trace.max(axis=1)
+        for k in range(self.n_components):
+            omega[k] = (self.expression_trace[:, k, :] == max_exp).mean(axis=0)
+
+        return omega
+
+    @property
+    def omega_difference(self):
+        """
+        Return a matrix of average ratio of expression/ maximum expression
+        for each marker in each component
+
+        :return: An <N cell types> x <N markers> floating point matrix.
+        """
+        difference = np.zeros(shape=self.expression_trace.shape[1:], dtype=np.float64)
+        max_exp = self.expression_trace.max(axis=1)
+        for k in range(self.n_components):
+            difference[k] = (self.expression_trace[:, k] / max_exp).mean(axis=0)
+
+        return difference
+
+    @property
+    def relative_expression(self):
+        """
+        Return a matrix of average expression in this cell type, minus the max expression in all other cell types,
+        divided by the maximum expression in all cell types. A higher number for this statistic represents a better
+        candidate marker gene.
+
+        :return: An <N cell types> x <N markers> floating point matrix.
+        """
+        expression = np.zeros(shape=self.expression_trace.shape[1:], dtype=np.float64)
+        gene_expression = self.expression_trace.mean(axis=0)
+        for k in range(self.n_components):
+            mask = np.arange(self.n_components) != k
+            max_exp_g_k_prime = gene_expression[mask].max(axis=0)
+            expression[k] = (gene_expression[k] - max_exp_g_k_prime) / np.max(gene_expression, axis=0)
+
+        return expression
+
     @classmethod
     def read_h5(cls, path):
         """
