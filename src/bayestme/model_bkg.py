@@ -1,5 +1,7 @@
 import numpy as np
 import os.path
+from typing import Optional
+
 from scipy.stats import binom
 from sklearn.decomposition import LatentDirichletAllocation
 
@@ -27,7 +29,6 @@ class GraphFusedMultinomial:
                  n_gene=300,
                  n_max=120,
                  background_noise=False,
-                 random_seed=0,
                  mask=None,
                  c=4,
                  D=30,
@@ -37,15 +38,20 @@ class GraphFusedMultinomial:
                  truth_prob=None,
                  truth_cellnum=None,
                  truth_reads=None,
-                 truth_beta=None):
-        np.random.seed(random_seed)
+                 truth_beta=None,
+                 rng: Optional[np.random.Generator] = None):
+        if rng is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = rng
+
         self.n_components = n_components
         self.n_max = n_max
         self.n_gene = n_gene
         self.edges = edges
         self.bkg = background_noise
-        self.HMM = HMM(self.n_components, self.n_max)
-        self.gtf_psi = GraphFusedBinomialTree(self.n_components + 1, edges, lam2=lam_psi)
+        self.HMM = HMM(self.n_components, self.n_max, rng=self.rng)
+        self.gtf_psi = GraphFusedBinomialTree(self.n_components + 1, edges, lam2=lam_psi, rng=self.rng)
         self.mask = mask
         self.n_nodes = self.gtf_psi.n_nodes
 
@@ -62,12 +68,12 @@ class GraphFusedMultinomial:
             self.phi = truth_expression
         elif lda_initialization:
             print('Initializing with lda')
-            lda = LatentDirichletAllocation(n_components=self.n_components)
+            lda = LatentDirichletAllocation(n_components=self.n_components, random_state=self.rng)
             lda.fit(observations)
             self.phi = lda.components_ / lda.components_.sum(axis=1)[:, None]
             self.probs[:, 1:] = lda.transform(observations)
         else:
-            self.phi = np.random.dirichlet(self.alpha, size=n_components)
+            self.phi = self.rng.dirichlet(self.alpha, size=n_components)
         if self.bkg:
             bkg = np.ones(self.n_gene) / self.n_gene
             self.phi = np.vstack((self.phi, bkg))
@@ -80,12 +86,12 @@ class GraphFusedMultinomial:
             self.cell_num[:, :-1] = truth_cellnum
             self.cell_num[:, -1] = 1
         else:
-            self.cell_num[:, 0] = np.random.binomial(self.n_max, self.probs[:, 0])
+            self.cell_num[:, 0] = self.rng.binomial(self.n_max, self.probs[:, 0])
             if self.bkg:
                 self.cell_num[:, -1] = 1
-                self.cell_num[:, 1:-1] = utils.multinomial_rvs(self.cell_num[:, 0], p=self.probs[:, 1:])
+                self.cell_num[:, 1:-1] = utils.multinomial_rvs(self.cell_num[:, 0], p=self.probs[:, 1:], rng=self.rng)
             else:
-                self.cell_num[:, 1:] = utils.multinomial_rvs(self.cell_num[:, 0], p=self.probs[:, 1:])
+                self.cell_num[:, 1:] = utils.multinomial_rvs(self.cell_num[:, 0], p=self.probs[:, 1:], rng=self.rng)
 
         if mask is not None:
             spot_count = observations[~mask].sum(axis=1)
@@ -100,7 +106,7 @@ class GraphFusedMultinomial:
         if truth_beta is not None:
             self.beta = truth_beta
         else:
-            self.beta = np.random.gamma(self.a_beta, 1 / self.b_beta, size=n_components)
+            self.beta = self.rng.gamma(self.a_beta, 1 / self.b_beta, size=n_components)
         if self.bkg:
             self.beta = np.concatenate([self.beta, [np.min([observations.sum(axis=1).min(), 100])]])
 
@@ -125,14 +131,14 @@ class GraphFusedMultinomial:
         self.assignment_probs = expected_counts / np.clip(expected_counts.sum(axis=1, keepdims=True), 1e-20, None)
         self.assignment_probs = np.transpose(self.assignment_probs, [0, 2, 1])
         # multinomial draw for all spots
-        self.reads = utils.multinomial_rvs(Observations.astype(np.int64), self.assignment_probs)
+        self.reads = utils.multinomial_rvs(Observations.astype(np.int64), self.assignment_probs, rng=self.rng)
 
     def sample_phi(self):
         '''
         sample cell-type-wise gene expression profile, phi_kg
         '''
         phi_posteriors = self.alpha[None] + self.reads.sum(axis=0).T
-        self.phi = np.array([np.random.dirichlet(c) for c in phi_posteriors])
+        self.phi = np.array([self.rng.dirichlet(c) for c in phi_posteriors])
 
     def sample_cell_num(self):
         '''
@@ -181,7 +187,7 @@ class GraphFusedMultinomial:
         '''
         R_k = self.reads.sum(axis=(0, 1))
         d_k = self.cell_num[:, 1:].sum(axis=0)
-        self.beta = np.random.gamma(R_k + self.a_beta, 1 / (d_k + self.b_beta))
+        self.beta = self.rng.gamma(R_k + self.a_beta, 1 / (d_k + self.b_beta))
 
     def sample(self, Obs):
         self.sample_reads(Obs)

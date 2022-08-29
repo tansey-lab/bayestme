@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Optional
 from polyagamma import random_polyagamma
 from scipy.sparse import spdiags, kron, csc_matrix
 
@@ -6,7 +7,14 @@ from bayestme import utils, fast_multivariate_normal
 
 
 class GraphFusedBinomialTree:
-    def __init__(self, n_classes, edges, trend_order=0, lam2=1e-5, pg_seed=42, stability=1e-6):
+    def __init__(self, n_classes, edges, trend_order=0, lam2=1e-5, pg_seed=42, stability=1e-6,
+                 rng: Optional[np.random.Generator] = None):
+
+        if rng is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = rng
+
         self.n_classes = n_classes
         self.edges = edges
         self.trend_order = trend_order
@@ -18,7 +26,8 @@ class GraphFusedBinomialTree:
 
         # Initialize the nuisance variables for the Horseshoe+ prior
         self.lam2 = lam2  # TODO: put a prior on this
-        self.Tau2, self.Tau2_c, self.Tau2_b, self.Tau2_a = utils.sample_horseshoe_plus(size=self.Delta.shape[0])
+        self.Tau2, self.Tau2_c, self.Tau2_b, self.Tau2_a = utils.sample_horseshoe_plus(size=self.Delta.shape[0],
+                                                                                       rng=self.rng)
         self.Tau2 = self.Tau2.clip(0, 9)
 
         # Initialize the logits (thetas) and PG latent variables (omegas)
@@ -52,7 +61,8 @@ class GraphFusedBinomialTree:
             trials_flat = Trials.reshape(-1)[obs_mask_flat]
             thetas_flat = self.Thetas.reshape(-1)[obs_mask_flat]
             omegas_flat = random_polyagamma(trials_flat, thetas_flat,
-                                            size=obs_mask_flat.sum())
+                                            size=obs_mask_flat.sum(),
+                                            random_state=self.rng)
             self.Omegas[obs_mask] = omegas_flat
             self.Omegas[~obs_mask] = 0.
 
@@ -82,7 +92,9 @@ class GraphFusedBinomialTree:
             mu_part=self.mu,
             sparse=True,
             force_psd=True,
-            Q_shape=self.Sigma_inv.shape).reshape(self.Thetas.shape[1],
+            Q_shape=self.Sigma_inv.shape,
+            rng=self.rng
+        ).reshape(self.Thetas.shape[1],
                                                   self.Thetas.shape[0]).T
 
         # Sample Horseshoe+ prior parameters

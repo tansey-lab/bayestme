@@ -44,10 +44,11 @@ def deconvolve(
         n_samples=100,
         n_burnin=1000,
         n_thin=10,
-        random_seed=0,
         bkg=False,
         lda=False,
-        expression_truth=None) -> data.DeconvolutionResult:
+        expression_truth=None,
+        rng: Optional[np.random.Generator] = None
+        ) -> data.DeconvolutionResult:
     """
     Run deconvolution
 
@@ -59,13 +60,16 @@ def deconvolve(
     :param n_samples: Number of total samples from the posterior distribution
     :param n_burnin: Number of burn in samples before samples are saved
     :param n_thin: Proportion of samples to save
-    :param random_seed: Random seed
     :param bkg:
     :param lda: If true use LDA initialization
     :param expression_truth: If provided, use ground truth per cell type relative expression values,
     output from companion scRNA fine mapping.
+    :param rng: Numpy random generator to use
     :return: data.DeconvolutionResult
     """
+    if rng is None:
+        rng = np.random.default_rng()
+
     # detetermine the number of spots
     n_nodes = reads.shape[0]
 
@@ -83,8 +87,6 @@ def deconvolve(
     else:
         raise ValueError('n_gene must be a integer or a list of indices of genes')
 
-    np.random.seed(random_seed)
-
     gfm = model_bkg.GraphFusedMultinomial(
         n_components=n_components,
         edges=edges,
@@ -93,7 +95,8 @@ def deconvolve(
         lam_psi=lam2,
         background_noise=bkg,
         lda_initialization=lda,
-        truth_expression=expression_truth)
+        truth_expression=expression_truth,
+        rng=rng)
 
     cell_prob_trace = np.zeros((n_samples, n_nodes, n_components + 1))
     cell_num_trace = np.zeros((n_samples, n_nodes, n_components + 1))

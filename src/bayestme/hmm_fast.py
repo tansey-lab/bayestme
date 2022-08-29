@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import binom
+from typing import Optional
 import scipy.special as scs
 
 from bayestme import utils
@@ -36,7 +37,12 @@ def emission_fast(reads, log_cell, expression, cell_grid):
 
 
 class HMM:
-    def __init__(self, n_components, n_max=120):
+    def __init__(self, n_components, n_max=120, rng: Optional[np.random.Generator] = None):
+        if rng is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = rng
+
         self.n_states = n_components
         self.n_max = n_max
         # cache the list of all possible cell numbers [0, 1, ..., n_max]
@@ -112,7 +118,7 @@ class HMM:
             # if len(zero_idx) > 0:
             #     print(raw_prob[post_prob])
             post_prob /= post_prob.sum(axis=1)[:, None]
-            samples[:, i] = (post_prob.cumsum(axis=1) > np.random.rand(post_prob.shape[0])[:, None]).argmax(axis=1)
+            samples[:, i] = (post_prob.cumsum(axis=1) > self.rng.random(post_prob.shape[0])[:, None]).argmax(axis=1)
             samples_n[:, i + 1] = samples_n[:, i] + samples[:, i]
         # the last entry in samples_n is D_i, move it to the output vector 
         samples[:, -1] = samples_n[:, -1]

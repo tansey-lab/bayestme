@@ -1,5 +1,6 @@
 import argparse
 import logging
+import numpy as np
 
 from bayestme import data, deconvolution
 
@@ -64,6 +65,8 @@ def main():
     if n_components is None:
         raise RuntimeError('--n-components not explicitly provided, and no expression truth provided.')
 
+    rng = np.random.default_rng(seed=args.random_seed)
+
     results: data.DeconvolutionResult = deconvolution.deconvolve(
         reads=dataset.reads,
         edges=dataset.edges,
@@ -73,10 +76,10 @@ def main():
         n_samples=args.n_samples,
         n_burnin=args.n_burnin,
         n_thin=args.n_thin,
-        random_seed=args.random_seed,
         bkg=args.bkg,
         lda=args.lda,
-        expression_truth=expression_truth
+        expression_truth=expression_truth,
+        rng=rng
     )
 
     results.save(args.output)

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import os
 
+from typing import Optional
 from sklearn.model_selection import KFold
 from typing import Iterable
 from scipy.stats import multinomial
@@ -106,7 +107,12 @@ def sample_graph_fused_multinomial(
         n_max: int,
         n_samples: int,
         n_thin: int,
-        n_burn: int):
+        n_burn: int,
+        rng: Optional[np.random.Generator] = None):
+
+    if rng is None:
+        rng = np.random.default_rng()
+
     n_nodes = train.shape[0]
 
     heldout_spots = np.argwhere(mask).flatten()
@@ -123,7 +129,8 @@ def sample_graph_fused_multinomial(
         background_noise=background_noise,
         lda_initialization=lda_initialization,
         mask=mask,
-        n_max=n_max)
+        n_max=n_max,
+        rng=rng)
 
     cell_prob_trace = np.zeros((n_samples, n_nodes, n_components + 1))
     cell_num_trace = np.zeros((n_samples, n_nodes, n_components + 1))

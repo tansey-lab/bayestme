@@ -168,7 +168,7 @@ def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False)
     return composite_trendfilter_matrix
 
 
-def multinomial_rvs(count, p):
+def multinomial_rvs(count, p, rng: Optional[np.random.Generator] = None):
     """
     Sample from the multinomial distribution with multiple p vectors.
     * count must be an (n-1)-dimensional numpy array.
@@ -177,6 +177,9 @@ def multinomial_rvs(count, p):
     The return value has the same shape as p.
     Taken from: https://stackoverflow.com/questions/55818845/fast-vectorized-multinomial-in-python
     """
+    if rng is None:
+        rng = np.random.default_rng()
+
     out = np.zeros(p.shape, dtype=int)
     count = count.copy()
     ps = p.cumsum(axis=-1)
@@ -185,7 +188,7 @@ def multinomial_rvs(count, p):
         condp = p / ps
     condp[np.isnan(condp)] = 0.0
     for i in range(p.shape[-1] - 1, 0, -1):
-        binsample = np.random.binomial(count, condp[..., i])
+        binsample = rng.binomial(count, condp[..., i])
         out[..., i] = binsample
         count -= binsample
     out[..., 0] = count
