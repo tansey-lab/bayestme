@@ -41,12 +41,8 @@ def test_plot_deconvolution():
 
     command_line_args = [
         'plot_deconvolution',
-        '--stdata',
+        '--adata',
         stdata_fn,
-        '--deconvolution-result',
-        deconvolve_results_fn,
-        '--n-marker-genes',
-        str(n_marker_genes),
         '--output-dir',
         tmpdir]
 
@@ -56,11 +52,7 @@ def test_plot_deconvolution():
 
             plot_deconvolution_mock.assert_called_once_with(
                 stdata=mock.ANY,
-                deconvolution_result=mock.ANY,
                 output_dir=tmpdir,
-                n_marker_genes=n_marker_genes,
-                alpha=0.05,
-                marker_gene_method=deconvolution.MarkerGeneMethod.TIGHT,
                 cell_type_names=None)
 
 
@@ -95,12 +87,8 @@ def test_plot_deconvolution_with_cell_type_names():
 
     command_line_args = [
         'plot_deconvolution',
-        '--stdata',
+        '--adata',
         stdata_fn,
-        '--deconvolution-result',
-        deconvolve_results_fn,
-        '--n-marker-genes',
-        str(n_marker_genes),
         '--output-dir',
         tmpdir,
         '--cell-type-names',
@@ -112,9 +100,5 @@ def test_plot_deconvolution_with_cell_type_names():
 
             plot_deconvolution_mock.assert_called_once_with(
                 stdata=mock.ANY,
-                deconvolution_result=mock.ANY,
                 output_dir=tmpdir,
-                n_marker_genes=n_marker_genes,
-                alpha=0.05,
-                marker_gene_method=deconvolution.MarkerGeneMethod.TIGHT,
                 cell_type_names=['type 1', 'type 2', 'type 3'])

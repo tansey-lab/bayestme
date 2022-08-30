@@ -32,13 +32,44 @@ There are 4 high level data classes that represent the outputs of the 4 steps:
 
 These are all saved as `hdf5 <https://en.wikipedia.org/wiki/Hierarchical_Data_Format>`_ archives on disk, which is a format also used by AnnData.
 
-Bleeding correction produces two outputs, one is a modified version of the input
+:ref:`cli_bleeding_correction` produces two outputs, one is a modified version of the input
 :py:class:`bayestme.data.SpatialExpressionDataset` object with the read counts adjusted,
 the other is the :py:class:`bayestme.data.BleedCorrectionResult` object which contains the basis functions,
 global, and local weights.
 
-Phenotype selection will produce one :py:class:`bayestme.data.PhenotypeSelectionResult` object for each node in the grid search.
-Having one output per parameter set enables parallelization.
+:ref:`cli_phenotype_selection` will produce one :py:class:`bayestme.data.PhenotypeSelectionResult` object
+for each node in the grid search. Having one output per parameter set enables parallelization.
 
-Deconvolution and spatial differential expression each just product their respective single objects as output,
-these objects just represent the samples from the posterior distributions.
+:ref:`cli_deconvolve` will produce a :py:class:`bayestme.data.DeconvolutionResult` object in h5 format,
+which represents all the raw samples from the posterior distribution.
+This object can be quite large (>10GB) as it is contains very high dimensional arrays of floating point numbers.
+:ref:`cli_deconvolve` will also modify the AnnData archive to add meaningful summary statistics
+from these posterior samples which are used in data visualization and analysis.
+
+The AnnData fields added by this step are as follows:
+
+Deconvolve AnnData Fields
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``adata.uns['bayestme_n_cell_types']`` - integer, number of cell types
+- ``adata.varm['bayestme_cell_type_counts']`` - <N marker> x <N cell type matrix> with the average posterior count of each cell type in each spot
+- ``adata.varm['bayestme_cell_type_probabilities']`` - <N marker> x <N cell type matrix> with the cell type probability of each cell type in each spot
+
+
+:ref:`cli_select_marker_genes` will modify the AnnData archive add to indicators of which genes are
+marker genes for each cell type, and their order of significance.
+
+The AnnData fields added by this step are as follows:
+
+Marker Gene AnnData Fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``adata.varm['bayestme_cell_type_marker']`` - <N marker> x <N cell type> integer matrix. Set to -1 if gene is not a
+marker gene for cell type, otherwise set to monotonically increasing 0-indexed integers indicating marker gene
+significance.
+- ``adata.varm['bayestme_omega_difference']`` - <N marker> x <N cell type> floating point matrix. This statistic
+represents the "overexpression" of a gene in a cell type, and is used for scaling the dot size in our marker gene plot.
+
+:ref:`cli_spatial_expression` will produce a :py:class:`bayestme.data.SpatialDifferentialExpressionResult`
+object in h5 format which represents all the raw samples from the posterior distribution.
+This object can be quite large (>10GB) as it is contains very high dimensional arrays of floating point numbers.

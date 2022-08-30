@@ -9,9 +9,13 @@ logger = logging.getLogger(__name__)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Deconvolve data')
-    parser.add_argument('--input', type=str,
-                        help='Input SpatialExpressionDataset in h5 format, '
-                             'expected to be bleed corrected')
+    parser.add_argument('--adata', type=str,
+                        help='Input AnnData in h5 format, expected to be already bleed corrected')
+    parser.add_argument('--adata-output', type=str,
+                        help='A new AnnData in h5 format created with the deconvolution summary results '
+                             'appended.')
+    parser.add_argument('-i', '--inplace', default=False, action='store_true',
+                        help='If provided, append deconvolution summary results to the --adata archive in place')
     parser.add_argument('--output', type=str,
                         help='Path where DeconvolutionResult will be written h5 format')
     parser.add_argument('--n-gene', type=int,
@@ -53,7 +57,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(args.input)
+    dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(args.adata)
 
     if args.expression_truth:
         expression_truth = deconvolution.load_expression_truth(dataset, args.expression_truth)
@@ -83,3 +87,15 @@ def main():
     )
 
     results.save(args.output)
+
+    deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset,
+        result=results
+    )
+
+    if args.inplace:
+        dataset.save(args.adata)
+    else:
+        dataset.save(args.adata_output)
+
+

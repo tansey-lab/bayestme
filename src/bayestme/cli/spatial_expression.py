@@ -15,9 +15,9 @@ def get_parser():
     parser.add_argument('--deconvolve-results',
                         type=str,
                         help='DeconvolutionResult in h5 format')
-    parser.add_argument('--dataset',
+    parser.add_argument('--adata',
                         type=str,
-                        help='SpatialExpressionDataset in h5 format')
+                        help='AnnData in h5 format')
     parser.add_argument('--output', type=str,
                         help='Path to store SpatialDifferentialExpressionResult in h5 format')
     parser.add_argument('--n-cell-min',
@@ -61,7 +61,7 @@ def main():
     args = get_parser().parse_args()
 
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
-        args.dataset)
+        args.adata)
 
     deconvolve_results: data.DeconvolutionResult = data.DeconvolutionResult.read_h5(
         args.deconvolve_results)

@@ -5,12 +5,14 @@ from bayestme import phenotype_selection, data
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Select values for number of cell types and lambda smoothing parameter '
+    parser = argparse.ArgumentParser(description='Select values for number of cell types and '
+                                                 'lambda smoothing parameter '
                                                  'via k-fold cross-validation.')
-    parser.add_argument('--stdata', type=str,
-                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--adata', type=str,
+                        help='Input file, AnnData in h5 format')
     parser.add_argument('--job-index', type=int, default=None,
-                        help='Run only this job index, suitable for running the sampling in parallel across many machines')
+                        help='Run only this job index, '
+                             'suitable for running the sampling in parallel across many machines')
     parser.add_argument('--n-fold',
                         type=int,
                         default=5,
@@ -61,7 +63,7 @@ DEFAULT_LAMBDAS = (1, 1e1, 1e2, 1e3, 1e4, 1e5)
 def main():
     args = get_parser().parse_args()
 
-    stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
+    stdata = data.SpatialExpressionDataset.read_h5(args.adata)
 
     all_jobs = [_ for _ in enumerate(phenotype_selection.get_phenotype_selection_parameters_for_folds(
         stdata=stdata,

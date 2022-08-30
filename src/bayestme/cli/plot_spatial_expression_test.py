@@ -52,7 +52,7 @@ def test_plot_spatial_expression():
 
     command_line_args = [
         'plot_spatial_expression',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--deconvolution-result',
         deconvolve_results_fn,
@@ -115,7 +115,7 @@ def test_plot_spatial_expression_with_cell_type_names():
 
     command_line_args = [
         'plot_spatial_expression',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--deconvolution-result',
         deconvolve_results_fn,

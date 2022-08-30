@@ -32,9 +32,9 @@ def test_plot_bleeding_correction():
 
     command_line_args = [
         'plot_bleeding_correction',
-        '--raw-stdata',
+        '--raw-adata',
         raw_out,
-        '--corrected-stdata',
+        '--corrected-adata',
         clean_out,
         '--bleed-correction-results',
         bleed_out,
