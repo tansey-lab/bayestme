@@ -25,6 +25,42 @@ def create_toy_deconvolve_result(
     )
 
 
+def create_deconvolve_dataset(
+        n_nodes: int = 12,
+        n_components: int = 5,
+        n_samples: int = 100,
+        n_genes: int = 100,
+        n_marker_gene: int = 5):
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=n_nodes,
+        n_cols=n_nodes,
+        n_genes=n_genes)
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=n_samples,
+        n_gene=dataset.n_gene)
+
+    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
+
+    marker_genes = deconvolution.select_marker_genes(
+        deconvolution_result=deconvolve_results,
+        n_marker=n_marker_gene,
+        alpha=0.99)
+
+    deconvolution.add_marker_gene_results_to_dataset(stdata=dataset, marker_genes=marker_genes)
+
+    return dataset
+
+
 def test_deconvolve():
     locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=15,
@@ -129,35 +165,11 @@ def test_detect_marker_genes_fdr():
 
 def test_plot_marker_genes():
     tempdir = tempfile.mkdtemp()
-    n_genes = 50
-    n_marker_genes = 5
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
-        n_rows=12,
-        n_cols=12,
-        n_genes=n_genes)
-
-    dataset = data.SpatialExpressionDataset.from_arrays(
-        raw_counts=bleed_counts,
-        tissue_mask=tissue_mask,
-        positions=locations,
-        gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE)
-
-    deconvolve_results = create_toy_deconvolve_result(
-        n_nodes=dataset.n_spot_in,
-        n_components=5,
-        n_samples=100,
-        n_gene=dataset.n_gene)
-
-    difference = np.random.random((n_marker_genes, n_genes))
+    dataset = create_deconvolve_dataset(n_components=5)
 
     try:
         deconvolution.plot_marker_genes(
-            marker_genes=[np.array([1]), np.array([2, 3]), np.array([4, 5, 6]), np.array([7, 8, 9, 10]),
-                          np.array([11, 12, 13, 14, 15])],
-            difference=difference,
             stdata=dataset,
-            deconvolution_results=deconvolve_results,
             output_file=os.path.join(tempdir, 'plot.pdf'),
             cell_type_labels=['B-Cell', 'T-Cell', 'Lymphoid', 'Muscle', 'Neuron']
         )
@@ -228,6 +240,8 @@ def test_add_marker_gene_results_to_dataset():
         n_samples=100,
         n_gene=dataset.n_gene)
 
+    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
+
     marker_genes = deconvolution.select_marker_genes(
         deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
 
@@ -241,34 +255,8 @@ def test_add_marker_gene_results_to_dataset():
 
 def test_deconvolve_plots():
     tempdir = tempfile.mkdtemp()
-    n_genes = 50
-    n_marker_genes = 5
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
-        n_rows=12,
-        n_cols=12,
-        n_genes=n_genes)
 
-    dataset = data.SpatialExpressionDataset.from_arrays(
-        raw_counts=bleed_counts,
-        tissue_mask=tissue_mask,
-        positions=locations,
-        gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE)
-
-    deconvolve_results = create_toy_deconvolve_result(
-        n_nodes=dataset.n_spot_in,
-        n_components=5,
-        n_samples=100,
-        n_gene=dataset.n_gene)
-    
-    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
-
-    marker_genes = deconvolution.select_marker_genes(
-        deconvolution_result=deconvolve_results,
-        n_marker=5,
-        alpha=0.99)
-
-    deconvolution.add_marker_gene_results_to_dataset(stdata=dataset, marker_genes=marker_genes)
+    dataset = create_deconvolve_dataset()
 
     try:
         deconvolution.plot_deconvolution(
@@ -281,33 +269,11 @@ def test_deconvolve_plots():
 
 def test_deconvolve_plots_with_cell_type_names():
     tempdir = tempfile.mkdtemp()
-    n_genes = 50
-    n_marker_genes = 5
-    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
-        n_rows=12,
-        n_cols=12,
-        n_genes=n_genes)
-
-    dataset = data.SpatialExpressionDataset.from_arrays(
-        raw_counts=bleed_counts,
-        tissue_mask=tissue_mask,
-        positions=locations,
-        gene_names=np.array(['gene{}'.format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE)
-
-    deconvolve_results = create_toy_deconvolve_result(
-        n_nodes=dataset.n_spot_in,
-        n_components=5,
-        n_samples=100,
-        n_gene=dataset.n_gene)
-
+    dataset = create_deconvolve_dataset(n_components=5)
     try:
         deconvolution.plot_deconvolution(
             stdata=dataset,
-            deconvolution_result=deconvolve_results,
             output_dir=tempdir,
-            n_marker_genes=n_marker_genes,
-            alpha=0.99,
             cell_type_names=['type1', 'banana', 'threeve', 'quattro', 'ISPC']
         )
     finally:
@@ -336,8 +302,14 @@ def test_create_top_gene_lists():
         n_samples=100,
         n_gene=dataset.n_gene)
 
+    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
+
     marker_genes = deconvolution.select_marker_genes(
-        deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
+        deconvolution_result=deconvolve_results,
+        n_marker=n_marker,
+        alpha=0.99)
+
+    deconvolution.add_marker_gene_results_to_dataset(stdata=dataset, marker_genes=marker_genes)
 
     tempdir = tempfile.mkdtemp()
 
