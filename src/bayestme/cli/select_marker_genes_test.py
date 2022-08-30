@@ -38,14 +38,17 @@ def test_select_marker_genes():
     tmpdir = tempfile.mkdtemp()
 
     stdata_fn = os.path.join(tmpdir, 'data.h5')
+    adata_output_fn = os.path.join(tmpdir, 'data_out.h5')
     deconvolve_results_fn = os.path.join(tmpdir, 'deconvolve.h5')
     dataset.save(stdata_fn)
     deconvolve_results.save(deconvolve_results_fn)
 
     command_line_arguments = [
         'select_marker_genes',
-        '--stdata',
+        '--adata',
         stdata_fn,
+        '--adata-output',
+        adata_output_fn,
         '--deconvolution-result',
         deconvolve_results_fn,
         '--n-marker-genes',
@@ -67,7 +70,7 @@ def test_select_marker_genes():
 
                 select_marker_genes.main()
 
-                stdata = data.SpatialExpressionDataset.read_h5(stdata_fn)
+                stdata = data.SpatialExpressionDataset.read_h5(adata_output_fn)
 
                 assert stdata.marker_gene_indices is not None
                 assert stdata.marker_gene_names is not None

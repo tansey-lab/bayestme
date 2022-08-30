@@ -27,11 +27,11 @@ def test_filter_genes():
 
     command_line_arguments = [
         'bleeding_correction',
-        '--input',
+        '--adata',
         input_path,
         '--bleed-out',
         bleed_out,
-        '--stdata-out',
+        '--adata-output',
         clean_out,
         '--n-top',
         '3',

@@ -5,8 +5,13 @@ from bayestme import data, deconvolution
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Perform marker gene selection')
-    parser.add_argument('--stdata', type=str,
-                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--adata', type=str,
+                        help='Input file, AnnData in h5 format')
+    parser.add_argument('--adata-output', type=str,
+                        help='A new AnnData in h5 format created with the deconvolution summary results '
+                             'appended.')
+    parser.add_argument('-i', '--inplace', default=False, action='store_true',
+                        help='If provided, append deconvolution summary results to the --adata archive in place')
     parser.add_argument('--deconvolution-result', type=str,
                         help='Input file, DeconvolutionResult in h5 format')
     parser.add_argument('--output-dir', type=str,
@@ -28,7 +33,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
+    stdata = data.SpatialExpressionDataset.read_h5(args.adata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
 
     marker_genes = deconvolution.select_marker_genes(
@@ -41,5 +46,8 @@ def main():
         stdata=stdata,
         marker_genes=marker_genes)
 
-    stdata.save(args.stdata)
+    if args.inplace:
+        stdata.save(args.adata)
+    else:
+        stdata.save(args.adata_output)
 

@@ -4,13 +4,15 @@ from bayestme import data, bleeding_correction
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Filter data')
-    parser.add_argument('--input', type=str,
+    parser = argparse.ArgumentParser(description='Perform bleeding correction')
+    parser.add_argument('--adata', type=str,
                         help='Input file, AnnData in h5 format')
     parser.add_argument('--bleed-out', type=str,
                         help='Output file, BleedCorrectionResult in h5 format')
-    parser.add_argument('--stdata-out', type=str,
-                        help='Output file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--adata-output', type=str,
+                        help='A new AnnData in h5 format created using the bleed corrected counts')
+    parser.add_argument('-i', '--inplace', default=False, action='store_true',
+                        help='If provided, overwrite the input file --adata')
     parser.add_argument('--n-top', type=int, default=50,
                         help='Use N top genes by standard deviation to calculate the bleeding functions. '
                              'Genes will not be filtered from output dataset.')
@@ -26,7 +28,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    dataset = data.SpatialExpressionDataset.read_h5(args.input)
+    dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 
     (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(
         dataset=dataset,
@@ -36,4 +38,8 @@ def main():
     )
 
     bleed_correction_result.save(args.bleed_out)
-    cleaned_dataset.save(args.stdata_out)
+
+    if not args.inplace:
+        cleaned_dataset.save(args.adata_output)
+    else:
+        cleaned_dataset.save(args.adata)
