@@ -45,6 +45,13 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :ref: bayestme.cli.deconvolve.get_parser
    :prog: deconvolve
 
+``select_marker_genes``
+--------------
+
+.. argparse::
+   :ref: bayestme.cli.select_marker_genes.get_parser
+   :prog: select_marker_genes
+
 ``spatial_expression``
 ----------------------
 

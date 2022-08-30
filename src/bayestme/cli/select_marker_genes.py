@@ -4,7 +4,7 @@ from bayestme import data, deconvolution
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Plot deconvolution results')
+    parser = argparse.ArgumentParser(description='Perform marker gene selection')
     parser.add_argument('--stdata', type=str,
                         help='Input file, SpatialExpressionDataset in h5 format')
     parser.add_argument('--deconvolution-result', type=str,
