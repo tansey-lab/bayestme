@@ -6,7 +6,7 @@ from bayestme import data, bleeding_correction
 def get_parser():
     parser = argparse.ArgumentParser(description='Filter data')
     parser.add_argument('--input', type=str,
-                        help='Input file, SpatialExpressionDataset in h5 format')
+                        help='Input file, AnnData in h5 format')
     parser.add_argument('--bleed-out', type=str,
                         help='Output file, BleedCorrectionResult in h5 format')
     parser.add_argument('--stdata-out', type=str,

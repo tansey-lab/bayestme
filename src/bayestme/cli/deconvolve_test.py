@@ -5,7 +5,7 @@ import tempfile
 import os
 
 from unittest import mock
-from bayestme import data
+from bayestme import data, deconvolution_test
 from bayestme.cli import deconvolve
 from bayestme.data_test import generate_toy_stdataset
 
@@ -17,14 +17,11 @@ def test_deconvolve():
     input_path = os.path.join(tmpdir, 'data.h5')
     output_path = os.path.join(tmpdir, 'deconvolve.h5')
 
-    deconvolve_rv = data.DeconvolutionResult(
-        cell_prob_trace=np.zeros((2, 2)),
-        expression_trace=np.zeros((2, 2)),
-        beta_trace=np.zeros((2, 2)),
-        cell_num_trace=np.zeros((2, 2)),
-        reads_trace=np.zeros((2, 2)),
-        lam2=1000,
-        n_components=4
+    deconvolve_rv = deconvolution_test.create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=5,
+        n_samples=100,
+        n_gene=dataset.n_gene
     )
 
     command_line_arguments = [
@@ -75,14 +72,11 @@ def test_deconvolve_with_expression_truth():
     input_path = os.path.join(tmpdir, 'data.h5')
     output_path = os.path.join(tmpdir, 'deconvolve.h5')
 
-    deconvolve_rv = data.DeconvolutionResult(
-        cell_prob_trace=np.zeros((2, 2)),
-        expression_trace=np.zeros((2, 2)),
-        beta_trace=np.zeros((2, 2)),
-        cell_num_trace=np.zeros((2, 2)),
-        reads_trace=np.zeros((2, 2)),
-        lam2=1000,
-        n_components=4
+    deconvolve_rv = deconvolution_test.create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=5,
+        n_samples=100,
+        n_gene=dataset.n_gene
     )
 
     command_line_arguments = [
