@@ -5,8 +5,8 @@ from bayestme import data, spatial_expression
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Plot spatial differential expression results')
-    parser.add_argument('--stdata', type=str,
-                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--adata', type=str,
+                        help='Input file, AnnData in h5 format')
     parser.add_argument('--deconvolution-result', type=str,
                         help='Input file, DeconvolutionResult in h5 format')
     parser.add_argument('--sde-result', type=str,
@@ -23,7 +23,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
+    stdata = data.SpatialExpressionDataset.read_h5(args.adata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
     sde_result = data.SpatialDifferentialExpressionResult.read_h5(args.sde_result)
 

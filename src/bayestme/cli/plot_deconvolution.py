@@ -5,8 +5,8 @@ from bayestme import data, deconvolution
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Plot deconvolution results')
-    parser.add_argument('--stdata', type=str,
-                        help='Input file, SpatialExpressionDataset in h5 format')
+    parser.add_argument('--adata', type=str,
+                        help='Input file, AnnData in h5 format. Expected to be annotated with deconvolution results.')
     parser.add_argument('--output-dir', type=str,
                         help='Output directory.')
     parser.add_argument('--cell-type-names',
@@ -19,7 +19,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    stdata = data.SpatialExpressionDataset.read_h5(args.stdata)
+    stdata = data.SpatialExpressionDataset.read_h5(args.adata)
 
     if args.cell_type_names is not None:
         cell_type_names = [name.strip() for name in args.cell_type_names.split(',')]

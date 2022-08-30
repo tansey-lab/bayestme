@@ -50,4 +50,3 @@ def main():
         stdata.save(args.adata)
     else:
         stdata.save(args.adata_output)
-

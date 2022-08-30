@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Filter the genes based on one or more criteria')
+    parser = argparse.ArgumentParser(description='Filter genes from dataset based on one or more criteria')
     parser.add_argument('--adata', type=str,
                         help='Input AnnData in h5 format')
     parser.add_argument('--output', type=str,
@@ -27,7 +27,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-    dataset = data.SpatialExpressionDataset.read_h5(args.input)
+    dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 
     if args.n_top_by_standard_deviation is not None:
         logger.info(

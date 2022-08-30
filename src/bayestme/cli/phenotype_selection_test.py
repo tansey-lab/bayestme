@@ -18,7 +18,7 @@ def test_phenotype_selection_all_job():
 
     command_line_args = [
         'phenotype_selection',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--n-fold',
         '1',
@@ -121,7 +121,7 @@ def test_phenotype_selection_single_job():
 
     command_line_args = [
         'phenotype_selection',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--job-index',
         '0',

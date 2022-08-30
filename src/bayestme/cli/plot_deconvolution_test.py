@@ -41,7 +41,7 @@ def test_plot_deconvolution():
 
     command_line_args = [
         'plot_deconvolution',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--output-dir',
         tmpdir]
@@ -87,7 +87,7 @@ def test_plot_deconvolution_with_cell_type_names():
 
     command_line_args = [
         'plot_deconvolution',
-        '--stdata',
+        '--adata',
         stdata_fn,
         '--output-dir',
         tmpdir,

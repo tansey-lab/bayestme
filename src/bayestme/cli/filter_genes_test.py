@@ -42,7 +42,7 @@ def test_filter_genes():
 
     command_line_arguments = [
         'filter_genes',
-        '--input',
+        '--adata',
         input_path,
         '--output',
         output_path,
@@ -97,7 +97,7 @@ def test_filter_expression_truth():
 
     command_line_arguments = [
         'filter_genes',
-        '--input',
+        '--adata',
         input_path,
         '--output',
         output_path,
