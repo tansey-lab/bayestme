@@ -63,7 +63,7 @@ autodoc_mock_imports = [
     'h5py',
     'pandas',
     'scipy',
-    'pypolyagamma',
+    'polyagamma',
     'libpysal',
     'seaborn',
     'anndata',
