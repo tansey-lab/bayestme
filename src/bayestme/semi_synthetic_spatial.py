@@ -2,6 +2,8 @@ import numpy as np
 import anndata
 import statsmodels.api as sm
 
+from bayestme import data
+
 
 def get_rank(array):
     temp = array.argsort()
@@ -12,7 +14,7 @@ def get_rank(array):
 
 def generate_semi_synthetic(adata: anndata.AnnData,
                             cluster_id_column: str,
-                            pos_ss: np.ndarray,
+                            tissue_positions: np.ndarray,
                             n_genes: int,
                             cell_num=None,
                             canvas_size=(36, 36),
@@ -26,6 +28,28 @@ def generate_semi_synthetic(adata: anndata.AnnData,
                             spatial_cell_type=None,
                             spatial_programs=None,
                             verbose=True):
+    """
+    Generate a synthetic ST dataset using a pre-clustered scRNA dataset.
+
+    :param adata: scRNA dataset
+    :param cluster_id_column: Column in adata.obs that contains cluster/cell type classification
+    :param tissue_positions: coordinates of tissue points in slide
+    :param n_genes: Number of genes to use
+    :param cell_num:
+    :param canvas_size:
+    :param sq_size:
+    :param layout:
+    :param random_seed:
+    :param n_spatial_gene:
+    :param alpha:
+    :param w:
+    :param spatial_gene:
+    :param spatial_cell_type:
+    :param spatial_programs:
+    :param verbose:
+    :return: data.SpatialExpressionDataset containing simulated ST data
+    """
+    pos_ss = tissue_positions.T
     if verbose:
         print('Generating semi-synthetic data...')
         if cell_num is not None:
@@ -163,4 +187,12 @@ def generate_semi_synthetic(adata: anndata.AnnData,
             Observation[i, :, k] = sampled_cell_reads[k][sampled_cells_spots[k] == i].sum(axis=0)
     Observations_tissue = Observation.sum(axis=-1).astype(int)
 
-    return Observations_tissue, Observation, Truth_prior, n_cells, spatial, sampled_cell_reads
+    stdata = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=Observations_tissue,
+        positions=tissue_positions,
+        tissue_mask=np.ones(tissue_positions.shape[0]).astype(bool),
+        gene_names=np.array([f'gene{i}' for i in range(n_genes)]),
+        layout=data.Layout.SQUARE
+    )
+
+    return stdata, Truth_prior, n_cells, spatial, sampled_cell_reads

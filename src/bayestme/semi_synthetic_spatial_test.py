@@ -13,9 +13,9 @@ def test_semi_synthetic_spatial():
 
     ad.obs['cluster'] = np.random.choice(np.array(['1', '2', '3']), size=100)
     a, b = np.meshgrid(np.arange(6, 30), np.arange(6, 30))
-    pos_ss = np.column_stack((a.ravel(), b.ravel())).T
+    pos_ss = np.column_stack((a.ravel(), b.ravel()))
     n_genes = 20
-    Observations_tissue, Observation, Truth_prior, n_cells, spatial, sampled_cell_reads = semi_synthetic_spatial.generate_semi_synthetic(
+    stdata, Truth_prior, n_cells, spatial, sampled_cell_reads = semi_synthetic_spatial.generate_semi_synthetic(
         ad,
         'cluster',
         pos_ss,
@@ -23,4 +23,4 @@ def test_semi_synthetic_spatial():
         canvas_size=(36, 36),
         n_spatial_gene=5)
 
-    assert Observations_tissue.shape == (pos_ss.shape[1], n_genes)
+    assert stdata.reads.shape == (pos_ss.shape[0], n_genes)
