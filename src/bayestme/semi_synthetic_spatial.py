@@ -1,7 +1,8 @@
 import numpy as np
-import pandas as pd
 import anndata
 import statsmodels.api as sm
+
+from bayestme import data
 
 
 def get_rank(array):
@@ -11,14 +12,44 @@ def get_rank(array):
     return ranks
 
 
-def generate_semi_synthetic(snRNA_reads_path, snRNA_label_path, pos_ss,
-                            cell_type_toselect, n_genes, cell_num=None,
-                            canvas_size=36, sq_size=4, layout=None,
+def generate_semi_synthetic(adata: anndata.AnnData,
+                            cluster_id_column: str,
+                            tissue_positions: np.ndarray,
+                            n_genes: int,
+                            cell_num=None,
+                            canvas_size=(36, 36),
+                            sq_size=4,
+                            layout=None,
                             random_seed=None,
-                            n_spatial_gene=50, alpha=1, w=None,
-                            spatial_gene=None, spatial_cell_type=None,
+                            n_spatial_gene=50,
+                            alpha=1,
+                            w=None,
+                            spatial_gene=None,
+                            spatial_cell_type=None,
                             spatial_programs=None,
                             verbose=True):
+    """
+    Generate a synthetic ST dataset using a pre-clustered scRNA dataset.
+
+    :param adata: scRNA dataset
+    :param cluster_id_column: Column in adata.obs that contains cluster/cell type classification
+    :param tissue_positions: coordinates of tissue points in slide
+    :param n_genes: Number of genes to use
+    :param cell_num:
+    :param canvas_size:
+    :param sq_size:
+    :param layout:
+    :param random_seed:
+    :param n_spatial_gene:
+    :param alpha:
+    :param w:
+    :param spatial_gene:
+    :param spatial_cell_type:
+    :param spatial_programs:
+    :param verbose:
+    :return: data.SpatialExpressionDataset containing simulated ST data
+    """
+    pos_ss = tissue_positions.T
     if verbose:
         print('Generating semi-synthetic data...')
         if cell_num is not None:
@@ -27,44 +58,41 @@ def generate_semi_synthetic(snRNA_reads_path, snRNA_label_path, pos_ss,
         print('Picking sptial genes and cell types by dispersion')
     else:
         print('Using given sptial genes and cell types')
-    print(canvas_size[0])
-    print(canvas_size[1])
     if random_seed is not None:
         np.random.seed(random_seed)
     # get single nucleus reads
-    adata_snrna_raw = anndata.read_h5ad(snRNA_reads_path)
-
-    # get ell type annotations and add cell type labels to the count matrix
-    labels = pd.read_csv(snRNA_label_path, index_col=0)
-    labels = labels.reindex(index=adata_snrna_raw.obs_names)
-    adata_snrna_raw.obs[labels.columns] = labels
+    adata_snrna_raw = adata
 
     # get the cell type list correspond to the count matrix
-    cell_types = adata_snrna_raw.obs['annotation_1']
-
-    cell_type_filter = cell_types.isin(cell_type_toselect)
-    cell_types = cell_types[cell_type_filter]
+    cell_types = adata_snrna_raw.obs[cluster_id_column]
 
     # filter the top n_genes most expressed genes
-    gene_count_mat = np.asarray(adata_snrna_raw.X[cell_type_filter].todense())
+    try:
+        gene_count_mat = np.asarray(adata_snrna_raw.X.todense())
+    except AttributeError:
+        gene_count_mat = adata_snrna_raw.X
+
     top = np.argsort(np.std(np.log(1 + gene_count_mat), axis=0))[::-1]
     gene_count_mat = gene_count_mat[:, top[:n_genes]].astype(int)
 
     # filter the selected cells
     classes = []
-    for cell_type in cell_type_toselect:
+    for cell_type in cell_types.unique():
         classes.append(np.where(cell_types == cell_type)[0])
 
     # generate the synthetic celluar community indices
     if layout is not None:
         bkg = layout
+        n_sectors = np.unique(bkg.flatten()).size
     else:
         bkg = np.zeros((canvas_size[0], canvas_size[1]), dtype=int)
         n_row = int(canvas_size[0] / sq_size)
         n_col = int(canvas_size[1] / sq_size)
+        n_sectors = 0
         for i in range(n_row):
             for j in range(n_col):
-                bkg[i * sq_size:(i + 1) * sq_size, j * sq_size:(j + 1) * sq_size] = i * n_col + j
+                bkg[i * sq_size:(i + 1) * sq_size, j * sq_size:(j + 1) * sq_size] = n_sectors
+                n_sectors = n_sectors + 1
 
     # assign celluar community indices to spots in tissue
     prior_idx = np.zeros(pos_ss.shape[1])
@@ -76,7 +104,7 @@ def generate_semi_synthetic(snRNA_reads_path, snRNA_label_path, pos_ss,
     prior_idx = prior_idx.astype(int)
 
     # generate synthetic cell type probilities
-    n_components = len(cell_type_toselect)
+    n_components = len(classes)
     priors = np.random.dirichlet(np.ones(n_components) * alpha, size=bkg.max() + 1)
     priors /= priors.sum(axis=1, keepdims=True)
     Truth_prior = priors[prior_idx]
@@ -84,7 +112,7 @@ def generate_semi_synthetic(snRNA_reads_path, snRNA_label_path, pos_ss,
     n_nodes = pos_ss.shape[1]
     # get the true rate of total number of cells in each region
     # total num of cells in spot i ~ Pois(lambda_i)
-    lambdas = np.random.gamma(90, 1 / 3, 36)
+    lambdas = np.random.gamma(90, 1 / 3, n_sectors)
     n_cells = np.zeros((n_nodes, n_components), dtype=int)
     for i in range(n_nodes):
         if i % 1000 == 0:
@@ -159,4 +187,12 @@ def generate_semi_synthetic(snRNA_reads_path, snRNA_label_path, pos_ss,
             Observation[i, :, k] = sampled_cell_reads[k][sampled_cells_spots[k] == i].sum(axis=0)
     Observations_tissue = Observation.sum(axis=-1).astype(int)
 
-    return Observations_tissue, Observation, Truth_prior, n_cells, spatial, sampled_cell_reads
+    stdata = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=Observations_tissue,
+        positions=tissue_positions,
+        tissue_mask=np.ones(tissue_positions.shape[0]).astype(bool),
+        gene_names=np.array([f'gene{i}' for i in range(n_genes)]),
+        layout=data.Layout.SQUARE
+    )
+
+    return stdata, Truth_prior, n_cells, spatial, sampled_cell_reads
