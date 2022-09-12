@@ -31,9 +31,12 @@ def get_n_neighbors(stdata: data.SpatialExpressionDataset):
 
 def create_folds(stdata: data.SpatialExpressionDataset,
                  n_fold=5,
-                 n_splits=15):
+                 n_splits=15,
+                 n_neighbours=None):
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=0)
-    n_neighbours = get_n_neighbors(stdata)
+
+    if n_neighbours is None:
+        n_neighbours = get_n_neighbors(stdata)
 
     if stdata.layout is data.Layout.HEX:
         edge_threshold = 5
@@ -88,9 +91,11 @@ def get_phenotype_selection_parameters_for_folds(stdata: data.SpatialExpressionD
                                                  lams: Iterable[int],
                                                  n_components_min: int,
                                                  n_components_max: int):
+    n_neighbours = get_n_neighbors(stdata)
+
     for lam in lams:
         for n_components in range(n_components_min, n_components_max + 1):
-            for fold_number, mask in enumerate(create_folds(stdata, n_fold, n_splits)):
+            for fold_number, mask in enumerate(create_folds(stdata, n_fold, n_splits, n_neighbours)):
                 yield lam, n_components, mask, fold_number
 
 
