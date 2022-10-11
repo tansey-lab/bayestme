@@ -93,15 +93,16 @@ def test_serialize_deserialize_deconvolution_results_dataset():
 
 
 def test_deconvolution_results_properties():
+    rng = np.random.default_rng(1)
     n_samples = 100
     n_nodes = 25
     n_components = 4
     n_gene = 100
-    cell_prob_trace = np.random.random((n_samples, n_nodes, n_components + 1))
-    cell_num_trace = np.random.random((n_samples, n_nodes, n_components + 1))
-    expression_trace = np.random.random((n_samples, n_components, n_gene))
-    beta_trace = np.random.random((n_samples, n_components))
-    reads_trace = np.random.random((n_samples, n_nodes, n_gene, n_components))
+    cell_prob_trace = rng.random((n_samples, n_nodes, n_components + 1))
+    cell_num_trace = rng.random((n_samples, n_nodes, n_components + 1))
+    expression_trace = rng.random((n_samples, n_components, n_gene))
+    beta_trace = rng.random((n_samples, n_components))
+    reads_trace = rng.random((n_samples, n_nodes, n_gene, n_components))
     lam2 = 1000
 
     dataset = data.DeconvolutionResult(
@@ -115,7 +116,7 @@ def test_deconvolution_results_properties():
     )
 
     assert dataset.omega.shape == (n_components, n_gene)
-    assert np.all(dataset.omega.sum(axis=0) == np.array(1.0))
+    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 100
 
     assert dataset.omega_difference.shape == (n_components, n_gene)
     assert np.all(dataset.omega_difference <= 1.0)
@@ -146,3 +147,48 @@ def test_create_anndata_object():
     )
     assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.name
 
+
+def test_properties_work_without_obs_names():
+    n_genes = 10
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=10, n_cols=10, n_genes=n_genes)
+
+    gene_names = np.array([f'{i}' for i in range(n_genes)])
+    adata = data.create_anndata_object(counts=bleed_counts,
+                                       coordinates=locations,
+                                       gene_names=gene_names,
+                                       layout=data.Layout.SQUARE,
+                                       tissue_mask=tissue_mask)
+
+    dataset = data.SpatialExpressionDataset(adata)
+
+    np.testing.assert_array_equal(dataset.reads, bleed_counts[tissue_mask])
+    np.testing.assert_array_equal(dataset.positions_tissue, locations[tissue_mask])
+    np.testing.assert_array_equal(dataset.n_spot_in, tissue_mask.sum())
+    np.testing.assert_array_equal(dataset.raw_counts, bleed_counts)
+    np.testing.assert_array_equal(dataset.positions, locations)
+    np.testing.assert_array_equal(dataset.tissue_mask, tissue_mask)
+
+
+def test_properties_work_with_obs_names():
+    n_genes = 10
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=10, n_cols=10, n_genes=n_genes)
+
+    gene_names = np.array([f'{i}' for i in range(n_genes)])
+    barcodes = np.array([f'barcode{i}' for i in range(100)])
+    adata = data.create_anndata_object(counts=bleed_counts,
+                                       coordinates=locations,
+                                       gene_names=gene_names,
+                                       layout=data.Layout.SQUARE,
+                                       tissue_mask=tissue_mask,
+                                       barcodes=barcodes)
+
+    dataset = data.SpatialExpressionDataset(adata)
+
+    np.testing.assert_array_equal(dataset.reads, bleed_counts[tissue_mask])
+    np.testing.assert_array_equal(dataset.positions_tissue, locations[tissue_mask])
+    np.testing.assert_array_equal(dataset.n_spot_in, tissue_mask.sum())
+    np.testing.assert_array_equal(dataset.raw_counts, bleed_counts)
+    np.testing.assert_array_equal(dataset.positions, locations)
+    np.testing.assert_array_equal(dataset.tissue_mask, tissue_mask)

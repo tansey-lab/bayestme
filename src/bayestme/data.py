@@ -82,11 +82,11 @@ class SpatialExpressionDataset:
 
     @property
     def reads(self) -> np.ndarray:
-        return self.adata.X[self.adata.obs[IN_TISSUE_ATTR]]
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
     @property
     def positions_tissue(self) -> np.ndarray:
-        return self.adata.obsm[SPATIAL_ATTR][self.adata.obs[IN_TISSUE_ATTR]]
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].obsm[SPATIAL_ATTR]
 
     @property
     def n_spot_in(self) -> int:
@@ -132,12 +132,12 @@ class SpatialExpressionDataset:
     @property
     def cell_type_probabilities(self) -> Optional[np.ndarray]:
         if CELL_TYPE_PROB_ATTR in self.adata.obsm:
-            return self.adata.obsm[CELL_TYPE_PROB_ATTR][self.tissue_mask]
+            return self.adata[self.tissue_mask].obsm[CELL_TYPE_PROB_ATTR]
 
     @property
     def cell_type_counts(self) -> Optional[np.ndarray]:
         if CELL_TYPE_COUNT_ATTR in self.adata.obsm:
-            return self.adata.obsm[CELL_TYPE_COUNT_ATTR][self.tissue_mask]
+            return self.adata[self.tissue_mask].obsm[CELL_TYPE_COUNT_ATTR]
 
     @property
     def marker_gene_names(self) -> Optional[List[np.ndarray]]:
