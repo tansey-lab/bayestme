@@ -10,10 +10,10 @@ from bayestme import utils, deconvolution, data
 
 
 def create_toy_deconvolve_result(
-        n_nodes: int,
-        n_components: int,
-        n_samples: int,
-        n_gene: int) -> data.DeconvolutionResult:
+    n_nodes: int,
+    n_components: int,
+    n_samples: int,
+    n_gene: int) -> data.DeconvolutionResult:
     return data.DeconvolutionResult(
         lam2=1000,
         n_components=n_components,
@@ -26,11 +26,11 @@ def create_toy_deconvolve_result(
 
 
 def create_deconvolve_dataset(
-        n_nodes: int = 12,
-        n_components: int = 5,
-        n_samples: int = 100,
-        n_genes: int = 100,
-        n_marker_gene: int = 5):
+    n_nodes: int = 12,
+    n_components: int = 5,
+    n_samples: int = 100,
+    n_genes: int = 100,
+    n_marker_gene: int = 5):
     locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
         n_rows=n_nodes,
         n_cols=n_nodes,
@@ -218,7 +218,85 @@ def test_add_deconvolution_results_to_dataset():
     assert dataset.n_cell_types == n_components
 
 
+def test_add_deconvolution_results_to_dataset_with_obs_names():
+    n_components = 3
+    n_genes = 100
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+    barcodes = np.array([f'barcode{i}' for i in range(12 * 12)])
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+        barcodes=barcodes)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene)
+
+    deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset,
+        result=deconvolve_results)
+
+    assert dataset.cell_type_probabilities is not None
+    assert dataset.cell_type_counts is not None
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_probabilities,
+        deconvolve_results.cell_prob_trace[:, :, 1:].mean(axis=0)
+    )
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_counts,
+        deconvolve_results.cell_num_trace[:, :, 1:].mean(axis=0)
+    )
+
+    assert dataset.n_cell_types == n_components
+
+
 def test_add_marker_gene_results_to_dataset():
+    n_components = 3
+    n_marker = 2
+    n_genes = 100
+    locations, tissue_mask, true_rates, true_counts, bleed_counts = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12,
+        n_cols=12,
+        n_genes=n_genes)
+    barcodes = np.array([f'barcode{i}' for i in range(12 * 12)])
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+        barcodes=barcodes)
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene)
+
+    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=deconvolve_results)
+
+    marker_genes = deconvolution.select_marker_genes(
+        deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99)
+
+    deconvolution.add_marker_gene_results_to_dataset(
+        stdata=dataset,
+        marker_genes=marker_genes)
+
+    for expected, observed in zip(marker_genes, dataset.marker_gene_indices):
+        np.testing.assert_equal(expected, observed)
+
+
+def test_add_marker_gene_results_to_dataset_with_obs_names():
     n_components = 3
     n_marker = 2
     n_genes = 100
