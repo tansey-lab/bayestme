@@ -8,6 +8,7 @@ BayesTME provides a suite of command line utilities that allow users to script r
 These commands will be available on the path in the python environment in which the ``bayestme`` package is installed.
 
 .. _cli_load_spaceranger:
+
 ``load_spaceranger``
 --------------------
 
@@ -16,6 +17,7 @@ These commands will be available on the path in the python environment in which 
    :prog: load_spaceranger
 
 .. _cli_filter_genes:
+
 ``filter_genes``
 ----------------
 
@@ -27,6 +29,7 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :prog: filter_genes
 
 .. _cli_bleeding_correction:
+
 ``bleeding_correction``
 -----------------------
 
@@ -35,6 +38,7 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :prog: bleeding_correction
 
 .. _cli_phenotype_selection:
+
 ``phenotype_selection``
 -----------------------
 
@@ -51,6 +55,7 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :prog: deconvolve
 
 .. _cli_select_marker_genes:
+
 ``select_marker_genes``
 --------------
 
@@ -59,6 +64,7 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :prog: select_marker_genes
 
 .. _cli_spatial_expression:
+
 ``spatial_expression``
 ----------------------
 
@@ -72,6 +78,7 @@ Plotting
 Creating plots is separated into separate commands:
 
 .. _cli_plot_bleeding:
+
 ``plot_bleeding``
 -----------------
 
@@ -80,6 +87,7 @@ Creating plots is separated into separate commands:
    :prog: plot_bleeding_correction
 
 .. _cli_plot_deconvolution:
+
 ``plot_deconvolution``
 ----------------------
 
@@ -88,6 +96,7 @@ Creating plots is separated into separate commands:
    :prog: plot_deconvolution
 
 .. _cli_plot_spatial_expression:
+
 ``plot_spatial_expression``
 ---------------------------
 
