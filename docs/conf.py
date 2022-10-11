@@ -57,6 +57,7 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 autodoc_mock_imports = [
+    'np',
     'numpy',
     'matplotlib',
     'torch',
