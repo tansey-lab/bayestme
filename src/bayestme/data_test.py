@@ -29,7 +29,8 @@ def generate_toy_stdataset() -> data.SpatialExpressionDataset:
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE
+        layout=data.Layout.SQUARE,
+        barcodes=np.array(['1', '2', '3'])
     )
 
 

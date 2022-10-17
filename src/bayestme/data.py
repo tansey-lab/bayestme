@@ -110,7 +110,7 @@ class SpatialExpressionDataset:
 
     @property
     def tissue_mask(self) -> np.array:
-        return self.adata.obs[IN_TISSUE_ATTR]
+        return self.adata.obs[IN_TISSUE_ATTR].to_numpy()
 
     @property
     def gene_names(self) -> np.array:
