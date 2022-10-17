@@ -637,7 +637,8 @@ def clean_bleed(dataset: data.SpatialExpressionDataset,
         tissue_mask=dataset.tissue_mask,
         positions=dataset.positions,
         gene_names=dataset.gene_names,
-        layout=dataset.layout
+        layout=dataset.layout,
+        barcodes=dataset.adata.obs.index.to_numpy()
     )
 
     bleed_correction_result = data.BleedCorrectionResult(

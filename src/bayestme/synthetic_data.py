@@ -133,4 +133,5 @@ def generate_fake_stdataset(
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(['{}'.format(x) for x in range(n_genes)]),
-        layout=layout)
+        layout=layout,
+        barcodes=np.array(['barcode' + str(i) for i in range(len(locations))]))
