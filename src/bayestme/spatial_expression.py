@@ -414,10 +414,19 @@ def calculate_spatial_genes(sde_result: data.SpatialDifferentialExpressionResult
 
 def filter_disconnected_points(edges, data):
     indexes_to_keep = []
+    indexes_to_drop = []
+    new_edges = np.copy(edges)
     for idx in range(len(data)):
         if idx in edges[:, 0] or idx in edges[:, 1]:
             indexes_to_keep.append(idx)
-    return edges, data[np.array(indexes_to_keep)]
+        else:
+            indexes_to_drop.append(idx)
+
+    for idx in indexes_to_drop:
+        new_edges[:, 0][edges[:, 0] > idx] = new_edges[:, 0][edges[:, 0] > idx] - 1
+        new_edges[:, 1][edges[:, 1] > idx] = new_edges[:, 1][edges[:, 1] > idx] - 1
+
+    return new_edges, data[np.array(indexes_to_keep)]
 
 
 def moran_i(
