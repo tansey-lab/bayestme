@@ -417,28 +417,31 @@ def test_morans_i():
 def test_filter_disconnected_points():
     edges, data = spatial_expression.filter_disconnected_points(np.array(
         [
-            [0, 1],
-            [1, 2]
+            [1, 2],
+            [4, 5]
         ]
-    ), np.array([1, 2, 3, 4]))
+    ), np.array([1, 2, 3, 4, 5, 6, 7]))
 
-    np.testing.assert_array_equal(data, np.array([1, 2, 3]))
+    np.testing.assert_array_equal(data, np.array([2, 3, 5, 6]))
     np.testing.assert_array_equal(edges,
                                   np.array(
                                       [
                                           [0, 1],
-                                          [1, 2]
+                                          [2, 3]
                                       ]
                                   )
                                   )
 
 
 def test_morans_i_doesnt_fail_on_disconnected_points():
-    data = np.ones(4)
+    data = np.array([1, 2, 3, 4])
 
-    edges = np.array([
-        [0, 1]
-    ])
+    edges = np.array(
+        [
+            [1, 2],
+            [2, 3]
+        ]
+    )
     spatial_expression.moran_i(edges, data)
 
 
