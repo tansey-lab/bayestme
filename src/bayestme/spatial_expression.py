@@ -412,6 +412,14 @@ def calculate_spatial_genes(sde_result: data.SpatialDifferentialExpressionResult
     return np.array(spatial_gene)
 
 
+def filter_disconnected_points(edges, data):
+    indexes_to_keep = []
+    for idx in range(len(data)):
+        if idx in edges[:, 0] or idx in edges[:, 1]:
+            indexes_to_keep.append(idx)
+    return edges, data[np.array(indexes_to_keep)]
+
+
 def moran_i(
         edges: np.ndarray,
         data: np.array,
@@ -425,6 +433,8 @@ def moran_i(
     :param two_tailed: If true, return 2-tailed p-value. Default is False.
     :return: float between 0 and 1
     """
+    edges, data = filter_disconnected_points(edges, data)
+
     data = data[np.newaxis]
 
     neighbours = dict()
