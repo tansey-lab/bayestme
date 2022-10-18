@@ -337,7 +337,8 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
     sde_2_outputs = []
 
     for i in range(5):
-        sde_1_outputs.append(sde_1.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
+        sde_1_outputs.append(
+            sde_1.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
 
         sde_2_state = sde_2.get_state()
 
@@ -346,7 +347,8 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
         sde_2_state = data.SpatialDifferentialExpressionSamplerState.read_h5(os.path.join(tmpdir, f'state_{i}.h5'))
         sde_2 = spatial_expression.SpatialDifferentialExpression.load_from_state(sde_2_state)
 
-        sde_2_outputs.append(sde_2.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
+        sde_2_outputs.append(
+            sde_2.sample(copy.deepcopy(n_obs_vector), copy.deepcopy(Y_igk), copy.deepcopy(cell_type_filter)))
 
     for (samples_1, samples_2) in zip(sde_1_outputs, sde_2_outputs):
         for (a, b) in zip(samples_1, samples_2):
@@ -412,6 +414,34 @@ def test_morans_i():
     assert clustered_value > 0
 
 
+def test_filter_disconnected_points():
+    edges, data = spatial_expression.filter_disconnected_points(np.array(
+        [
+            [0, 1],
+            [1, 2]
+        ]
+    ), np.array([1, 2, 3, 4]))
+
+    np.testing.assert_array_equal(data, np.array([1, 2, 3]))
+    np.testing.assert_array_equal(edges,
+                                  np.array(
+                                      [
+                                          [0, 1],
+                                          [1, 2]
+                                      ]
+                                  )
+                                  )
+
+
+def test_morans_i_doesnt_fail_on_disconnected_points():
+    data = np.ones(4)
+
+    edges = np.array([
+        [0, 1]
+    ])
+    spatial_expression.moran_i(edges, data)
+
+
 def test_select_significant_spatial_programs():
     n_genes = 3
     n_components = 1
@@ -455,10 +485,10 @@ def test_select_significant_spatial_programs():
     for mock_setup, expected_result in zip(mock_setups, expected_results):
         with mock.patch('bayestme.spatial_expression.get_n_cell_correlation') as mock_get_n_cell_correlation:
             with mock.patch('bayestme.spatial_expression.get_proportion_of_spots_in_k_with_pattern_h_per_gene') as \
-                    mock_get_proportion_of_spots_in_k_with_pattern_h_per_gene:
+                mock_get_proportion_of_spots_in_k_with_pattern_h_per_gene:
                 with mock.patch(
-                        'bayestme.spatial_expression.filter_pseudogenes_from_selection') as \
-                        mock_filter_pseudogenes_from_selection:
+                    'bayestme.spatial_expression.filter_pseudogenes_from_selection') as \
+                    mock_filter_pseudogenes_from_selection:
                     with mock.patch('bayestme.spatial_expression.moran_i') as mock_moran_i:
                         cell_correlation, proportions, pseudogene_filter, morans_i = mock_setup
 
