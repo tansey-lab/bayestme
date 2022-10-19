@@ -1,8 +1,11 @@
+.. _example-workflow:
+
 Example Work Flow
 =================
 
 This purpose of this document is to give you a sense of how you can string the different BayesTME modules together
-to produce results.
+to analyze your data. This is a maximal example, you dont necessarily need to perform all of these steps,
+but some of them do depend on the output of each other.
 
 1. Assuming your data is the output of the visium/10x spaceranger pipeline, the first step is to convert that spaceranger
 output into an anndata archive, which is the primary data format of BayesTME. You can do this with the :ref:`load_spaceranger <cli_load_spaceranger>`
@@ -48,11 +51,16 @@ command:
 
 5. Run phenotype selection / cross validation using the :ref:`phenotype_selection <cli_bleeding_correction>`.
 This step is very computationally expensive as we need to re-run the deconvolution gibbs sampler thousands of times
-in order to do cross validation to learn the number of cell types. This step cannot be feasibly accomplished on a single
-computer, a computational cluster or cloud service provider needs to be used in order to run the thousands of gibbs samplers in parallel.
+in order to do cross validation to learn the number of cell types and the lambda parameter.
+This step cannot be feasibly accomplished on a single computer,
+a computational cluster or cloud service provider needs to be used in order to run the thousands of gibbs samplers in parallel.
+
+If you have some outside data telling you how many cell types are in your sample you can feasibly skip this step and go straight to step 6,
+however you will need to have a reasonable guess for the lambda parameter. If you are taking this quick and dirty approach,
+``lambda = 1000`` is probably a reasonable guess.
 
 We cannot comment too much on how to set up this distributed computation, as it will vary a lot depending on whether you are using
-AWS, Google cloud, or a high performance computing cluster, but it basically boils down to running the :ref:`phenotype_selection <cli_bleeding_correction>`
+AWS, Google cloud, or a high performance computing cluster, but it basically boils down to running the :ref:`phenotype_selection <cli_phenotype_selection>`
 command N times in parallel:
 
 .. code::
@@ -77,7 +85,7 @@ containing serialized :py:class:`bayestme.data.PhenotypeSelectionResult` objects
 When this is complete you can use the utility function :py:func:`bayestme.cv_likelihoods.plot_likelihoods` to plot
 the results and see which value of lambda and n_cell_types performed the best.
 
-6. Run deconvolution using :ref:`deconvolve <cli_deconvolve>` command
+6. Run deconvolution using :ref:`deconvolve <cli_deconvolve>` command.
 
 .. code::
 
