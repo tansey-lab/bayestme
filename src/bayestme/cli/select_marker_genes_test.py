@@ -52,9 +52,7 @@ def test_select_marker_genes():
         '--deconvolution-result',
         deconvolve_results_fn,
         '--n-marker-genes',
-        str(n_marker_genes),
-        '--output-dir',
-        tmpdir,
+        str(n_marker_genes)
     ]
 
     try:
