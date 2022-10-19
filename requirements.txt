@@ -13,3 +13,4 @@ h5py==3.7.0
 esda>=2.4.1
 libpysal>=4.5.1
 polyagamma>=1.3.4,<1.4
+tqdm>=4.64.0,<5

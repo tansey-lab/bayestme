@@ -8,6 +8,7 @@ import logging
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import tqdm
 
 from typing import Optional, List
 from matplotlib.lines import Line2D
@@ -19,7 +20,7 @@ from libpysal.weights import W as pysal_Weights
 from esda.moran import Moran
 from collections import defaultdict
 from polyagamma import random_polyagamma
-
+from tqdm.contrib.logging import logging_redirect_tqdm
 from bayestme.utils import ilogit, stable_softmax
 from bayestme import utils, data, plotting, fast_multivariate_normal
 
@@ -334,25 +335,25 @@ class SpatialDifferentialExpression:
             reads = reads_trace.astype(int)
             lambdas = cell_num_trace[:, 1:, None] * rate[None]
 
-        for step in range(n_burn + n_samples):
-            print(f'Step {step}')
-            if step < n_burn:
-                n_iter = 1
-                Y_igk = reads
-                n_obs_vector = np.transpose(lambdas, [0, 2, 1])
-            else:
-                n_iter = n_thin
-                if n_posterior_sample == 0 or simple:
+        with logging_redirect_tqdm():
+            for step in tqdm.trange(n_burn + n_samples, desc='Spatial Differential Expression'):
+                if step < n_burn:
+                    n_iter = 1
                     Y_igk = reads
                     n_obs_vector = np.transpose(lambdas, [0, 2, 1])
                 else:
-                    Y_igk = reads_trace[step - n_burn]
-                    lambdas = cell_num_trace[step - n_burn, :, 1:, None] * rate[step - n_burn, None]
-                    n_obs_vector = np.transpose(lambdas, [0, 2, 1])
-            for i in range(n_iter):
-                W, C, Gamma, H, V, Theta = self.sample(n_obs_vector, Y_igk, cell_type_filter)
-            if step >= n_burn:
-                yield W, C, Gamma, H, V, Theta
+                    n_iter = n_thin
+                    if n_posterior_sample == 0 or simple:
+                        Y_igk = reads
+                        n_obs_vector = np.transpose(lambdas, [0, 2, 1])
+                    else:
+                        Y_igk = reads_trace[step - n_burn]
+                        lambdas = cell_num_trace[step - n_burn, :, 1:, None] * rate[step - n_burn, None]
+                        n_obs_vector = np.transpose(lambdas, [0, 2, 1])
+                for i in range(n_iter):
+                    W, C, Gamma, H, V, Theta = self.sample(n_obs_vector, Y_igk, cell_type_filter)
+                if step >= n_burn:
+                    yield W, C, Gamma, H, V, Theta
 
 
 def run_spatial_expression(

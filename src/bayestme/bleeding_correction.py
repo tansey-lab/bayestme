@@ -10,9 +10,11 @@ import os.path
 import math
 import logging
 import matplotlib.cm as cm
+import tqdm
 
 from typing import Optional
 
+from tqdm.contrib.logging import logging_redirect_tqdm
 from torch.nn import Softmax
 from bayestme.utils import stable_softmax
 from bayestme import data, utils, plotting
@@ -343,9 +345,9 @@ def decontaminate_spots(
     else:
         global_rates, Rates = rates_from_raw(Rates_init, tissue_mask, (Reads.shape[0], n_top))
 
-    print(f'Fitting basis functions to first {n_top} genes')
-    for step in range(max_steps):
-        print(f'\nStep {step + 1}/{max_steps}')
+    logger.info(f'Fitting basis functions to first {n_top} genes')
+    for step in tqdm.trange(max_steps, desc="Fitting bleed correction basis functions"):
+        logger.info(f'\nStep {step + 1}/{max_steps}')
 
         basis_functions, Weights, res = fit_basis_functions(Reads[:, :n_top], tissue_mask, Rates, global_rates,
                                                             basis_idxs, basis_mask,
@@ -356,12 +358,12 @@ def decontaminate_spots(
         Rates_init = res.x
         loss = res.fun
 
-        print(f'\tLoss: {loss:.2f}')
+        logger.info(f'\tLoss: {loss:.2f}')
 
     Rates = np.zeros(Reads.shape)
     global_rates = np.zeros(Reads.shape[1])
-    for g in range(Reads.shape[1]):
-        print(f'\nGene {g + 1}/{Reads.shape[1]}')
+    for g in tqdm.trange(Reads.shape[1], desc="Fitting bleed spot rates"):
+        logger.info(f'\nGene {g + 1}/{Reads.shape[1]}')
         global_rates[g], Rates[:, g:g + 1], res = fit_spot_rates(Reads[:, g:g + 1], tissue_mask, Weights, x_init=None)
 
     return global_rates, Rates, basis_functions, Weights, basis_init, Rates_init
@@ -414,17 +416,16 @@ def select_local_weight(reads, tissue_mask, basis_idxs, basis_mask,
 
         losses[widx] = L
         for i in range(widx + 1):
-            print(f'{i}. local_weight={weight_grid[i]} loss={losses[i]:.2f}')
-        print()
+            logger.info(f'{i}. local_weight={weight_grid[i]} loss={losses[i]:.2f}')
 
         if np.argmin(losses[:widx + 1]) == widx:
             best_inits = (basis_init, Rates_init)
 
     best = weight_grid[np.argmin(losses)]
-    print(f'Best: {best}')
+    logger.info(f'Best: {best}')
 
     best_delta = weight_grid[np.argmax(losses[1:] - losses[:-1]) + 1]
-    print(f'Best by delta rule: {best_delta}')
+    logger.info(f'Best by delta rule: {best_delta}')
 
     return best, best_delta, losses, weight_grid, best_inits
 
@@ -438,7 +439,6 @@ def get_suggested_initial_local_weight(dataset: data.SpatialExpressionDataset) -
 
 
 def plot_basis_functions(basis_functions, output_dir):
-    print('Plotting')
     basis_types = ['Out-Tissue', 'In-Tissue']
     basis_names = ['North', 'South', 'West', 'East']
 
