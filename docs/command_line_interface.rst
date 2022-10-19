@@ -57,7 +57,7 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
 .. _cli_select_marker_genes:
 
 ``select_marker_genes``
---------------
+-----------------------
 
 .. argparse::
    :ref: bayestme.cli.select_marker_genes.get_parser
@@ -77,10 +77,10 @@ Plotting
 
 Creating plots is separated into separate commands:
 
-.. _cli_plot_bleeding:
+.. _cli_plot_bleeding_correction:
 
-``plot_bleeding``
------------------
+``plot_bleeding_correction``
+----------------------------
 
 .. argparse::
    :ref: bayestme.cli.plot_bleeding_correction.get_parser

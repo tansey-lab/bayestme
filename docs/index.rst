@@ -16,6 +16,7 @@ Contents
     data_format
     demo_notebooks
     command_line_interface
+    example_workflow
     api
     fine_mapping_workflow
 
