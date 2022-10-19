@@ -1,7 +1,7 @@
 .. _example-workflow:
 
-Example Work Flow
-=================
+Example Workflow
+================
 
 This purpose of this document is to give you a sense of how you can string the different BayesTME modules together
 to analyze your data. This is a maximal example, you dont necessarily need to perform all of these steps,
