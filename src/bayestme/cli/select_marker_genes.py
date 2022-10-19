@@ -14,8 +14,6 @@ def get_parser():
                         help='If provided, append deconvolution summary results to the --adata archive in place')
     parser.add_argument('--deconvolution-result', type=str,
                         help='Input file, DeconvolutionResult in h5 format')
-    parser.add_argument('--output-dir', type=str,
-                        help='Output directory.')
     parser.add_argument('--n-marker-genes', type=int,
                         default=5,
                         help='Maximum number of marker genes per cell type.')
