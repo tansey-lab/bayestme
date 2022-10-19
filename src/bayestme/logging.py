@@ -4,13 +4,13 @@ import logging
 def configure_logging(args):
     logger = logging.getLogger('bayestme')
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    
+    if args.verbose:
+        ch.setLevel(level=logging.DEBUG)
+    else:
+        ch.setLevel(level=logging.INFO)
+
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
