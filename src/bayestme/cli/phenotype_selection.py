@@ -64,6 +64,7 @@ DEFAULT_LAMBDAS = (1, 1e1, 1e2, 1e3, 1e4, 1e5)
 
 def main():
     args = get_parser().parse_args()
+    bayestme.logging.configure_logging(args)
 
     stdata = data.SpatialExpressionDataset.read_h5(args.adata)
 
