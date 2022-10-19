@@ -1,7 +1,7 @@
 import argparse
 
 from bayestme import data, bleeding_correction
-
+import bayestme.logging
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Perform bleeding correction')
@@ -21,12 +21,14 @@ def get_parser():
     parser.add_argument('--local-weight', type=int, default=None,
                         help='Initial value for local weight, a tuning parameter for bleed correction. '
                              'rho_0g from equation 1 in the paper. By default will be set to sqrt(N tissue spots)')
-
+    bayestme.logging.add_logging_args(parser)
     return parser
 
 
 def main():
     args = get_parser().parse_args()
+
+    bayestme.logging.configure_logging(args)
 
     dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 

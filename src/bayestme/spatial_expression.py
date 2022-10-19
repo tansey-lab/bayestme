@@ -805,3 +805,6 @@ def plot_significant_spatial_patterns(
             output_format=output_format,
             cell_type_name=None if cell_type_names is None else cell_type_names[k]
         )
+
+    if len(program_ids) == 0:
+        logger.warning('No significant spatial programs found.')

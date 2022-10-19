@@ -7,7 +7,7 @@ import bayestme.cli.plot_deconvolution
 from unittest import mock
 
 import bayestme.synthetic_data
-from bayestme import data, deconvolution, bleeding_correction, deconvolution_test
+from bayestme import data, deconvolution_test
 
 
 def test_plot_deconvolution():

@@ -1,6 +1,10 @@
 import argparse
+import logging
+import bayestme.logging
 
 from bayestme import data, deconvolution
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -13,6 +17,8 @@ def get_parser():
                         default=None,
                         help='A comma separated list of cell type names to use for plots.'
                              'For example --cell-type-names "type 1, type 2, type 3"')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 
@@ -25,6 +31,14 @@ def main():
         cell_type_names = [name.strip() for name in args.cell_type_names.split(',')]
     else:
         cell_type_names = None
+
+    if stdata.cell_type_counts is None or stdata.cell_type_probabilities is None:
+        raise RuntimeError('The anndata archive does not contain deconvolution results, '
+                           'please run select_marker_genes first.')
+
+    if stdata.marker_gene_indices is None:
+        raise RuntimeError('The anndata archive does not contain marker gene information, '
+                           'please run select_marker_genes first.')
 
     deconvolution.plot_deconvolution(
         stdata=stdata,

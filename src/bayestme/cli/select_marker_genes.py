@@ -1,4 +1,5 @@
 import argparse
+import bayestme.logging
 
 from bayestme import data, deconvolution
 
@@ -27,6 +28,8 @@ def get_parser():
                         choices=list(deconvolution.MarkerGeneMethod),
                         default=deconvolution.MarkerGeneMethod.TIGHT,
                         help='Method for choosing marker genes.')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 
