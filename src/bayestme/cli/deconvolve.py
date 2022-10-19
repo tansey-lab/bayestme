@@ -57,6 +57,7 @@ def get_parser():
 
 def main():
     args = get_parser().parse_args()
+    bayestme.logging.configure_logging(args)
 
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(args.adata)
 
