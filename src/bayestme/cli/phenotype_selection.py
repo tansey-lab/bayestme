@@ -2,6 +2,7 @@ import argparse
 import os
 
 from bayestme import phenotype_selection, data
+import bayestme.logging
 
 
 def get_parser():
@@ -53,6 +54,7 @@ def get_parser():
     parser.add_argument('--output-dir', type=str,
                         help='Output directory. N new files will be saved in this directory, '
                              'where N is the number of cross-validation jobs.')
+    bayestme.logging.add_logging_args(parser)
 
     return parser
 

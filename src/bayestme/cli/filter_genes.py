@@ -1,5 +1,6 @@
 import argparse
 import logging
+import bayestme.logging
 
 from bayestme import data, gene_filtering
 
@@ -21,6 +22,8 @@ def get_parser():
                         help='Filter genes appearing in greater than the provided threshold of tissue spots.')
     parser.add_argument('--expression-truth', type=str, default=None,
                         help='Filter out genes not found in the expression truth dataset.')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 

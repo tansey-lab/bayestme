@@ -1,6 +1,10 @@
 import argparse
+import logging
+import bayestme.logging
 
 from bayestme import data, deconvolution
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -13,6 +17,8 @@ def get_parser():
                         default=None,
                         help='A comma separated list of cell type names to use for plots.'
                              'For example --cell-type-names "type 1, type 2, type 3"')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 

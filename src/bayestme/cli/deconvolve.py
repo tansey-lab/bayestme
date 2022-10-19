@@ -1,6 +1,7 @@
 import argparse
 import logging
 import numpy as np
+import bayestme.logging
 
 from bayestme import data, deconvolution
 
@@ -50,7 +51,7 @@ def get_parser():
                         help='Use expression ground truth from seurat companion scRNA fine mapping workflow',
                         type=str,
                         default=None)
-
+    bayestme.logging.add_logging_args(parser)
     return parser
 
 

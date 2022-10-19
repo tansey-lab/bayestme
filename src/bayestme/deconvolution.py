@@ -2,6 +2,8 @@ import logging
 import numpy as np
 import pandas
 import os.path
+import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from enum import Enum
 from typing import Optional, List
@@ -105,18 +107,19 @@ def deconvolve(
     reads_trace = np.zeros((n_samples, n_nodes, n_gene, n_components))
 
     total_samples = n_samples * n_thin + n_burnin
-    for step in range(total_samples):
-        logger.info(f'Step {step}/{total_samples} ...')
-        # perform Gibbs sampling
-        gfm.sample(Observation)
-        # save the trace of GFMM parameters
-        if step >= n_burnin and (step - n_burnin) % n_thin == 0:
-            idx = (step - n_burnin) // n_thin
-            cell_prob_trace[idx] = gfm.probs
-            expression_trace[idx] = gfm.phi
-            beta_trace[idx] = gfm.beta
-            cell_num_trace[idx] = gfm.cell_num
-            reads_trace[idx] = gfm.reads
+    with logging_redirect_tqdm():
+        for step in tqdm.trange(total_samples, desc='Deconvolution'):
+            logger.info(f'Step {step}/{total_samples} ...')
+            # perform Gibbs sampling
+            gfm.sample(Observation)
+            # save the trace of GFMM parameters
+            if step >= n_burnin and (step - n_burnin) % n_thin == 0:
+                idx = (step - n_burnin) // n_thin
+                cell_prob_trace[idx] = gfm.probs
+                expression_trace[idx] = gfm.phi
+                beta_trace[idx] = gfm.beta
+                cell_num_trace[idx] = gfm.cell_num
+                reads_trace[idx] = gfm.reads
 
     return data.DeconvolutionResult(
         cell_prob_trace=cell_prob_trace,
@@ -237,6 +240,9 @@ def plot_cell_num(
         cell_type_names: Optional[List[str]] = None):
     plot_object = stdata.cell_type_counts
 
+    if plot_object is None:
+        raise RuntimeError('SpatialExpressionDataset contains no cell type counts')
+
     if seperate_pdf:
         for i in range(stdata.n_cell_types):
             fig, ax = plt.subplot()
@@ -292,6 +298,8 @@ def plot_cell_prob(
         seperate_pdf: bool = False,
         cell_type_names: Optional[List[str]] = None):
     plot_object = stdata.cell_type_probabilities
+    if plot_object is None:
+        raise RuntimeError('SpatialExpressionDataset contains no cell type counts')
 
     if seperate_pdf:
         for i in range(stdata.n_cell_types):
@@ -345,6 +353,12 @@ def plot_marker_genes(
         output_file: str,
         cell_type_labels: Optional[List[str]] = None,
         colormap: cm.ScalarMappable = cm.BuPu):
+    if stdata.marker_gene_indices is None:
+        raise RuntimeError('SpatialExpressionDataset contains no marker genes')
+
+    if stdata.omega_difference is None:
+        raise RuntimeError('SpatialExpressionDataset contains no omega difference')
+
     all_gene_indices = np.concatenate(stdata.marker_gene_indices)
     all_gene_names = stdata.gene_names[all_gene_indices]
     n_marker = len(all_gene_indices)
@@ -421,6 +435,9 @@ def plot_cell_num_scatterpie(
     :param output_path: Where to save plot
     :param cell_type_names: Cell type names to use in plot, an array of length n_components
     """
+    if stdata.cell_type_counts is None:
+        raise RuntimeError('SpatialExpressionDataset contains no cell type counts')
+
     fig, ax = plt.subplots()
 
     plotting.plot_spatial_pie_charts(fig, ax,

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import bayestme.logging
 
 import numpy as np
 import os
@@ -54,6 +55,8 @@ def get_parser():
                         help='Number of genes to consider for detecting spatial programs,'
                              ' if this number is less than the total number of genes the top N'
                              ' by spatial variance will be selected')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 

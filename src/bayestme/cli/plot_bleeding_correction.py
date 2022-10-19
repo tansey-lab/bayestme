@@ -1,4 +1,5 @@
 import argparse
+import bayestme.logging
 
 from bayestme import data, bleeding_correction
 
@@ -16,6 +17,8 @@ def get_parser():
     parser.add_argument('--n-top', type=int,
                         default=10,
                         help='Plot top n genes by stddev')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 

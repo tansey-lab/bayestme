@@ -54,7 +54,8 @@ setup(
         "anndata>=0.8.0,<1",
         "h5py>=3.7.0,<4",
         "esda>=2.4.1,<3",
-        "libpysal>=4.5.1,<5"
+        "libpysal>=4.5.1,<5",
+        "tqdm>=4.64.0,<5"
     ],
     extras_require={
         "dev": [

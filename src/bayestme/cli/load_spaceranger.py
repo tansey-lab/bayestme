@@ -1,5 +1,6 @@
 import argparse
 import logging
+import bayestme.logging
 
 from bayestme import data
 
@@ -12,6 +13,8 @@ def get_parser():
                         help='Output file, a SpatialExpressionDataset in h5 format')
     parser.add_argument('--input', type=str,
                         help='Input spaceranger dir')
+    bayestme.logging.add_logging_args(parser)
+
     return parser
 
 
