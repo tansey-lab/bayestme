@@ -32,14 +32,6 @@ def main():
     else:
         cell_type_names = None
 
-    if stdata.cell_type_counts is None or stdata.cell_type_probabilities is None:
-        raise RuntimeError('The anndata archive does not contain deconvolution results, '
-                           'please run select_marker_genes first.')
-
-    if stdata.marker_gene_indices is None:
-        raise RuntimeError('The anndata archive does not contain marker gene information, '
-                           'please run select_marker_genes first.')
-
     deconvolution.plot_deconvolution(
         stdata=stdata,
         output_dir=args.output_dir,
