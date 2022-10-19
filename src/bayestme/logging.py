@@ -7,9 +7,11 @@ def configure_logging(args):
     ch = logging.StreamHandler()
     
     if args.verbose:
-        ch.setLevel(level=logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        ch.setLevel(logging.DEBUG)
     else:
-        ch.setLevel(level=logging.INFO)
+        logger.setLevel(logging.INFO)
+        ch.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)

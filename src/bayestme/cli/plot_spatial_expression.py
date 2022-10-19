@@ -1,8 +1,11 @@
 import argparse
+import logging
 import bayestme.logging
 
 from bayestme import data, spatial_expression
 
+
+logger = logging.getLogger(__name__)
 
 def get_parser():
     parser = argparse.ArgumentParser(description='Plot spatial differential expression results')
@@ -26,7 +29,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.logging.configure_logging(args)
-
+    
     stdata = data.SpatialExpressionDataset.read_h5(args.adata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
     sde_result = data.SpatialDifferentialExpressionResult.read_h5(args.sde_result)
