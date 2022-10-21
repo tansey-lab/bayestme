@@ -24,16 +24,16 @@ setup(
     packages=find_packages(where="src"),
     entry_points={  # Optional
         "console_scripts": [
-            "grid_search=bayestme.grid_search_cfg:main",
             "filter_genes=bayestme.cli.filter_genes:main",
             "bleeding_correction=bayestme.cli.bleeding_correction:main",
             "deconvolve=bayestme.cli.deconvolve:main",
             "spatial_expression=bayestme.cli.spatial_expression:main",
             "load_spaceranger=bayestme.cli.load_spaceranger:main",
-            "plot_bleeding=bayestme.cli.plot_bleeding_correction:main",
+            "plot_bleeding_correction=bayestme.cli.plot_bleeding_correction:main",
             "plot_deconvolution=bayestme.cli.plot_deconvolution:main",
             "plot_spatial_expression=bayestme.cli.plot_spatial_expression:main",
-            "phenotype_selection=bayestme.cli.phenotype_selection:main"
+            "phenotype_selection=bayestme.cli.phenotype_selection:main",
+            "select_marker_genes=bayestme.cli.select_marker_genes:main"
         ],
     },
     python_requires=">=3.7, <4",

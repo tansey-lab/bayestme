@@ -4,7 +4,7 @@ Example Workflow
 ================
 
 This purpose of this document is to give you a sense of how you can string the different BayesTME modules together
-to analyze your data. This is a maximal example, you dont necessarily need to perform all of these steps,
+to analyze your data. This is a maximal example, you don't necessarily need to perform all of these steps,
 but some of them do depend on the output of each other.
 
 1. Assuming your data is the output of the visium/10x spaceranger pipeline, the first step is to convert that spaceranger
@@ -38,12 +38,12 @@ This will create a new anndata archive ``dataset_filtered.h5ad`` which has only 
 This will create a new anndata archive ``dataset_filtered_corrected.h5ad`` where the counts have been replaced with the
 bleed corrected counts. This will also create another h5 archive, which is a serialized :py:class:`bayestme.data.BleedCorrectionResult`.
 
-4. Plot bleeding correction using the :ref:`plot_bleeding_correction <cli_plot_bleeding_correction>`
+4. Plot bleeding correction using the :ref:`plot_bleeding_correction <cli_plot_bleeding_correction>` command
 command:
 
 .. code::
 
-    plot_deconvolution --raw-adata dataset_filtered.h5ad \
+    plot_bleeding_correction --raw-adata dataset_filtered.h5ad \
         --corrected-adata dataset_filtered_corrected.h5ad \
         --bleed-correction-results bleed_correction_results.h5 \
         --output-dir bleed_correction_results
@@ -53,7 +53,7 @@ command:
 This step is very computationally expensive as we need to re-run the deconvolution gibbs sampler thousands of times
 in order to do cross validation to learn the number of cell types and the lambda parameter.
 This step cannot be feasibly accomplished on a single computer,
-a computational cluster or cloud service provider needs to be used in order to run the thousands of gibbs samplers in parallel.
+a computational cluster or cloud service provider needs to be used in order to run many MCMC samplers in parallel.
 
 If you have some outside data telling you how many cell types are in your sample you can feasibly skip this step and go straight to step 6,
 however you will need to have a reasonable guess for the lambda parameter. If you are taking this quick and dirty approach,
