@@ -33,13 +33,25 @@ class Layout(Enum):
     SQUARE = 2
 
 
+def is_csv(fn: str):
+    return fn.lower().endswith('csv.gz') or fn.lower().endswith('csv')
+
+
+def is_tsv(fn: str):
+    return fn.lower().endswith('tsv.gz') or fn.lower().endswith('tsv')
+
+
+def is_csv_tsv(fn: str):
+    return is_csv(fn) or is_tsv(fn)
+
+
 def create_anndata_object(
-        counts: np.ndarray,
-        coordinates: Optional[np.ndarray],
-        tissue_mask: Optional[np.ndarray],
-        gene_names: np.ndarray,
-        layout: Layout,
-        barcodes: Optional[np.array] = None):
+    counts: np.ndarray,
+    coordinates: Optional[np.ndarray],
+    tissue_mask: Optional[np.ndarray],
+    gene_names: np.ndarray,
+    layout: Layout,
+    barcodes: Optional[np.array] = None):
     """
     Create an AnnData object from spatial expression data.
 
@@ -238,9 +250,17 @@ class SpatialExpressionDataset:
         filtered_count_path = os.path.join(data_path, 'filtered_feature_bc_matrix/matrix.mtx.gz')
         features_path = os.path.join(data_path, 'raw_feature_bc_matrix/features.tsv.gz')
         barcodes_path = os.path.join(data_path, 'raw_feature_bc_matrix/barcodes.tsv.gz')
-        positions_path = glob.glob(os.path.join(data_path, 'spatial/tissue_positions_list.*')).pop()
 
-        positions_list = pd.read_csv(positions_path, header=None, index_col=0, names=None)
+        tissue_positions_lists = glob.glob(os.path.join(data_path, 'spatial/tissue_positions_list.*'))
+
+        positions_path = [fn for fn in tissue_positions_lists if is_csv_tsv(fn)][0]
+
+        if is_tsv(positions_path):
+            positions_list = pd.read_csv(positions_path, sep='\t', header=None, index_col=0, names=None)
+        elif is_csv(positions_path):
+            positions_list = pd.read_csv(positions_path, header=None, index_col=0, names=None)
+        else:
+            raise RuntimeError('No positions list found in spaceranger directory')
 
         raw_count = np.array(io.mmread(raw_count_path).todense())
         filtered_count = np.array(io.mmread(filtered_count_path).todense())
@@ -567,6 +587,7 @@ class SpatialDifferentialExpressionSamplerState:
     """
     Data model for internal SDE gibbs sampler state
     """
+
     def __init__(self,
                  pickled_bit_generator: bytes,
                  n_cell_types: int,
