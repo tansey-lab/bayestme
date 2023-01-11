@@ -286,11 +286,11 @@ class SpatialExpressionDataset:
         n_spots = count_mat.shape[0]
         n_genes = count_mat.shape[1]
         logger.info('detected {} spots, {} genes'.format(n_spots, n_genes))
-        positions = np.zeros((2, n_spots))
+        positions = np.zeros((n_spots, 2))
         for i in range(n_spots):
             spot_pos = raw_data.columns[1:][i].split('x')
-            positions[0, i] = int(spot_pos[0])
-            positions[1, i] = int(spot_pos[1])
+            positions[i, 0] = int(spot_pos[0])
+            positions[i, 1] = int(spot_pos[1])
         positions = positions.astype(int)
         tissue_mask = np.ones(n_spots).astype(bool)
 
