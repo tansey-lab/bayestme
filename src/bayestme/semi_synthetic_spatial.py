@@ -12,22 +12,24 @@ def get_rank(array):
     return ranks
 
 
-def generate_semi_synthetic(adata: anndata.AnnData,
-                            cluster_id_column: str,
-                            tissue_positions: np.ndarray,
-                            n_genes: int,
-                            cell_num=None,
-                            canvas_size=(36, 36),
-                            sq_size=4,
-                            layout=None,
-                            random_seed=None,
-                            n_spatial_gene=50,
-                            alpha=1,
-                            w=None,
-                            spatial_gene=None,
-                            spatial_cell_type=None,
-                            spatial_programs=None,
-                            verbose=True):
+def generate_semi_synthetic(
+    adata: anndata.AnnData,
+    cluster_id_column: str,
+    tissue_positions: np.ndarray,
+    n_genes: int,
+    cell_num=None,
+    canvas_size=(36, 36),
+    sq_size=4,
+    layout=None,
+    random_seed=None,
+    n_spatial_gene=50,
+    alpha=1,
+    w=None,
+    spatial_gene=None,
+    spatial_cell_type=None,
+    spatial_programs=None,
+    verbose=True,
+):
     """
     Generate a synthetic ST dataset using a pre-clustered scRNA dataset.
 
@@ -51,13 +53,13 @@ def generate_semi_synthetic(adata: anndata.AnnData,
     """
     pos_ss = tissue_positions.T
     if verbose:
-        print('Generating semi-synthetic data...')
+        print("Generating semi-synthetic data...")
         if cell_num is not None:
-            print('\t with cell num. annotation at {} spots'.format(cell_num.shape[0]))
+            print("\t with cell num. annotation at {} spots".format(cell_num.shape[0]))
     if spatial_gene is None or spatial_cell_type is None:
-        print('Picking sptial genes and cell types by dispersion')
+        print("Picking sptial genes and cell types by dispersion")
     else:
-        print('Using given sptial genes and cell types')
+        print("Using given sptial genes and cell types")
     if random_seed is not None:
         np.random.seed(random_seed)
     # get single nucleus reads
@@ -91,7 +93,9 @@ def generate_semi_synthetic(adata: anndata.AnnData,
         n_sectors = 0
         for i in range(n_row):
             for j in range(n_col):
-                bkg[i * sq_size:(i + 1) * sq_size, j * sq_size:(j + 1) * sq_size] = n_sectors
+                bkg[
+                    i * sq_size : (i + 1) * sq_size, j * sq_size : (j + 1) * sq_size
+                ] = n_sectors
                 n_sectors = n_sectors + 1
 
     # assign celluar community indices to spots in tissue
@@ -117,7 +121,9 @@ def generate_semi_synthetic(adata: anndata.AnnData,
     for i in range(n_nodes):
         if i % 1000 == 0:
             print(i)
-        n_cells[i] = np.random.multinomial(np.random.poisson(lambdas[prior_idx[i]]), Truth_prior[i])
+        n_cells[i] = np.random.multinomial(
+            np.random.poisson(lambdas[prior_idx[i]]), Truth_prior[i]
+        )
 
     # sample cells from scRNA data
     # sampled cells for each cell type
@@ -133,7 +139,7 @@ def generate_semi_synthetic(adata: anndata.AnnData,
         current_spot = 0
         for i in range(n_nodes):
             # assign each sampled cell to some spots
-            sampled_cells_spots_k[current_spot:current_spot + n_cells[i, k]] = i
+            sampled_cells_spots_k[current_spot : current_spot + n_cells[i, k]] = i
             current_spot += n_cells[i, k]
         sampled_cells.append(sampled_cells_k)
         sampled_cells_spots.append(sampled_cells_spots_k)
@@ -152,12 +158,18 @@ def generate_semi_synthetic(adata: anndata.AnnData,
             alphas = np.zeros((n_genes, n_components))
             for k in range(n_components):
                 for i in range(n_genes):
-                    if (sampled_cell_reads[k][:, i] > 0).sum() > int(sampled_cell_reads[k].shape[0] / 2):
+                    if (sampled_cell_reads[k][:, i] > 0).sum() > int(
+                        sampled_cell_reads[k].shape[0] / 2
+                    ):
                         x = np.ones(sampled_cell_reads[k].shape[0])
-                        res = sm.NegativeBinomial(sampled_cell_reads[k][:, i], x, loglike_method='nb2').fit()
+                        res = sm.NegativeBinomial(
+                            sampled_cell_reads[k][:, i], x, loglike_method="nb2"
+                        ).fit()
                         alphas[i, k] = res.params[1]
 
-            spatial_gene, spatial_cell_type = np.unravel_index(np.argsort(alphas, axis=None)[::-1], alphas.shape)
+            spatial_gene, spatial_cell_type = np.unravel_index(
+                np.argsort(alphas, axis=None)[::-1], alphas.shape
+            )
 
         # assign each spatial gene with some spatial program
         if spatial_programs is None:
@@ -167,32 +179,47 @@ def generate_semi_synthetic(adata: anndata.AnnData,
 
         for i in range(n_spatial_gene):
             expression_current_gene = np.random.normal(
-                w[:, spatial_programs[i]][sampled_cells_spots[spatial_cell_type[i]]])
+                w[:, spatial_programs[i]][sampled_cells_spots[spatial_cell_type[i]]]
+            )
             expression_rank = get_rank(expression_current_gene)
 
             # reorder the sampled gene
             # sampled_cell_reads[spatial_cell_type[i]][:, spatial_gene[i]] = np.sort(sampled_cell_reads[spatial_cell_type[i]][:, spatial_gene[i]])[expression_rank]
 
             # genereate poisson synthetic reads
-            gene_lam = sampled_cell_reads[spatial_cell_type[i]][:, spatial_gene[i]].mean()
-            syn_gene_reads = np.random.poisson(gene_lam, size=len(sampled_cell_reads[spatial_cell_type[i]]))
-            sampled_cell_reads[spatial_cell_type[i]][:, spatial_gene[i]] = np.sort(syn_gene_reads)[expression_rank]
-        spatial = np.array([spatial_gene[:n_spatial_gene], spatial_cell_type[:n_spatial_gene], spatial_programs])
+            gene_lam = sampled_cell_reads[spatial_cell_type[i]][
+                :, spatial_gene[i]
+            ].mean()
+            syn_gene_reads = np.random.poisson(
+                gene_lam, size=len(sampled_cell_reads[spatial_cell_type[i]])
+            )
+            sampled_cell_reads[spatial_cell_type[i]][:, spatial_gene[i]] = np.sort(
+                syn_gene_reads
+            )[expression_rank]
+        spatial = np.array(
+            [
+                spatial_gene[:n_spatial_gene],
+                spatial_cell_type[:n_spatial_gene],
+                spatial_programs,
+            ]
+        )
     else:
         spatial = None
 
     Observation = np.zeros((n_nodes, n_genes, n_components))
     for i in range(n_nodes):
         for k in range(n_components):
-            Observation[i, :, k] = sampled_cell_reads[k][sampled_cells_spots[k] == i].sum(axis=0)
+            Observation[i, :, k] = sampled_cell_reads[k][
+                sampled_cells_spots[k] == i
+            ].sum(axis=0)
     Observations_tissue = Observation.sum(axis=-1).astype(int)
 
     stdata = data.SpatialExpressionDataset.from_arrays(
         raw_counts=Observations_tissue,
         positions=tissue_positions,
         tissue_mask=np.ones(tissue_positions.shape[0]).astype(bool),
-        gene_names=np.array([f'gene{i}' for i in range(n_genes)]),
-        layout=data.Layout.SQUARE
+        gene_names=np.array([f"gene{i}" for i in range(n_genes)]),
+        layout=data.Layout.SQUARE,
     )
 
     return stdata, Truth_prior, n_cells, spatial, sampled_cell_reads

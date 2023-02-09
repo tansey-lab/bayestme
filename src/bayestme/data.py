@@ -16,16 +16,16 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
-IN_TISSUE_ATTR = 'in_tissue'
-SPATIAL_ATTR = 'spatial'
-LAYOUT_ATTR = 'layout'
-CONNECTIVITIES_ATTR = 'connectivities'
-BAYESTME_ANNDATA_PREFIX = 'bayestme'
-N_CELL_TYPES_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_n_cell_types'
-CELL_TYPE_COUNT_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_counts'
-CELL_TYPE_PROB_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_probabilities'
-MARKER_GENE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_cell_type_marker'
-OMEGA_DIFFERENCE_ATTR = f'{BAYESTME_ANNDATA_PREFIX}_omega_difference'
+IN_TISSUE_ATTR = "in_tissue"
+SPATIAL_ATTR = "spatial"
+LAYOUT_ATTR = "layout"
+CONNECTIVITIES_ATTR = "connectivities"
+BAYESTME_ANNDATA_PREFIX = "bayestme"
+N_CELL_TYPES_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_n_cell_types"
+CELL_TYPE_COUNT_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_counts"
+CELL_TYPE_PROB_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_probabilities"
+MARKER_GENE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_marker"
+OMEGA_DIFFERENCE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega_difference"
 
 
 class Layout(Enum):
@@ -34,11 +34,11 @@ class Layout(Enum):
 
 
 def is_csv(fn: str):
-    return fn.lower().endswith('csv.gz') or fn.lower().endswith('csv')
+    return fn.lower().endswith("csv.gz") or fn.lower().endswith("csv")
 
 
 def is_tsv(fn: str):
-    return fn.lower().endswith('tsv.gz') or fn.lower().endswith('tsv')
+    return fn.lower().endswith("tsv.gz") or fn.lower().endswith("tsv")
 
 
 def is_csv_tsv(fn: str):
@@ -51,7 +51,8 @@ def create_anndata_object(
     tissue_mask: Optional[np.ndarray],
     gene_names: np.ndarray,
     layout: Layout,
-    barcodes: Optional[np.array] = None):
+    barcodes: Optional[np.array] = None,
+):
     """
     Create an AnnData object from spatial expression data.
 
@@ -73,7 +74,9 @@ def create_anndata_object(
     edges = utils.get_edges(coordinates[tissue_mask], layout.value)
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
-        shape=(adata.n_obs, adata.n_obs), dtype=np.bool)
+        shape=(adata.n_obs, adata.n_obs),
+        dtype=np.bool,
+    )
     adata.obsp[CONNECTIVITIES_ATTR] = connectivities
 
     return adata
@@ -171,9 +174,13 @@ class SpatialExpressionDataset:
 
         for i in range(self.n_cell_types):
             marker_gene_indices = self.adata.varm[MARKER_GENE_ATTR].T[i] >= 0
-            marker_gene_order = self.adata.varm[MARKER_GENE_ATTR].T[i][marker_gene_indices]
+            marker_gene_order = self.adata.varm[MARKER_GENE_ATTR].T[i][
+                marker_gene_indices
+            ]
 
-            outputs.append(np.arange(self.adata.n_vars)[marker_gene_indices][marker_gene_order])
+            outputs.append(
+                np.arange(self.adata.n_vars)[marker_gene_indices][marker_gene_order]
+            )
 
         return outputs
 
@@ -188,13 +195,15 @@ class SpatialExpressionDataset:
         self.adata.write_h5ad(path)
 
     @classmethod
-    def from_arrays(cls,
-                    raw_counts: np.ndarray,
-                    positions: Optional[np.ndarray],
-                    tissue_mask: Optional[np.ndarray],
-                    gene_names: np.ndarray,
-                    layout: Layout,
-                    barcodes: Optional[np.array] = None):
+    def from_arrays(
+        cls,
+        raw_counts: np.ndarray,
+        positions: Optional[np.ndarray],
+        tissue_mask: Optional[np.ndarray],
+        gene_names: np.ndarray,
+        layout: Layout,
+        barcodes: Optional[np.array] = None,
+    ):
         """
         Construct SpatialExpressionDataset directly from numpy arrays.
 
@@ -212,18 +221,18 @@ class SpatialExpressionDataset:
             tissue_mask=tissue_mask,
             gene_names=gene_names,
             layout=layout,
-            barcodes=barcodes
+            barcodes=barcodes,
         )
         return cls(adata)
 
     @classmethod
     def read_legacy_h5(cls, path):
-        with h5py.File(path, 'r') as f:
-            raw_counts = f['raw_counts'][:]
-            positions = f['positions'][:]
-            tissue_mask = f['tissue_mask'][:]
-            gene_names = np.array([x.decode('utf-8') for x in f['gene_names'][:]])
-            layout_name = f.attrs['layout']
+        with h5py.File(path, "r") as f:
+            raw_counts = f["raw_counts"][:]
+            positions = f["positions"][:]
+            tissue_mask = f["tissue_mask"][:]
+            gene_names = np.array([x.decode("utf-8") for x in f["gene_names"][:]])
+            layout_name = f.attrs["layout"]
             layout = Layout[layout_name]
 
             return cls.from_arrays(
@@ -231,7 +240,8 @@ class SpatialExpressionDataset:
                 positions=positions,
                 tissue_mask=tissue_mask,
                 gene_names=gene_names,
-                layout=layout)
+                layout=layout,
+            )
 
     @classmethod
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
@@ -246,39 +256,53 @@ class SpatialExpressionDataset:
         in a hex grid layout.
         :return: SpatialExpressionDataset
         """
-        raw_count_path = os.path.join(data_path, 'raw_feature_bc_matrix/matrix.mtx.gz')
-        filtered_count_path = os.path.join(data_path, 'filtered_feature_bc_matrix/matrix.mtx.gz')
-        features_path = os.path.join(data_path, 'raw_feature_bc_matrix/features.tsv.gz')
-        barcodes_path = os.path.join(data_path, 'raw_feature_bc_matrix/barcodes.tsv.gz')
+        raw_count_path = os.path.join(data_path, "raw_feature_bc_matrix/matrix.mtx.gz")
+        filtered_count_path = os.path.join(
+            data_path, "filtered_feature_bc_matrix/matrix.mtx.gz"
+        )
+        features_path = os.path.join(data_path, "raw_feature_bc_matrix/features.tsv.gz")
+        barcodes_path = os.path.join(data_path, "raw_feature_bc_matrix/barcodes.tsv.gz")
 
-        tissue_positions_lists = glob.glob(os.path.join(data_path, 'spatial/tissue_positions_list.*'))
+        tissue_positions_lists = glob.glob(
+            os.path.join(data_path, "spatial/tissue_positions_list.*")
+        )
 
         positions_path = [fn for fn in tissue_positions_lists if is_csv_tsv(fn)][0]
 
         if is_tsv(positions_path):
-            positions_list = pd.read_csv(positions_path, sep='\t', header=None, index_col=0, names=None)
+            positions_list = pd.read_csv(
+                positions_path, sep="\t", header=None, index_col=0, names=None
+            )
         elif is_csv(positions_path):
-            positions_list = pd.read_csv(positions_path, header=None, index_col=0, names=None)
+            positions_list = pd.read_csv(
+                positions_path, header=None, index_col=0, names=None
+            )
         else:
-            raise RuntimeError('No positions list found in spaceranger directory')
+            raise RuntimeError("No positions list found in spaceranger directory")
 
         raw_count = np.array(io.mmread(raw_count_path).todense())
         filtered_count = np.array(io.mmread(filtered_count_path).todense())
-        features = np.array(pd.read_csv(features_path, header=None, sep='\t'))[:, 1].astype(str)
-        barcodes = pd.read_csv(barcodes_path, header=None, sep='\t')
+        features = np.array(pd.read_csv(features_path, header=None, sep="\t"))[
+            :, 1
+        ].astype(str)
+        barcodes = pd.read_csv(barcodes_path, header=None, sep="\t")
         n_spots = raw_count.shape[1]
         n_genes = raw_count.shape[0]
-        logger.info('detected {} spots, {} genes'.format(n_spots, n_genes))
+        logger.info("detected {} spots, {} genes".format(n_spots, n_genes))
         pos = np.zeros((n_spots, 3))
         for i in range(n_spots):
             pos[i] = np.array(positions_list.loc[barcodes[0][i]][:3])
         tissue_mask = pos[:, 0] == 1
         positions = pos[:, 1:]
         n_spot_in = tissue_mask.sum()
-        logger.info('\t {} spots in tissue sample'.format(n_spot_in))
+        logger.info("\t {} spots in tissue sample".format(n_spot_in))
         all_counts = raw_count.sum()
         tissue_counts = filtered_count.sum()
-        logger.info('\t {:.3f}% UMI counts bleeds out'.format((1 - tissue_counts / all_counts) * 100))
+        logger.info(
+            "\t {:.3f}% UMI counts bleeds out".format(
+                (1 - tissue_counts / all_counts) * 100
+            )
+        )
 
         return cls.from_arrays(
             raw_counts=raw_count.T,
@@ -286,7 +310,8 @@ class SpatialExpressionDataset:
             tissue_mask=tissue_mask,
             gene_names=features,
             layout=layout,
-            barcodes=barcodes[0].to_numpy())
+            barcodes=barcodes[0].to_numpy(),
+        )
 
     @classmethod
     def read_count_mat(cls, data_path, layout=Layout.SQUARE):
@@ -300,15 +325,15 @@ class SpatialExpressionDataset:
         in a hex grid layout.
         :return: SpatialExpressionDataset
         """
-        raw_data = pd.read_csv(data_path, sep='\t')
+        raw_data = pd.read_csv(data_path, sep="\t")
         count_mat = raw_data.values[:, 1:].T.astype(int)
-        features = np.array([x.split(' ')[0] for x in raw_data.values[:, 0]])
+        features = np.array([x.split(" ")[0] for x in raw_data.values[:, 0]])
         n_spots = count_mat.shape[0]
         n_genes = count_mat.shape[1]
-        logger.info('detected {} spots, {} genes'.format(n_spots, n_genes))
+        logger.info("detected {} spots, {} genes".format(n_spots, n_genes))
         positions = np.zeros((n_spots, 2))
         for i in range(n_spots):
-            spot_pos = raw_data.columns[1:][i].split('x')
+            spot_pos = raw_data.columns[1:][i].split("x")
             positions[i, 0] = int(spot_pos[0])
             positions[i, 1] = int(spot_pos[1])
         positions = positions.astype(int)
@@ -319,7 +344,8 @@ class SpatialExpressionDataset:
             positions=positions,
             tissue_mask=tissue_mask,
             gene_names=features,
-            layout=layout)
+            layout=layout,
+        )
 
     @classmethod
     def read_h5(cls, path):
@@ -336,11 +362,13 @@ class BleedCorrectionResult:
     Data model for the results of bleeding correction.
     """
 
-    def __init__(self,
-                 corrected_reads: np.ndarray,
-                 global_rates: np.ndarray,
-                 basis_functions: np.ndarray,
-                 weights: np.ndarray):
+    def __init__(
+        self,
+        corrected_reads: np.ndarray,
+        global_rates: np.ndarray,
+        basis_functions: np.ndarray,
+        weights: np.ndarray,
+    ):
         """
         :param corrected_reads: <N in-tissue spot> x <N genes> matrix of corrected read counts.
         :param global_rates:
@@ -353,11 +381,11 @@ class BleedCorrectionResult:
         self.corrected_reads = corrected_reads
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f['corrected_reads'] = self.corrected_reads
-            f['global_rates'] = self.global_rates
-            f['basis_functions'] = self.basis_functions
-            f['weights'] = self.weights
+        with h5py.File(path, "w") as f:
+            f["corrected_reads"] = self.corrected_reads
+            f["global_rates"] = self.global_rates
+            f["basis_functions"] = self.basis_functions
+            f["weights"] = self.weights
 
     @classmethod
     def read_h5(cls, path):
@@ -366,17 +394,18 @@ class BleedCorrectionResult:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            corrected_reads = f['corrected_reads'][:]
-            global_rates = f['global_rates'][:]
-            basis_functions = f['basis_functions'][:]
-            weights = f['weights'][:]
+        with h5py.File(path, "r") as f:
+            corrected_reads = f["corrected_reads"][:]
+            global_rates = f["global_rates"][:]
+            basis_functions = f["basis_functions"][:]
+            weights = f["weights"][:]
 
             return cls(
                 corrected_reads=corrected_reads,
                 global_rates=global_rates,
                 basis_functions=basis_functions,
-                weights=weights)
+                weights=weights,
+            )
 
 
 class PhenotypeSelectionResult:
@@ -384,17 +413,19 @@ class PhenotypeSelectionResult:
     Data model for the results of one job in phenotype selection k-fold cross validation
     """
 
-    def __init__(self,
-                 mask: np.ndarray,
-                 cell_prob_trace: np.ndarray,
-                 expression_trace: np.ndarray,
-                 beta_trace: np.ndarray,
-                 cell_num_trace: np.ndarray,
-                 log_lh_train_trace: np.ndarray,
-                 log_lh_test_trace: np.ndarray,
-                 n_components: int,
-                 lam: float,
-                 fold_number: int):
+    def __init__(
+        self,
+        mask: np.ndarray,
+        cell_prob_trace: np.ndarray,
+        expression_trace: np.ndarray,
+        beta_trace: np.ndarray,
+        cell_num_trace: np.ndarray,
+        log_lh_train_trace: np.ndarray,
+        log_lh_test_trace: np.ndarray,
+        n_components: int,
+        lam: float,
+        fold_number: int,
+    ):
         """
         :param mask: <N tissue spots> length boolean array, False if the spot is being held out, True otherwise
         :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
@@ -419,17 +450,17 @@ class PhenotypeSelectionResult:
         self.cell_prob_trace = cell_prob_trace
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f['mask'] = self.mask
-            f['log_lh_test_trace'] = self.log_lh_test_trace
-            f['log_lh_train_trace'] = self.log_lh_train_trace
-            f['cell_num_trace'] = self.cell_num_trace
-            f['beta_trace'] = self.beta_trace
-            f['expression_trace'] = self.expression_trace
-            f['cell_prob_trace'] = self.cell_prob_trace
-            f.attrs['fold_number'] = self.fold_number
-            f.attrs['lam'] = self.lam
-            f.attrs['n_components'] = self.n_components
+        with h5py.File(path, "w") as f:
+            f["mask"] = self.mask
+            f["log_lh_test_trace"] = self.log_lh_test_trace
+            f["log_lh_train_trace"] = self.log_lh_train_trace
+            f["cell_num_trace"] = self.cell_num_trace
+            f["beta_trace"] = self.beta_trace
+            f["expression_trace"] = self.expression_trace
+            f["cell_prob_trace"] = self.cell_prob_trace
+            f.attrs["fold_number"] = self.fold_number
+            f.attrs["lam"] = self.lam
+            f.attrs["n_components"] = self.n_components
 
     @classmethod
     def read_h5(cls, path):
@@ -438,17 +469,17 @@ class PhenotypeSelectionResult:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            mask = f['mask'][:]
-            log_lh_test_trace = f['log_lh_test_trace'][:]
-            log_lh_train_trace = f['log_lh_train_trace'][:]
-            cell_num_trace = f['cell_num_trace'][:]
-            beta_trace = f['beta_trace'][:]
-            expression_trace = f['expression_trace'][:]
-            cell_prob_trace = f['cell_prob_trace'][:]
-            fold_number = f.attrs['fold_number']
-            lam = f.attrs['lam']
-            n_components = f.attrs['n_components']
+        with h5py.File(path, "r") as f:
+            mask = f["mask"][:]
+            log_lh_test_trace = f["log_lh_test_trace"][:]
+            log_lh_train_trace = f["log_lh_train_trace"][:]
+            cell_num_trace = f["cell_num_trace"][:]
+            beta_trace = f["beta_trace"][:]
+            expression_trace = f["expression_trace"][:]
+            cell_prob_trace = f["cell_prob_trace"][:]
+            fold_number = f.attrs["fold_number"]
+            lam = f.attrs["lam"]
+            n_components = f.attrs["n_components"]
 
             return cls(
                 mask=mask,
@@ -460,7 +491,8 @@ class PhenotypeSelectionResult:
                 cell_num_trace=cell_num_trace,
                 fold_number=fold_number,
                 lam=lam,
-                n_components=n_components)
+                n_components=n_components,
+            )
 
 
 class DeconvolutionResult:
@@ -468,14 +500,16 @@ class DeconvolutionResult:
     Data model for the results of sampling from the deconvolution posterior distribution.
     """
 
-    def __init__(self,
-                 cell_prob_trace: np.ndarray,
-                 expression_trace: np.ndarray,
-                 beta_trace: np.ndarray,
-                 cell_num_trace: np.ndarray,
-                 reads_trace: np.ndarray,
-                 lam2: float,
-                 n_components: int):
+    def __init__(
+        self,
+        cell_prob_trace: np.ndarray,
+        expression_trace: np.ndarray,
+        beta_trace: np.ndarray,
+        cell_num_trace: np.ndarray,
+        reads_trace: np.ndarray,
+        lam2: float,
+        n_components: int,
+    ):
         """
 
         :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
@@ -495,14 +529,14 @@ class DeconvolutionResult:
         self.n_components = n_components
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f['cell_prob_trace'] = self.cell_prob_trace
-            f['expression_trace'] = self.expression_trace
-            f['beta_trace'] = self.beta_trace
-            f['cell_num_trace'] = self.cell_num_trace
-            f['reads_trace'] = self.reads_trace
-            f.attrs['lam2'] = self.lam2
-            f.attrs['n_components'] = self.n_components
+        with h5py.File(path, "w") as f:
+            f["cell_prob_trace"] = self.cell_prob_trace
+            f["expression_trace"] = self.expression_trace
+            f["beta_trace"] = self.beta_trace
+            f["cell_num_trace"] = self.cell_num_trace
+            f["reads_trace"] = self.reads_trace
+            f.attrs["lam2"] = self.lam2
+            f.attrs["n_components"] = self.n_components
 
     @property
     def omega(self):
@@ -553,7 +587,9 @@ class DeconvolutionResult:
         for k in range(self.n_components):
             mask = np.arange(self.n_components) != k
             max_exp_g_k_prime = gene_expression[mask].max(axis=0)
-            expression[k] = (gene_expression[k] - max_exp_g_k_prime) / np.max(gene_expression, axis=0)
+            expression[k] = (gene_expression[k] - max_exp_g_k_prime) / np.max(
+                gene_expression, axis=0
+            )
 
         return expression
 
@@ -564,14 +600,14 @@ class DeconvolutionResult:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            cell_prob_trace = f['cell_prob_trace'][:]
-            expression_trace = f['expression_trace'][:]
-            beta_trace = f['beta_trace'][:]
-            cell_num_trace = f['cell_num_trace'][:]
-            reads_trace = f['reads_trace'][:]
-            lam2 = f.attrs['lam2']
-            n_components = f.attrs['n_components']
+        with h5py.File(path, "r") as f:
+            cell_prob_trace = f["cell_prob_trace"][:]
+            expression_trace = f["expression_trace"][:]
+            beta_trace = f["beta_trace"][:]
+            cell_num_trace = f["cell_num_trace"][:]
+            reads_trace = f["reads_trace"][:]
+            lam2 = f.attrs["lam2"]
+            n_components = f.attrs["n_components"]
 
             return cls(
                 cell_prob_trace=cell_prob_trace,
@@ -580,7 +616,8 @@ class DeconvolutionResult:
                 cell_num_trace=cell_num_trace,
                 reads_trace=reads_trace,
                 lam2=lam2,
-                n_components=n_components)
+                n_components=n_components,
+            )
 
 
 class SpatialDifferentialExpressionSamplerState:
@@ -588,31 +625,33 @@ class SpatialDifferentialExpressionSamplerState:
     Data model for internal SDE gibbs sampler state
     """
 
-    def __init__(self,
-                 pickled_bit_generator: bytes,
-                 n_cell_types: int,
-                 n_nodes: int,
-                 n_signals: int,
-                 n_spatial_patterns: int,
-                 lam2: float,
-                 edges: np.ndarray,
-                 alpha: np.ndarray,
-                 W: np.ndarray,
-                 Gamma: np.ndarray,
-                 H: np.ndarray,
-                 C: np.ndarray,
-                 V: np.ndarray,
-                 Theta: np.ndarray,
-                 Omegas: np.ndarray,
-                 prior_vars: np.ndarray,
-                 Delta: scipy.sparse.csc.csc_matrix,
-                 DeltaT: scipy.sparse.csc.csc_matrix,
-                 Tau2: np.ndarray,
-                 Tau2_a: np.ndarray,
-                 Tau2_b: np.ndarray,
-                 Tau2_c: np.ndarray,
-                 Sigma0_inv: scipy.sparse.csc.csc_matrix,
-                 Cov_mats: np.ndarray):
+    def __init__(
+        self,
+        pickled_bit_generator: bytes,
+        n_cell_types: int,
+        n_nodes: int,
+        n_signals: int,
+        n_spatial_patterns: int,
+        lam2: float,
+        edges: np.ndarray,
+        alpha: np.ndarray,
+        W: np.ndarray,
+        Gamma: np.ndarray,
+        H: np.ndarray,
+        C: np.ndarray,
+        V: np.ndarray,
+        Theta: np.ndarray,
+        Omegas: np.ndarray,
+        prior_vars: np.ndarray,
+        Delta: scipy.sparse.csc.csc_matrix,
+        DeltaT: scipy.sparse.csc.csc_matrix,
+        Tau2: np.ndarray,
+        Tau2_a: np.ndarray,
+        Tau2_b: np.ndarray,
+        Tau2_c: np.ndarray,
+        Sigma0_inv: scipy.sparse.csc.csc_matrix,
+        Cov_mats: np.ndarray,
+    ):
         self.pickled_bit_generator = pickled_bit_generator
         self.n_cell_types = n_cell_types
         self.n_nodes = n_nodes
@@ -639,40 +678,31 @@ class SpatialDifferentialExpressionSamplerState:
         self.Cov_mats = Cov_mats
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f.attrs['pickled_bit_generator'] = np.void(self.pickled_bit_generator)
-            f.attrs['n_cell_types'] = self.n_cell_types
-            f.attrs['n_nodes'] = self.n_nodes
-            f.attrs['n_signals'] = self.n_signals
-            f.attrs['n_spatial_patterns'] = self.n_spatial_patterns
-            f.attrs['lam2'] = self.lam2
-            f['edges'] = self.edges
-            f['alpha'] = self.alpha
-            f['W'] = self.W
-            f['Gamma'] = self.Gamma
-            f['H'] = self.H
-            f['C'] = self.C
-            f['V'] = self.V
-            f['Theta'] = self.Theta
-            f['Omegas'] = self.Omegas
-            f['prior_vars'] = self.prior_vars
-            f['Tau2'] = self.Tau2
-            f['Tau2_a'] = self.Tau2_a
-            f['Tau2_b'] = self.Tau2_b
-            f['Tau2_c'] = self.Tau2_c
-            f['Cov_mats'] = self.Cov_mats
-            anndata._io.h5ad.write_sparse_as_dense(
-                f,
-                'Delta',
-                self.Delta)
-            anndata._io.h5ad.write_sparse_as_dense(
-                f,
-                'DeltaT',
-                self.DeltaT)
-            anndata._io.h5ad.write_sparse_as_dense(
-                f,
-                'Sigma0_inv',
-                self.Sigma0_inv)
+        with h5py.File(path, "w") as f:
+            f.attrs["pickled_bit_generator"] = np.void(self.pickled_bit_generator)
+            f.attrs["n_cell_types"] = self.n_cell_types
+            f.attrs["n_nodes"] = self.n_nodes
+            f.attrs["n_signals"] = self.n_signals
+            f.attrs["n_spatial_patterns"] = self.n_spatial_patterns
+            f.attrs["lam2"] = self.lam2
+            f["edges"] = self.edges
+            f["alpha"] = self.alpha
+            f["W"] = self.W
+            f["Gamma"] = self.Gamma
+            f["H"] = self.H
+            f["C"] = self.C
+            f["V"] = self.V
+            f["Theta"] = self.Theta
+            f["Omegas"] = self.Omegas
+            f["prior_vars"] = self.prior_vars
+            f["Tau2"] = self.Tau2
+            f["Tau2_a"] = self.Tau2_a
+            f["Tau2_b"] = self.Tau2_b
+            f["Tau2_c"] = self.Tau2_c
+            f["Cov_mats"] = self.Cov_mats
+            anndata._io.h5ad.write_sparse_as_dense(f, "Delta", self.Delta)
+            anndata._io.h5ad.write_sparse_as_dense(f, "DeltaT", self.DeltaT)
+            anndata._io.h5ad.write_sparse_as_dense(f, "Sigma0_inv", self.Sigma0_inv)
 
     @classmethod
     def read_h5(cls, path):
@@ -681,34 +711,31 @@ class SpatialDifferentialExpressionSamplerState:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            pickled_bit_generator = f.attrs['pickled_bit_generator'].tobytes()
-            n_cell_types = f.attrs['n_cell_types']
-            n_nodes = f.attrs['n_nodes']
-            n_signals = f.attrs['n_signals']
-            n_spatial_patterns = f.attrs['n_spatial_patterns']
-            lam2 = f.attrs['lam2']
-            edges = f['edges'][:]
-            alpha = f['alpha'][:]
-            W = f['W'][:]
-            Gamma = f['Gamma'][:]
-            H = f['H'][:]
-            C = f['C'][:]
-            V = f['V'][:]
-            Theta = f['Theta'][:]
-            Omegas = f['Omegas'][:]
-            prior_vars = f['prior_vars'][:]
-            Tau2 = f['Tau2'][:]
-            Tau2_a = f['Tau2_a'][:]
-            Tau2_b = f['Tau2_b'][:]
-            Tau2_c = f['Tau2_c'][:]
-            Cov_mats = f['Cov_mats'][:]
-            Delta = anndata._io.h5ad.read_dense_as_csc(
-                f['Delta'])
-            DeltaT = anndata._io.h5ad.read_dense_as_csc(
-                f['DeltaT'])
-            Sigma0_inv = anndata._io.h5ad.read_dense_as_csc(
-                f['Sigma0_inv'])
+        with h5py.File(path, "r") as f:
+            pickled_bit_generator = f.attrs["pickled_bit_generator"].tobytes()
+            n_cell_types = f.attrs["n_cell_types"]
+            n_nodes = f.attrs["n_nodes"]
+            n_signals = f.attrs["n_signals"]
+            n_spatial_patterns = f.attrs["n_spatial_patterns"]
+            lam2 = f.attrs["lam2"]
+            edges = f["edges"][:]
+            alpha = f["alpha"][:]
+            W = f["W"][:]
+            Gamma = f["Gamma"][:]
+            H = f["H"][:]
+            C = f["C"][:]
+            V = f["V"][:]
+            Theta = f["Theta"][:]
+            Omegas = f["Omegas"][:]
+            prior_vars = f["prior_vars"][:]
+            Tau2 = f["Tau2"][:]
+            Tau2_a = f["Tau2_a"][:]
+            Tau2_b = f["Tau2_b"][:]
+            Tau2_c = f["Tau2_c"][:]
+            Cov_mats = f["Cov_mats"][:]
+            Delta = anndata._io.h5ad.read_dense_as_csc(f["Delta"])
+            DeltaT = anndata._io.h5ad.read_dense_as_csc(f["DeltaT"])
+            Sigma0_inv = anndata._io.h5ad.read_dense_as_csc(f["Sigma0_inv"])
 
             return cls(
                 pickled_bit_generator=pickled_bit_generator,
@@ -734,7 +761,7 @@ class SpatialDifferentialExpressionSamplerState:
                 Cov_mats=Cov_mats,
                 Delta=Delta,
                 DeltaT=DeltaT,
-                Sigma0_inv=Sigma0_inv
+                Sigma0_inv=Sigma0_inv,
             )
 
 
@@ -743,13 +770,15 @@ class SpatialDifferentialExpressionResult:
     Data model for results from sampling from the spatial differential expression posterior distribution.
     """
 
-    def __init__(self,
-                 w_samples: np.ndarray,
-                 c_samples: np.ndarray,
-                 gamma_samples: np.ndarray,
-                 h_samples: np.ndarray,
-                 v_samples: np.ndarray,
-                 theta_samples: np.ndarray):
+    def __init__(
+        self,
+        w_samples: np.ndarray,
+        c_samples: np.ndarray,
+        gamma_samples: np.ndarray,
+        h_samples: np.ndarray,
+        v_samples: np.ndarray,
+        theta_samples: np.ndarray,
+    ):
         """
         :param w_samples: <N samples> x <N components> x <N spatial patterns + 1> x <N tissue spots>
         :param c_samples: <N samples> x <N markers> x <N components>
@@ -766,13 +795,13 @@ class SpatialDifferentialExpressionResult:
         self.w_samples = w_samples
 
     def save(self, path):
-        with h5py.File(path, 'w') as f:
-            f['theta_samples'] = self.theta_samples
-            f['v_samples'] = self.v_samples
-            f['h_samples'] = self.h_samples
-            f['gamma_samples'] = self.gamma_samples
-            f['c_samples'] = self.c_samples
-            f['w_samples'] = self.w_samples
+        with h5py.File(path, "w") as f:
+            f["theta_samples"] = self.theta_samples
+            f["v_samples"] = self.v_samples
+            f["h_samples"] = self.h_samples
+            f["gamma_samples"] = self.gamma_samples
+            f["c_samples"] = self.c_samples
+            f["w_samples"] = self.w_samples
 
     @property
     def n_spatial_patterns(self):
@@ -789,13 +818,13 @@ class SpatialDifferentialExpressionResult:
         :param path: Path to h5 file.
         :return: SpatialExpressionDataset
         """
-        with h5py.File(path, 'r') as f:
-            theta_samples = f['theta_samples'][:]
-            v_samples = f['v_samples'][:]
-            h_samples = f['h_samples'][:]
-            gamma_samples = f['gamma_samples'][:]
-            c_samples = f['c_samples'][:]
-            w_samples = f['w_samples'][:]
+        with h5py.File(path, "r") as f:
+            theta_samples = f["theta_samples"][:]
+            v_samples = f["v_samples"][:]
+            h_samples = f["h_samples"][:]
+            gamma_samples = f["gamma_samples"][:]
+            c_samples = f["c_samples"][:]
+            w_samples = f["w_samples"][:]
 
             return cls(
                 theta_samples=theta_samples,
@@ -803,4 +832,5 @@ class SpatialDifferentialExpressionResult:
                 h_samples=h_samples,
                 gamma_samples=gamma_samples,
                 c_samples=c_samples,
-                w_samples=w_samples)
+                w_samples=w_samples,
+            )

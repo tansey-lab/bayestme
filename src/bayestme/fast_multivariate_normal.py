@@ -10,16 +10,17 @@ from numpy.linalg import LinAlgError
 
 
 def sample_multivariate_normal_from_precision(
-        Q,
-        mu=None,
-        mu_part=None,
-        sparse=True,
-        chol_factor=False,
-        Q_shape=None,
-        force_psd=False,
-        force_psd_eps=1e-6,
-        force_psd_attempts=4,
-        rng: Optional[np.random.Generator] = None):
+    Q,
+    mu=None,
+    mu_part=None,
+    sparse=True,
+    chol_factor=False,
+    Q_shape=None,
+    force_psd=False,
+    force_psd_eps=1e-6,
+    force_psd_attempts=4,
+    rng: Optional[np.random.Generator] = None,
+):
     """
     Fast sampling from a multivariate normal with precision parameterization.
     Supports sparse arrays.
@@ -45,10 +46,10 @@ def sample_multivariate_normal_from_precision(
         rng = np.random.default_rng()
 
     if sparse and not Q_shape:
-        raise ValueError('Need to provide one of q_shape if sparse.')
+        raise ValueError("Need to provide one of q_shape if sparse.")
 
     if not np.any([Q_shape is not None, not chol_factor, not sparse]):
-        raise ValueError('Need to provide one of q_shape, chol_factor, or sparse.')
+        raise ValueError("Need to provide one of q_shape, chol_factor, or sparse.")
 
     attempt = 0
     eps = force_psd_eps
@@ -90,23 +91,28 @@ def sample_multivariate_normal_from_precision(
                 attempt += 1
                 eps *= 10
             else:
-                warn(f'Cholesky factorization failed, try setting force_psd=True or increasing attempts')
+                warn(
+                    f"Cholesky factorization failed, try setting force_psd=True or increasing attempts"
+                )
                 if attempt > force_psd_attempts:
-                    raise Exception('Max attempts reached. Could not force matrix to be positive definite.') from e
+                    raise Exception(
+                        "Max attempts reached. Could not force matrix to be positive definite."
+                    ) from e
         else:
             return result
 
 
 def sample_multivariate_normal_from_covariance(
-        Q,
-        mu=None,
-        mu_part=None,
-        sparse=True,
-        chol_factor=False,
-        force_psd=False,
-        force_psd_eps=1e-6,
-        force_psd_attempts=4,
-        rng: Optional[np.random.Generator] = None):
+    Q,
+    mu=None,
+    mu_part=None,
+    sparse=True,
+    chol_factor=False,
+    force_psd=False,
+    force_psd_eps=1e-6,
+    force_psd_attempts=4,
+    rng: Optional[np.random.Generator] = None,
+):
     """
     Fast sampling from a multivariate normal with covariance parameterization.
     Supports sparse arrays.
@@ -169,26 +175,31 @@ def sample_multivariate_normal_from_covariance(
             if force_psd and attempt < force_psd_attempts:
                 Q = Q.copy()
                 Q[np.diag_indices_from(Q)] += eps
-                warn(f'Cholesky factorization failed, adding shrinkage {eps}.')
+                warn(f"Cholesky factorization failed, adding shrinkage {eps}.")
                 attempt += 1
                 eps *= 10
             else:
-                warn(f'Cholesky factorization failed, try setting force_psd=True or increasing attempts')
+                warn(
+                    f"Cholesky factorization failed, try setting force_psd=True or increasing attempts"
+                )
                 if attempt > force_psd_attempts:
-                    raise Exception('Max attempts reached. Could not force matrix to be positive definite.') from e
+                    raise Exception(
+                        "Max attempts reached. Could not force matrix to be positive definite."
+                    ) from e
         else:
             return result
 
 
 def sample_multivariate_normal(
-        Q,
-        mu=None,
-        mu_part=None,
-        sparse=True,
-        precision=False,
-        chol_factor=False,
-        Q_shape=None,
-        **kwargs):
+    Q,
+    mu=None,
+    mu_part=None,
+    sparse=True,
+    precision=False,
+    chol_factor=False,
+    Q_shape=None,
+    **kwargs,
+):
     """
     Fast sampling from a multivariate normal with covariance or precision
     parameterization. Supports sparse arrays.
@@ -218,14 +229,15 @@ def sample_multivariate_normal(
 
     # Sample from the appropriate precision or covariance version
     if precision:
-        return sample_multivariate_normal_from_precision(Q,
-                                                         mu=mu, mu_part=mu_part,
-                                                         sparse=sparse,
-                                                         chol_factor=chol_factor,
-                                                         Q_shape=Q_shape,
-                                                         **kwargs)
-    return sample_multivariate_normal_from_covariance(Q,
-                                                      mu=mu, mu_part=mu_part,
-                                                      sparse=sparse,
-                                                      chol_factor=chol_factor,
-                                                      **kwargs)
+        return sample_multivariate_normal_from_precision(
+            Q,
+            mu=mu,
+            mu_part=mu_part,
+            sparse=sparse,
+            chol_factor=chol_factor,
+            Q_shape=Q_shape,
+            **kwargs,
+        )
+    return sample_multivariate_normal_from_covariance(
+        Q, mu=mu, mu_part=mu_part, sparse=sparse, chol_factor=chol_factor, **kwargs
+    )

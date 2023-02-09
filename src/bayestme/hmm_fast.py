@@ -17,14 +17,16 @@ def transition_mat_vec(phi, n_max, ifsigma=False):
     p_f = np.power.outer(1 - p, np.arange(n_max))
     for n in range(n_max):
         coeff = np.array([scs.binom(n, k) for k in range(n + 1)])
-        T[:, :, n, :(n + 1)] = coeff * p_s[:, :, :(n + 1)] * p_f[:, :, :(n + 1)][:, :, ::-1]
+        T[:, :, n, : (n + 1)] = (
+            coeff * p_s[:, :, : (n + 1)] * p_f[:, :, : (n + 1)][:, :, ::-1]
+        )
     return T
 
 
 def emission_fast(reads, log_cell, expression, cell_grid):
     # calculate the emission prob of a given cell type k
     # reads:        N by G
-    # log_cell:     n_max   
+    # log_cell:     n_max
     # expression:   G
     # prob:         N by n_max
     # better clip the cell_grid at 0 before taking the log, in order to solve the log(0) problem
@@ -37,7 +39,9 @@ def emission_fast(reads, log_cell, expression, cell_grid):
 
 
 class HMM:
-    def __init__(self, n_components, n_max=120, rng: Optional[np.random.Generator] = None):
+    def __init__(
+        self, n_components, n_max=120, rng: Optional[np.random.Generator] = None
+    ):
         if rng is None:
             self.rng = np.random.default_rng()
         else:
@@ -47,7 +51,7 @@ class HMM:
         self.n_max = n_max
         # cache the list of all possible cell numbers [0, 1, ..., n_max]
         self.cell_grid = np.arange(self.n_max + 1)
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             self.log_cell = np.clip(np.log(self.cell_grid), -1e30, None)
         # cache the idx arrays for ship_up function
         self.lower_idx = np.zeros((int((1 + n_max) * (2 + n_max) / 2), 2)).astype(int)
@@ -62,7 +66,9 @@ class HMM:
     def ship_up(self, mat):
         # transform a lower triangular matrix to right-upper triangular matrix
         out = np.ones_like(mat) * -np.inf
-        out[:, self.upper_idx[:, 0], self.upper_idx[:, 1]] = mat[:, self.lower_idx[:, 0], self.lower_idx[:, 1]]
+        out[:, self.upper_idx[:, 0], self.upper_idx[:, 1]] = mat[
+            :, self.lower_idx[:, 0], self.lower_idx[:, 1]
+        ]
         return out
 
     def forward_filter(self, Obs):
@@ -81,13 +87,20 @@ class HMM:
                 predictor_log = self.start_prob[:, :, None] + self.LogTrans[:, i]
             else:
                 # eqn 10
-                predictor_log = scs.logsumexp(self.alpha_log[:, i - 1], axis=-1)[:, :, None] + self.LogTrans[:, i]
+                predictor_log = (
+                    scs.logsumexp(self.alpha_log[:, i - 1], axis=-1)[:, :, None]
+                    + self.LogTrans[:, i]
+                )
             # P(R_ik|d_ik)
-            self.alpha_log[:, i] = self.ship_up(predictor_log) + emission_fast(Obs[:, i], self.log_cell,
-                                                                               self.expression[i], self.cell_grid)[:,
-                                                                 None]
-        self.alpha_log[:, -1] += emission_fast(Obs[:, -1], self.log_cell, self.expression[-1], self.cell_grid)[:, :,
-                                 None]
+            self.alpha_log[:, i] = (
+                self.ship_up(predictor_log)
+                + emission_fast(
+                    Obs[:, i], self.log_cell, self.expression[i], self.cell_grid
+                )[:, None]
+            )
+        self.alpha_log[:, -1] += emission_fast(
+            Obs[:, -1], self.log_cell, self.expression[-1], self.cell_grid
+        )[:, :, None]
 
     def backward_sample(self):
         ### backward sampling
@@ -103,7 +116,9 @@ class HMM:
                 post_prob = scs.logsumexp(self.alpha_log[:, -1], axis=-1)
             else:
                 # eqn 12
-                post_prob = self.alpha_log[:, -i][np.arange(self.n_nodes), samples_n[:, i]]
+                post_prob = self.alpha_log[:, -i][
+                    np.arange(self.n_nodes), samples_n[:, i]
+                ]
             # normalize the posterior prob and sample
             raw_prob = post_prob.copy()
             peak = post_prob.max(axis=1)
@@ -118,9 +133,11 @@ class HMM:
             # if len(zero_idx) > 0:
             #     print(raw_prob[post_prob])
             post_prob /= post_prob.sum(axis=1)[:, None]
-            samples[:, i] = (post_prob.cumsum(axis=1) > self.rng.random(post_prob.shape[0])[:, None]).argmax(axis=1)
+            samples[:, i] = (
+                post_prob.cumsum(axis=1) > self.rng.random(post_prob.shape[0])[:, None]
+            ).argmax(axis=1)
             samples_n[:, i + 1] = samples_n[:, i] + samples[:, i]
-        # the last entry in samples_n is D_i, move it to the output vector 
+        # the last entry in samples_n is D_i, move it to the output vector
         samples[:, -1] = samples_n[:, -1]
         self.samples = samples[:, ::-1]
 
@@ -134,7 +151,9 @@ class HMM:
         self.start_prob = start_prob
         self.expression = expression
         self.n_nodes = Obs.shape[0]
-        self.alpha_log = np.zeros((self.n_nodes, self.n_states - 1, self.n_max + 1, self.n_max + 1))
+        self.alpha_log = np.zeros(
+            (self.n_nodes, self.n_states - 1, self.n_max + 1, self.n_max + 1)
+        )
         self.forward_filter(Obs)
         self.backward_sample()
         return self.samples
