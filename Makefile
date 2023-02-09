@@ -1,5 +1,5 @@
 VE:
-	pip3 install --upgrade pip	
+	pip3 install --upgrade pip
 	pip3 install --upgrade virtualenv
 	python3 -m virtualenv VE
 	VE/bin/pip3 install -r requirements.txt \
@@ -18,3 +18,9 @@ container:
 python-unittest:
 	python setup.py install
 	pytest .
+
+
+.PHONY: install_precommit_hooks
+install_precommit_hooks:
+	pip install pre-commit
+	pre-commit install

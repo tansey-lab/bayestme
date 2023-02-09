@@ -29,3 +29,11 @@ Bibtex citation:
 	journal = {bioRxiv}
 }
 ```
+
+## Developer Setup
+
+Please run `make install_precommit_hooks` from the root of the repository
+to install the pre-commit hooks.
+
+When you run any `git commit` command these pre-commit hooks will run and format any files that you changed in your commit.
+Any unchanged files will not be formatted.

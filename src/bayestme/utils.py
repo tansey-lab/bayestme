@@ -1,6 +1,6 @@
-import numpy as np
-
 from typing import Optional
+
+import numpy as np
 from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.stats import poisson
 
@@ -38,19 +38,21 @@ def is_first_order_discrete_difference_operator(a):
     """
     if issparse(a):
         return (
-                np.all(np.sum(a, axis=1).flatten() == 0) and
-                np.all(np.max(a, axis=1).todense().flatten() == 1) and
-                np.all(np.min(a, axis=1).todense().flatten() == -1)
+            np.all(np.sum(a, axis=1).flatten() == 0)
+            and np.all(np.max(a, axis=1).todense().flatten() == 1)
+            and np.all(np.min(a, axis=1).todense().flatten() == -1)
         )
     else:
         return (
-                np.all(np.sum(a, axis=1) == 0) and
-                np.all(np.max(a, axis=1) == 1) and
-                np.all(np.min(a, axis=1) == -1)
+            np.all(np.sum(a, axis=1) == 0)
+            and np.all(np.max(a, axis=1) == 1)
+            and np.all(np.min(a, axis=1) == -1)
         )
 
 
-def get_kth_order_discrete_difference_operator(first_order_discrete_difference_operator, k):
+def get_kth_order_discrete_difference_operator(
+    first_order_discrete_difference_operator, k
+):
     """
     Calculate the k-th order trend filtering matrix given a first order discrete difference operator of shape
     M x N.
@@ -59,18 +61,26 @@ def get_kth_order_discrete_difference_operator(first_order_discrete_difference_o
     :param k: Order of the output discrete difference operator
     :return: If k is even, this returns an M x N size matrix, if k is odd, this returns an N x N size matrix
     """
-    if not is_first_order_discrete_difference_operator(first_order_discrete_difference_operator):
-        raise ValueError('Expected edge_adjacency_matrix to be a '
-                         'first order discrete difference operator, instead got: {}'.format(
-            first_order_discrete_difference_operator))
+    if not is_first_order_discrete_difference_operator(
+        first_order_discrete_difference_operator
+    ):
+        raise ValueError(
+            "Expected edge_adjacency_matrix to be a "
+            "first order discrete difference operator, instead got: {}".format(
+                first_order_discrete_difference_operator
+            )
+        )
 
     if k < 0:
-        raise ValueError('k must be at least 0th order.')
+        raise ValueError("k must be at least 0th order.")
 
     result = first_order_discrete_difference_operator
     for i in range(k):
-        result = first_order_discrete_difference_operator.T.dot(
-            result) if i % 2 == 0 else first_order_discrete_difference_operator.dot(result)
+        result = (
+            first_order_discrete_difference_operator.T.dot(result)
+            if i % 2 == 0
+            else first_order_discrete_difference_operator.dot(result)
+        )
     return result
 
 
@@ -106,15 +116,23 @@ def construct_trendfilter(adjacency_matrix, k, sparse=False):
     :return: Graph trend filtering matrix
     """
     if not is_first_order_discrete_difference_operator(adjacency_matrix):
-        raise ValueError('Expected edge_adjacency_matrix to be a '
-                         'first order discrete difference operator, instead got: {}'.format(adjacency_matrix))
+        raise ValueError(
+            "Expected edge_adjacency_matrix to be a "
+            "first order discrete difference operator, instead got: {}".format(
+                adjacency_matrix
+            )
+        )
 
-    transformed_edge_adjacency_matrix = adjacency_matrix.copy().astype('float')
+    transformed_edge_adjacency_matrix = adjacency_matrix.copy().astype("float")
     for i in range(k):
         if i % 2 == 0:
-            transformed_edge_adjacency_matrix = adjacency_matrix.T.dot(transformed_edge_adjacency_matrix)
+            transformed_edge_adjacency_matrix = adjacency_matrix.T.dot(
+                transformed_edge_adjacency_matrix
+            )
         else:
-            transformed_edge_adjacency_matrix = adjacency_matrix.dot(transformed_edge_adjacency_matrix)
+            transformed_edge_adjacency_matrix = adjacency_matrix.dot(
+                transformed_edge_adjacency_matrix
+            )
 
     if sparse:
         # Add a coordinate sparsity penalty
@@ -122,9 +140,12 @@ def construct_trendfilter(adjacency_matrix, k, sparse=False):
     else:
         # Add a single independent node to make the matrix full rank
         extra = csc_matrix(
-            (np.array([1.]), (np.array([0], dtype=int), np.array([0], dtype=int))),
-            shape=(1, transformed_edge_adjacency_matrix.shape[1]))
-    transformed_edge_adjacency_matrix = vstack([transformed_edge_adjacency_matrix, extra])
+            (np.array([1.0]), (np.array([0], dtype=int), np.array([0], dtype=int))),
+            shape=(1, transformed_edge_adjacency_matrix.shape[1]),
+        )
+    transformed_edge_adjacency_matrix = vstack(
+        [transformed_edge_adjacency_matrix, extra]
+    )
     return transformed_edge_adjacency_matrix
 
 
@@ -140,8 +161,12 @@ def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False)
     :return: Composite trendfilter matrix.
     """
     if not is_first_order_discrete_difference_operator(adjacency_matrix):
-        raise ValueError('Expected edge_adjacency_matrix to be a '
-                         'first order discrete difference operator, instead got: {}'.format(adjacency_matrix))
+        raise ValueError(
+            "Expected edge_adjacency_matrix to be a "
+            "first order discrete difference operator, instead got: {}".format(
+                adjacency_matrix
+            )
+        )
 
     if sparse:
         composite_trendfilter_matrix = np.eye(adjacency_matrix.shape[1])
@@ -155,15 +180,17 @@ def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False)
 
     # Add in the k'th order diffs
     for k in range(k + 1):
-        kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(adjacency_matrix, k=k)
+        kth_order_trend_filtering_matrix = get_kth_order_discrete_difference_operator(
+            adjacency_matrix, k=k
+        )
         if issparse(composite_trendfilter_matrix):
             composite_trendfilter_matrix = vstack(
-                [composite_trendfilter_matrix,
-                 kth_order_trend_filtering_matrix])
+                [composite_trendfilter_matrix, kth_order_trend_filtering_matrix]
+            )
         else:
             composite_trendfilter_matrix = np.concatenate(
-                [composite_trendfilter_matrix,
-                 kth_order_trend_filtering_matrix], axis=0)
+                [composite_trendfilter_matrix, kth_order_trend_filtering_matrix], axis=0
+            )
 
     return composite_trendfilter_matrix
 
@@ -192,7 +219,7 @@ def multinomial_rvs(count, p, rng: Optional[np.random.Generator] = None):
     count = count.copy()
     ps = p.cumsum(axis=-1)
     # Conditional probabilities
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         condp = p / ps
     condp[np.isnan(condp)] = 0.0
     for i in range(p.shape[-1] - 1, 0, -1):
@@ -205,7 +232,7 @@ def multinomial_rvs(count, p, rng: Optional[np.random.Generator] = None):
 
 def logp(beta, components, attr, obs):
     attribute = beta * attr
-    lams = np.einsum('nk,kg->nkg', attribute, components)
+    lams = np.einsum("nk,kg->nkg", attribute, components)
     lams = np.clip(lams.sum(axis=1), 1e-6, None)
     p = poisson.logpmf(obs, lams).sum()
     return p
@@ -258,9 +285,15 @@ def get_edges(pos, layout=1) -> np.ndarray:
                 if ~np.isnan(pos_map[i, j]):
                     if i + 1 < pos_map.shape[0]:
                         if j > 0 and ~np.isnan(pos_map[i + 1, j - 1]):
-                            edges.append(np.array([pos_map[i, j], pos_map[i + 1, j - 1]]))
-                        if j + 1 < pos_map.shape[1] and ~np.isnan(pos_map[i + 1, j + 1]):
-                            edges.append(np.array([pos_map[i, j], pos_map[i + 1, j + 1]]))
+                            edges.append(
+                                np.array([pos_map[i, j], pos_map[i + 1, j - 1]])
+                            )
+                        if j + 1 < pos_map.shape[1] and ~np.isnan(
+                            pos_map[i + 1, j + 1]
+                        ):
+                            edges.append(
+                                np.array([pos_map[i, j], pos_map[i + 1, j + 1]])
+                            )
                     if j + 2 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 2]):
                         edges.append(np.array([pos_map[i, j], pos_map[i, j + 2]]))
     elif layout == 2:
@@ -276,7 +309,7 @@ def get_edges(pos, layout=1) -> np.ndarray:
                     if j + 1 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 1]):
                         edges.append(np.array([pos_map[i, j], pos_map[i, j + 1]]))
     else:
-        raise RuntimeError('Unknown layout')
+        raise RuntimeError("Unknown layout")
 
     edges = np.array(edges)
     edges = edges.astype(int)
@@ -293,10 +326,7 @@ def get_stddev_ordering(reads: np.ndarray):
     return np.argsort(np.std(np.log(1 + reads), axis=0))[::-1]
 
 
-def get_top_gene_names_by_stddev(
-        reads: np.ndarray,
-        gene_names: np.array,
-        n_genes=int):
+def get_top_gene_names_by_stddev(reads: np.ndarray, gene_names: np.array, n_genes=int):
     ordering = get_stddev_ordering(reads)
     return gene_names[ordering][:n_genes]
 

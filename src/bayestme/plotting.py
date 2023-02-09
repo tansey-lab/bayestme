@@ -1,18 +1,16 @@
 import math
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.axes
-import matplotlib.figure
-
 from typing import Tuple
 
+import matplotlib.axes
+import matplotlib.cm as cm
+import matplotlib.figure
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
 from matplotlib.colors import Normalize
 from matplotlib.patches import RegularPolygon, Wedge, Patch
-from matplotlib.colors import ListedColormap
 
 from bayestme import data
-
 
 # Extended version of cm.Set1 categorical colormap. See references:
 #
@@ -23,43 +21,47 @@ from bayestme import data
 #     ²) Luo, M. R., Cui, G. and Li, C. (2006),
 #        Uniform Colour Spaces Based on CIECAM02 Colour Appearance Model.
 #        Color Research and Application, 31: 320–330
-GLASBEY_30_COLORS = ['#e51415',
-                     '#347fba',
-                     '#4bb049',
-                     '#9a4da4',
-                     '#ff8000',
-                     '#ffff30',
-                     '#a85523',
-                     '#f782c0',
-                     '#9b9b9b',
-                     '#004100',
-                     '#00ffff',
-                     '#000090',
-                     '#5f0025',
-                     '#fff5ff',
-                     '#4d4d50',
-                     '#b59bff',
-                     '#6700f9',
-                     '#4c006f',
-                     '#00816c',
-                     '#72ff9c',
-                     '#6a6c00',
-                     '#e2c88c',
-                     '#63c3fe',
-                     '#da0084',
-                     '#593200',
-                     '#40bcab',
-                     '#b39c00',
-                     '#f200ff',
-                     '#930000',
-                     '#004d74']
+GLASBEY_30_COLORS = [
+    "#e51415",
+    "#347fba",
+    "#4bb049",
+    "#9a4da4",
+    "#ff8000",
+    "#ffff30",
+    "#a85523",
+    "#f782c0",
+    "#9b9b9b",
+    "#004100",
+    "#00ffff",
+    "#000090",
+    "#5f0025",
+    "#fff5ff",
+    "#4d4d50",
+    "#b59bff",
+    "#6700f9",
+    "#4c006f",
+    "#00816c",
+    "#72ff9c",
+    "#6a6c00",
+    "#e2c88c",
+    "#63c3fe",
+    "#da0084",
+    "#593200",
+    "#40bcab",
+    "#b39c00",
+    "#f200ff",
+    "#930000",
+    "#004d74",
+]
 Glasbey30 = ListedColormap(colors=GLASBEY_30_COLORS, name="Glasbey30", N=30)
 
 
-def get_x_y_arrays_for_layout(coords: np.ndarray, layout: data.Layout) -> Tuple[np.array, np.array]:
+def get_x_y_arrays_for_layout(
+    coords: np.ndarray, layout: data.Layout
+) -> Tuple[np.array, np.array]:
     if layout is data.Layout.HEX:
         hcoord = coords[:, 0]
-        vcoord = (2. * np.sin(np.radians(60)) * (coords[:, 1]) / 3.)
+        vcoord = 2.0 * np.sin(np.radians(60)) * (coords[:, 1]) / 3.0
     elif layout is data.Layout.SQUARE:
         hcoord = coords[:, 0]
         vcoord = coords[:, 1]
@@ -69,15 +71,16 @@ def get_x_y_arrays_for_layout(coords: np.ndarray, layout: data.Layout) -> Tuple[
 
 
 def plot_colored_spatial_polygon(
-        fig: matplotlib.figure.Figure,
-        ax: matplotlib.axes.Axes,
-        coords: np.ndarray,
-        values: np.ndarray,
-        layout: data.Layout,
-        colormap: cm.ScalarMappable = cm.BuPu,
-        norm=None,
-        plotting_coordinates=None,
-        normalize=True):
+    fig: matplotlib.figure.Figure,
+    ax: matplotlib.axes.Axes,
+    coords: np.ndarray,
+    values: np.ndarray,
+    layout: data.Layout,
+    colormap: cm.ScalarMappable = cm.BuPu,
+    norm=None,
+    plotting_coordinates=None,
+    normalize=True,
+):
     """
     Basic plot of spatial gene expression
 
@@ -97,12 +100,14 @@ def plot_colored_spatial_polygon(
     if norm is None:
         norm = Normalize(vmin=np.min(values), vmax=np.max(values))
 
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
     hcoord, vcoord = get_x_y_arrays_for_layout(coords, layout)
     if plotting_coordinates is None:
         support_hcoord, support_vcoord = (hcoord, vcoord)
     else:
-        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(plotting_coordinates, layout)
+        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(
+            plotting_coordinates, layout
+        )
 
     if layout is data.Layout.HEX:
         num_vertices = 6
@@ -124,8 +129,9 @@ def plot_colored_spatial_polygon(
             orientation=orientation,
             facecolor=colormap(norm(v)) if normalize else colormap(v),
             alpha=1,
-            edgecolor='k',
-            linewidth=0.3)
+            edgecolor="k",
+            linewidth=0.3,
+        )
         ax.add_patch(polygon)
 
     # By scatter-plotting an invisible point on to all of our patches
@@ -133,7 +139,9 @@ def plot_colored_spatial_polygon(
     # adjusted such that all patches are visible.
     ax.scatter(support_hcoord, support_vcoord, alpha=0)
 
-    cb = fig.colorbar(cm.ScalarMappable(norm=norm if normalize else None, cmap=colormap), ax=ax)
+    cb = fig.colorbar(
+        cm.ScalarMappable(norm=norm if normalize else None, cmap=colormap), ax=ax
+    )
 
     return ax, cb, norm, hcoord, vcoord
 
@@ -155,14 +163,15 @@ def get_wedge_dimensions_from_value_array(value_array: np.array):
 
 
 def plot_spatial_pie_charts(
-        fig: matplotlib.figure.Figure,
-        ax: matplotlib.axes.Axes,
-        coords: np.ndarray,
-        values: np.ndarray,
-        layout: data.Layout,
-        colormap: cm.ScalarMappable = Glasbey30,
-        plotting_coordinates=None,
-        cell_type_names=None):
+    fig: matplotlib.figure.Figure,
+    ax: matplotlib.axes.Axes,
+    coords: np.ndarray,
+    values: np.ndarray,
+    layout: data.Layout,
+    colormap: cm.ScalarMappable = Glasbey30,
+    plotting_coordinates=None,
+    cell_type_names=None,
+):
     """
     Plot pie charts to show relative proportions of multiple scalar values at each spot
 
@@ -178,31 +187,36 @@ def plot_spatial_pie_charts(
     :return: matplotlib Figure object
     """
 
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
 
     hcoord, vcoord = get_x_y_arrays_for_layout(coords, layout)
     if plotting_coordinates is None:
         support_hcoord, support_vcoord = (hcoord, vcoord)
     else:
-        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(plotting_coordinates, layout)
+        support_hcoord, support_vcoord = get_x_y_arrays_for_layout(
+            plotting_coordinates, layout
+        )
 
     if layout is data.Layout.HEX:
-        packing_radius = .5
+        packing_radius = 0.5
     elif layout is data.Layout.SQUARE:
-        packing_radius = .5
+        packing_radius = 0.5
     else:
         raise NotImplementedError(layout)
 
     # Add colored polygons
     for x, y, vs in zip(hcoord, vcoord, values):
-        for idx, (theta1, theta2) in enumerate(get_wedge_dimensions_from_value_array(vs)):
+        for idx, (theta1, theta2) in enumerate(
+            get_wedge_dimensions_from_value_array(vs)
+        ):
             wedge = Wedge(
                 center=(x, y),
                 r=packing_radius,
                 theta1=theta1,
                 theta2=theta2,
                 facecolor=colormap(idx),
-                alpha=1)
+                alpha=1,
+            )
             ax.add_patch(wedge)
 
     # By scatter-plotting an invisible point on to all of our patches
@@ -216,18 +230,17 @@ def plot_spatial_pie_charts(
         if cell_type_names is not None:
             label = cell_type_names[i]
         else:
-            label = f'Cell Type {i + 1}'
+            label = f"Cell Type {i + 1}"
         patches.append(Patch(color=colormap(i), label=label))
 
     # put those patched as legend-handles into the legend
-    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
 
     ax.set_axis_off()
     return ax, hcoord, vcoord
 
 
-def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset,
-                               gene: str):
+def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset, gene: str):
     gene_idx = np.argmax(stdata.gene_names == gene)
     counts = stdata.raw_counts[:, gene_idx]
     counts = counts[stdata.tissue_mask]
@@ -241,14 +254,15 @@ def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset,
         coords=positions,
         values=counts,
         layout=stdata.layout,
-        plotting_coordinates=stdata.positions)
+        plotting_coordinates=stdata.positions,
+    )
 
     return fig, ax, cb, norm, hcoord, vcoord
 
 
-def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
-                         gene: str,
-                         output_file: str):
+def plot_gene_raw_counts(
+    stdata: data.SpatialExpressionDataset, gene: str, output_file: str
+):
     gene_idx = np.argmax(stdata.gene_names == gene)
 
     fig, ax = plt.subplots(1)
@@ -258,7 +272,8 @@ def plot_gene_raw_counts(stdata: data.SpatialExpressionDataset,
         ax=ax,
         coords=stdata.positions,
         values=stdata.raw_counts[:, gene_idx],
-        layout=stdata.layout)
+        layout=stdata.layout,
+    )
 
     fig.savefig(output_file)
     plt.close(fig)
