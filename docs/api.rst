@@ -1,14 +1,6 @@
 bayestme package
 ================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   bayestme.cli
-
 Submodules
 ----------
 
@@ -52,6 +44,14 @@ bayestme.deconvolution module
    :undoc-members:
    :show-inheritance:
 
+bayestme.fast\_multivariate\_normal module
+------------------------------------------
+
+.. automodule:: bayestme.fast_multivariate_normal
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bayestme.gene\_filtering module
 -------------------------------
 
@@ -76,10 +76,10 @@ bayestme.hmm\_fast module
    :undoc-members:
    :show-inheritance:
 
-bayestme.imc module
--------------------
+bayestme.logging module
+-----------------------
 
-.. automodule:: bayestme.imc
+.. automodule:: bayestme.logging
    :members:
    :undoc-members:
    :show-inheritance:
@@ -140,10 +140,3 @@ bayestme.utils module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
-
-.. automodule:: bayestme
-   :members:
-   :undoc-members:
-   :show-inheritance:

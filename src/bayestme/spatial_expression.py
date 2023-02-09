@@ -531,11 +531,11 @@ def select_significant_spatial_programs(
     :param sde_result: spatial differential expression result
     :param cell_correlation_threshold: Threshold for cell correlation metric
     :param moran_i_score_threshold: Moran's I score cutoff,
-                                    spatial programs with scores below this will be filtered out
+    spatial programs with scores below this will be filtered out
     :param gene_spatial_pattern_proportion_threshold: Only return (k, h) pairs where in cell types k
     greater than this proportion of spots are labeled with spatial pattern h for at least one gene.
     :param tissue_threshold: Only consider spots with greater than this many cells of type k
-                             for Moran's I calculation and cell correlation calculation
+    for Moran's I calculation and cell correlation calculation
     :param filter_pseudogenes: Do not consider pseudogenes.
     :return: generator of (cell type index, spatial pattern index, np.array of gene indices)
     """
