@@ -4,7 +4,15 @@ on:
   push: { branches: main }
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          version: "~= 23.1"
   test:
+    needs: lint
     name: Run python unittests in docker
     runs-on: ubuntu-latest
     container:
