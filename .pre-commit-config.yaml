@@ -10,6 +10,7 @@ repos:
       - id: check-added-large-files
       - id: check-json
       - id: fix-byte-order-marker
+      - id: requirements-txt-fixer
   - repo: https://github.com/psf/black
     rev: 23.1.0
     hooks:
