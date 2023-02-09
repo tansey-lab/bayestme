@@ -1,11 +1,11 @@
-import numpy
-import numpy as np
 import os
 import tempfile
-import bayestme.cli.plot_deconvolution
-
 from unittest import mock
 
+import numpy
+import numpy as np
+
+import bayestme.cli.plot_deconvolution
 import bayestme.synthetic_data
 from bayestme import data, deconvolution_test
 

@@ -1,9 +1,8 @@
 import argparse
 import logging
+
 import bayestme.logging
-
 from bayestme import data, spatial_expression
-
 
 logger = logging.getLogger(__name__)
 

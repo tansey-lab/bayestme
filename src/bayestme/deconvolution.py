@@ -1,15 +1,16 @@
 import logging
-import numpy as np
-import pandas
 import os.path
-import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
-
 from enum import Enum
 from typing import Optional, List
-from matplotlib import pyplot as plt
-from matplotlib import colors
+
 import matplotlib.cm as cm
+import numpy as np
+import pandas
+import tqdm
+from matplotlib import colors
+from matplotlib import pyplot as plt
+from tqdm.contrib.logging import logging_redirect_tqdm
+
 from bayestme import model_bkg, data, plotting
 
 logger = logging.getLogger(__name__)

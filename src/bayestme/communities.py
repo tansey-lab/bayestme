@@ -89,7 +89,6 @@ def communities_from_posteriors_separate(
     cluster_score=gaussian_aicc_bic_mixture,
 ):
     from sklearn.cluster import AgglomerativeClustering
-    from scipy.stats import mode
 
     if n_clusters is None:
         # Choose the best cluster from a grid of options
@@ -169,7 +168,6 @@ def communities_from_posteriors(
     cluster_score=gaussian_aicc_bic_mixture,
 ):
     from sklearn.cluster import AgglomerativeClustering
-    from scipy.stats import mode
 
     if n_clusters is None:
         # Choose the best cluster from a grid of options

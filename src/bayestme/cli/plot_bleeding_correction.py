@@ -1,6 +1,6 @@
 import argparse
-import bayestme.logging
 
+import bayestme.logging
 from bayestme import data, bleeding_correction
 
 

@@ -1,14 +1,13 @@
-import shutil
-
-import numpy as np
-import tempfile
 import os
+import shutil
+import tempfile
 from unittest import mock
 
-from bayestme import data
-from bayestme.data_test import generate_toy_stdataset
+import numpy as np
 
+from bayestme import data
 from bayestme.cli import spatial_expression
+from bayestme.data_test import generate_toy_stdataset
 
 
 def test_spatial_expression():

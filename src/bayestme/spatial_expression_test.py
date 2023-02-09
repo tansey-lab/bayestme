@@ -1,15 +1,15 @@
 import copy
+import os
 import shutil
+import tempfile
+from unittest import mock
+
 import numpy as np
 import numpy.testing
-import scipy.sparse
 from numpy import testing
-import tempfile
-import os
 
 import bayestme.synthetic_data
-from bayestme import spatial_expression, bleeding_correction, utils, deconvolution, data
-from unittest import mock
+from bayestme import spatial_expression, utils, data
 
 
 def generate_fake_deconvolve_results(

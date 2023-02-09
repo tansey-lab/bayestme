@@ -1,6 +1,6 @@
-import numpy as np
-
 from typing import Optional
+
+import numpy as np
 from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.stats import poisson
 

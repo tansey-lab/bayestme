@@ -1,12 +1,11 @@
-import shutil
-
-import numpy as np
-import tempfile
 import os
+import shutil
+import tempfile
 from unittest import mock
 
-from bayestme import data
+import numpy as np
 
+from bayestme import data
 from bayestme.cli import filter_genes
 
 

@@ -1,7 +1,7 @@
 import argparse
 
-from bayestme import data, bleeding_correction
 import bayestme.logging
+from bayestme import data, bleeding_correction
 
 
 def get_parser():

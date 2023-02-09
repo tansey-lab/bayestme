@@ -1,7 +1,7 @@
 import argparse
 import logging
-import bayestme.logging
 
+import bayestme.logging
 from bayestme import data, deconvolution
 
 logger = logging.getLogger(__name__)

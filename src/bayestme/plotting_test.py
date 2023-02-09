@@ -1,10 +1,10 @@
+import os
 import shutil
 import tempfile
-import os
-
-from bayestme import plotting, synthetic_data, data
 
 from matplotlib import pyplot as plt
+
+from bayestme import plotting, synthetic_data, data
 
 
 def test_plot_gene_raw_counts():

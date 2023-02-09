@@ -1,10 +1,11 @@
+import glob
 import logging
-import numpy as np
 import os
+
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-import glob
 
 from bayestme import data
 

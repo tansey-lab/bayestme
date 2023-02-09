@@ -1,11 +1,11 @@
+import os
 import shutil
+import tempfile
+from unittest import mock
 
 import numpy as np
-import tempfile
-import os
-import bayestme
 
-from unittest import mock
+import bayestme
 from bayestme import data
 from bayestme import deconvolution_test, deconvolution
 from bayestme.cli import select_marker_genes

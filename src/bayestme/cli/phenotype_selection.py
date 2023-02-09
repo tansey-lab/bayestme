@@ -1,8 +1,8 @@
 import argparse
 import os
 
-from bayestme import phenotype_selection, data
 import bayestme.logging
+from bayestme import phenotype_selection, data
 
 
 def get_parser():

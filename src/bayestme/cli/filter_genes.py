@@ -1,7 +1,7 @@
 import argparse
 import logging
-import bayestme.logging
 
+import bayestme.logging
 from bayestme import data, gene_filtering
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
-import numpy as np
 import anndata
+import numpy as np
 import statsmodels.api as sm
 
 from bayestme import data

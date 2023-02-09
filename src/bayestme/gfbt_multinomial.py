@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Optional
+
+import numpy as np
 from polyagamma import random_polyagamma
 from scipy.sparse import spdiags, kron, csc_matrix
 

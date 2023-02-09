@@ -1,12 +1,12 @@
-import numpy
-import numpy as np
 import os
 import tempfile
-
 from unittest import mock
+
+import numpy
+import numpy as np
+
 from bayestme import data
 from bayestme.cli import plot_bleeding_correction
-
 from bayestme.data_test import generate_toy_stdataset
 
 

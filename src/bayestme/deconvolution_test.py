@@ -1,9 +1,10 @@
+import os
 import shutil
 import tempfile
+
 import numpy as np
-import os
-import pandas
 import numpy.testing
+import pandas
 
 import bayestme.synthetic_data
 from bayestme import utils, deconvolution, data

@@ -4,7 +4,7 @@ import tempfile
 import numpy as np
 import pandas
 
-from bayestme import gene_filtering, data, bleeding_correction
+from bayestme import gene_filtering, data
 
 
 def test_select_top_genes_by_standard_deviation():

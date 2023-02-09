@@ -1,10 +1,10 @@
+import os
 import shutil
+import tempfile
+from unittest import mock
 
 import numpy as np
-import tempfile
-import os
 
-from unittest import mock
 from bayestme import data, deconvolution_test
 from bayestme.cli import deconvolve
 from bayestme.data_test import generate_toy_stdataset

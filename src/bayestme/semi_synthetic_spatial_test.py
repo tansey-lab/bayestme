@@ -1,5 +1,5 @@
-import numpy as np
 import anndata
+import numpy as np
 
 from bayestme import semi_synthetic_spatial
 

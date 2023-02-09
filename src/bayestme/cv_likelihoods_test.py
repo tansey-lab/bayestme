@@ -1,8 +1,9 @@
-import tempfile
 import os.path
-import numpy as np
-import shutil
 import pathlib
+import shutil
+import tempfile
+
+import numpy as np
 
 from bayestme import cv_likelihoods, data
 

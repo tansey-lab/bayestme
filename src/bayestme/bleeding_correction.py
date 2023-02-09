@@ -2,26 +2,25 @@
 Same as bleed_correction8.py except now we use separate basis functions for in-tissue and out-out-tissue.
 The hope is that this enables us to account for tissue friction which seems to be an issue.
 """
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import os.path
-import math
 import logging
-import matplotlib.cm as cm
-import tqdm
-
+import math
+import os.path
 from typing import Optional
 
-from tqdm.contrib.logging import logging_redirect_tqdm
-from torch.nn import Softmax
-from bayestme.utils import stable_softmax
-from bayestme import data, utils, plotting
+import matplotlib.cm as cm
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import tqdm
 from autograd_minimize import minimize
-from torch.nn import Softplus
-from torch.distributions.multinomial import Multinomial
 from scipy.stats import multinomial
+from torch.distributions.multinomial import Multinomial
+from torch.nn import Softmax
+from torch.nn import Softplus
+
+from bayestme import data, utils, plotting
+from bayestme.utils import stable_softmax
 
 logger = logging.getLogger(__name__)
 

@@ -1,13 +1,13 @@
-import numpy
-import numpy as np
 import os
 import tempfile
-import bayestme.cli.plot_spatial_expression
-
 from unittest import mock
 
+import numpy
+import numpy as np
+
+import bayestme.cli.plot_spatial_expression
 import bayestme.synthetic_data
-from bayestme import data, bleeding_correction, spatial_expression_test
+from bayestme import data, spatial_expression_test
 
 
 def test_plot_spatial_expression():

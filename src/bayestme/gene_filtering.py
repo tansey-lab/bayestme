@@ -1,7 +1,8 @@
-import numpy as np
+import logging
 import re
 from enum import Enum
-import logging
+
+import numpy as np
 import pandas
 
 from . import data, utils

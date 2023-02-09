@@ -1,9 +1,9 @@
 import numpy as np
-import numpy.testing
 import numpy.linalg
+import numpy.testing
+from scipy.sparse import csc_matrix
 
 from bayestme import utils
-from scipy.sparse import csc_matrix
 
 
 def test_is_first_order_discrete_difference_operator():

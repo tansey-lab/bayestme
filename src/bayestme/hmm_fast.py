@@ -1,6 +1,6 @@
-import numpy as np
-from scipy.stats import binom
 from typing import Optional
+
+import numpy as np
 import scipy.special as scs
 
 from bayestme import utils

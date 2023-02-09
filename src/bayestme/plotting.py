@@ -1,18 +1,16 @@
 import math
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.axes
-import matplotlib.figure
-
 from typing import Tuple
 
+import matplotlib.axes
+import matplotlib.cm as cm
+import matplotlib.figure
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
 from matplotlib.colors import Normalize
 from matplotlib.patches import RegularPolygon, Wedge, Patch
-from matplotlib.colors import ListedColormap
 
 from bayestme import data
-
 
 # Extended version of cm.Set1 categorical colormap. See references:
 #

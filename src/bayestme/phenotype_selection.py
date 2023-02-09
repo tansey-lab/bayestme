@@ -1,14 +1,13 @@
 import logging
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import os
-
-from typing import Optional
-from sklearn.model_selection import KFold
 from typing import Iterable
-from scipy.stats import multinomial
+from typing import Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Patch
+from scipy.stats import multinomial
+from sklearn.model_selection import KFold
 
 from bayestme import utils, data, plotting
 from bayestme.model_bkg import GraphFusedMultinomial

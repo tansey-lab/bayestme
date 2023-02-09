@@ -1,7 +1,8 @@
-import numpy as np
-import tempfile
 import os
 import shutil
+import tempfile
+
+import numpy as np
 
 from bayestme import data, synthetic_data, utils
 

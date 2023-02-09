@@ -1,11 +1,10 @@
-import numpy
-import numpy as np
 import os
 import tempfile
-
 from unittest import mock
-from bayestme.cli import phenotype_selection
 
+import numpy as np
+
+from bayestme.cli import phenotype_selection
 from bayestme.data_test import generate_toy_stdataset
 
 

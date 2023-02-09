@@ -1,7 +1,8 @@
-import shutil
-import numpy as np
-import tempfile
 import os
+import shutil
+import tempfile
+
+import numpy as np
 
 import bayestme.synthetic_data
 from bayestme import bleeding_correction, data

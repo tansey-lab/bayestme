@@ -1,10 +1,10 @@
 import shutil
-
-import numpy as np
 import tempfile
 
+import numpy as np
+
 import bayestme.synthetic_data
-from bayestme import bleeding_correction, data, phenotype_selection
+from bayestme import data, phenotype_selection
 
 
 def test_get_phenotype_selection_parameters_for_folds():

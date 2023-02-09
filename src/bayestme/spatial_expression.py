@@ -1,28 +1,28 @@
 import copy
+import logging
+import os
 import pathlib
 import pickle
-
-import numpy as np
-import os
-import logging
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import tqdm
-
+from collections import defaultdict
 from typing import Optional, List
+
+import matplotlib
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
+from esda.moran import Moran
+from libpysal.weights import W as pysal_Weights
+from matplotlib import colors
 from matplotlib.lines import Line2D
+from polyagamma import random_polyagamma
 from scipy.sparse import block_diag, spdiags
 from scipy.stats import nbinom
-from matplotlib import colors
 from scipy.stats import pearsonr
-from libpysal.weights import W as pysal_Weights
-from esda.moran import Moran
-from collections import defaultdict
-from polyagamma import random_polyagamma
 from tqdm.contrib.logging import logging_redirect_tqdm
-from bayestme.utils import ilogit, stable_softmax
+
 from bayestme import utils, data, plotting, fast_multivariate_normal
+from bayestme.utils import ilogit, stable_softmax
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,12 @@
+from typing import Optional
+from warnings import warn
+
 import numpy as np
 import scipy as sp
-
-from typing import Optional
-from scipy.sparse import csc_matrix
-from scipy.linalg import solve_triangular
-from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError
-from warnings import warn
 from numpy.linalg import LinAlgError
+from scipy.linalg import solve_triangular
+from scipy.sparse import csc_matrix
+from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError
 
 
 def sample_multivariate_normal_from_precision(

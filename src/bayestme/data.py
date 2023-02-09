@@ -1,16 +1,16 @@
+import glob
+import logging
+import os
+from enum import Enum
+from typing import Optional, List
+
+import anndata
+import h5py
 import numpy as np
 import pandas as pd
 import scipy.io as io
-import os
-import glob
-import logging
-import h5py
-import anndata
 import scipy.sparse.csc
 from scipy.sparse import csr_matrix
-
-from enum import Enum
-from typing import Optional, List
 
 from . import utils
 

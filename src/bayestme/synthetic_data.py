@@ -1,7 +1,7 @@
-from bayestme import data
-
 import numpy as np
 from scipy.stats import multivariate_normal, multivariate_t
+
+from bayestme import data
 
 
 def generate_simulated_bleeding_reads_data(

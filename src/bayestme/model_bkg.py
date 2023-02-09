@@ -1,13 +1,13 @@
-import numpy as np
 import os.path
 from typing import Optional
 
+import numpy as np
 from scipy.stats import binom
 from sklearn.decomposition import LatentDirichletAllocation
 
 from bayestme import utils
-from bayestme.hmm_fast import HMM, transition_mat_vec
 from bayestme.gfbt_multinomial import GraphFusedBinomialTree
+from bayestme.hmm_fast import HMM, transition_mat_vec
 
 
 def transition_mat(phi, n_max, coeff, ifsigma=False):

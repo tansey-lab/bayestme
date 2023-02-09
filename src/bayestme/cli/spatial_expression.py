@@ -1,12 +1,11 @@
 import argparse
 import logging
-import bayestme.logging
-
-import numpy as np
 import os
 
-from bayestme import data, spatial_expression
+import numpy as np
 
+import bayestme.logging
+from bayestme import data, spatial_expression
 
 MODEL_DUMP_PATH = "sde_model_dump.h5"
 
