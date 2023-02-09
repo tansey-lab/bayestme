@@ -33,7 +33,7 @@ setup(
             "plot_deconvolution=bayestme.cli.plot_deconvolution:main",
             "plot_spatial_expression=bayestme.cli.plot_spatial_expression:main",
             "phenotype_selection=bayestme.cli.phenotype_selection:main",
-            "select_marker_genes=bayestme.cli.select_marker_genes:main"
+            "select_marker_genes=bayestme.cli.select_marker_genes:main",
         ],
     },
     python_requires=">=3.7, <4",
@@ -55,15 +55,10 @@ setup(
         "h5py>=3.7.0,<4",
         "esda>=2.4.1,<3",
         "libpysal>=4.5.1,<5",
-        "tqdm>=4.64.0,<5"
+        "tqdm>=4.64.0,<5",
     ],
     extras_require={
-        "dev": [
-            "check-manifest"
-        ],
-        "test": [
-            "pytest",
-            "tox"
-        ],
-    }
+        "dev": ["check-manifest"],
+        "test": ["pytest", "tox"],
+    },
 )
