@@ -171,11 +171,19 @@ def construct_composite_trendfilter(adjacency_matrix, k, anchor=0, sparse=False)
 def multinomial_rvs(count, p, rng: Optional[np.random.Generator] = None):
     """
     Sample from the multinomial distribution with multiple p vectors.
-    * count must be an (n-1)-dimensional numpy array.
-    * p must an n-dimensional numpy array, n >= 1.  The last axis of p
-      holds the sequence of probabilities for a multinomial distribution.
+
+    count must be an (n-1)-dimensional numpy array.
+
+    p must an n-dimensional numpy array, n >= 1.  The last axis of p
+    holds the sequence of probabilities for a multinomial distribution.
+
     The return value has the same shape as p.
     Taken from: https://stackoverflow.com/questions/55818845/fast-vectorized-multinomial-in-python
+
+    :param count:
+    :param p:
+    :param rng:
+    :return:
     """
     if rng is None:
         rng = np.random.default_rng()

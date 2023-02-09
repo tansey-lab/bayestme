@@ -57,19 +57,21 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 autodoc_mock_imports = [
+    'anndata',
+    'autograd_minimize',
+    'esda',
+    'h5py',
+    'libpysal',
+    'matplotlib',
     'np',
     'numpy',
-    'matplotlib',
-    'torch',
-    'h5py',
     'pandas',
-    'scipy',
     'polyagamma',
-    'libpysal',
+    'scipy',
     'seaborn',
-    'anndata',
-    'statsmodels',
-    'autograd_minimize',
     'sklearn',
-    'esda',
-    'sksparse']
+    'sksparse',
+    'statsmodels',
+    'torch',
+    'tqdm'
+]
