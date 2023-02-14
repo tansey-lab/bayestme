@@ -72,4 +72,6 @@ autodoc_mock_imports = [
     "statsmodels",
     "torch",
     "tqdm",
+    "jax",
+    "numpyro",
 ]
