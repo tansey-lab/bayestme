@@ -113,7 +113,7 @@ def test_deconvolve_with_expression_truth():
         with mock.patch("sys.argv", command_line_arguments):
             with mock.patch("bayestme.deconvolution.deconvolve") as deconvolve_mock:
                 with mock.patch(
-                    "bayestme.deconvolution.load_expression_truth"
+                    "bayestme.expression_truth.load_expression_truth"
                 ) as load_expression_truth_mock:
                     expression_truth = np.zeros((9, 10))
                     load_expression_truth_mock.return_value = expression_truth
