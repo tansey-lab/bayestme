@@ -11,8 +11,17 @@ jobs:
       - uses: psf/black@stable
         with:
           version: "~= 23.1"
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ammaraskar/sphinx-action@master
+        with:
+          docs-folder: "docs/"
   test:
-    needs: lint
+    needs:
+      - lint
+      - docs
     name: Run python unittests in docker
     runs-on: ubuntu-latest
     container:

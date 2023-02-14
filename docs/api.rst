@@ -44,6 +44,14 @@ bayestme.deconvolution module
    :undoc-members:
    :show-inheritance:
 
+bayestme.expression_truth module
+--------------------------------
+
+.. automodule:: bayestme.expression_truth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bayestme.fast\_multivariate\_normal module
 ------------------------------------------
 
@@ -76,10 +84,10 @@ bayestme.hmm\_fast module
    :undoc-members:
    :show-inheritance:
 
-bayestme.logging module
------------------------
+bayestme.log_config module
+--------------------------
 
-.. automodule:: bayestme.logging
+.. automodule:: bayestme.log_config
    :members:
    :undoc-members:
    :show-inheritance:
@@ -139,4 +147,3 @@ bayestme.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-
