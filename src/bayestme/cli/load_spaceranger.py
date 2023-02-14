@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-import bayestme.logging
+import bayestme.log_config
 from bayestme import data
 
 logger = logging.getLogger(__name__)
@@ -17,14 +17,14 @@ def get_parser():
         help="Output file, a SpatialExpressionDataset in h5 format",
     )
     parser.add_argument("--input", type=str, help="Input spaceranger dir")
-    bayestme.logging.add_logging_args(parser)
+    bayestme.log_config.add_logging_args(parser)
 
     return parser
 
 
 def main():
     args = get_parser().parse_args()
-    bayestme.logging.configure_logging(args)
+    bayestme.log_config.configure_logging(args)
 
     dataset = data.SpatialExpressionDataset.read_spaceranger(
         args.input, layout=data.Layout.HEX

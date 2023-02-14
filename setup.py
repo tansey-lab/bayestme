@@ -44,6 +44,7 @@ setup(
         "scikit-image>=0.19.2,<0.20",
         "scikit-learn>=1,<2",
         "polyagamma>=1.3.4,<1.4",
+        "numpyro>=0.11.0,<1",
         "matplotlib>=3.4,<3.5",
         "autograd-minimize>=0.2.2,<0.3",
         "scikit-sparse>=0.4,<0.5",

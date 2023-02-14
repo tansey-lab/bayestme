@@ -69,6 +69,8 @@ dependencies:
   - ipython=8.4.0=py39hecd8cb5_0
   - ipython_genutils=0.2.0=pyhd3eb1b0_1
   - ipywidgets=7.6.5=pyhd3eb1b0_1
+  - jax=0.3.25=py39hecd8cb5_0
+  - jaxlib=0.3.25=py39h5c6ac89_1
   - jedi=0.18.1=py39hecd8cb5_1
   - jinja2=3.1.2=pyhd8ed1ab_1
   - joblib=1.1.0=pyhd8ed1ab_0
@@ -142,6 +144,7 @@ dependencies:
   - nomkl=3.0=0
   - notebook=6.4.12=py39hecd8cb5_0
   - numpy=1.22.4=py39h677350a_0
+  - numpyro=0.11.0=pyhd8ed1ab_0
   - openh264=2.1.1=hfd3ada9_0
   - openjpeg=2.4.0=h6e7aa92_1
   - openssl=1.1.1q=hca72f7f_0

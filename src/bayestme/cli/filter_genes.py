@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-import bayestme.logging
+import bayestme.log_config
 from bayestme import data, gene_filtering
 
 logger = logging.getLogger(__name__)
@@ -41,14 +41,14 @@ def get_parser():
         default=None,
         help="Filter out genes not found in the expression truth dataset.",
     )
-    bayestme.logging.add_logging_args(parser)
+    bayestme.log_config.add_logging_args(parser)
 
     return parser
 
 
 def main():
     args = get_parser().parse_args()
-    bayestme.logging.configure_logging(args)
+    bayestme.log_config.configure_logging(args)
 
     dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 

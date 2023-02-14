@@ -3,7 +3,9 @@ import logging
 
 import numpy as np
 
-import bayestme.logging
+import bayestme.log_config
+
+import bayestme.expression_truth
 from bayestme import data, deconvolution
 
 logger = logging.getLogger(__name__)
@@ -68,27 +70,42 @@ def get_parser():
     )
     parser.add_argument(
         "--expression-truth",
-        help="Use expression ground truth from seurat companion scRNA fine mapping workflow",
+        help="Use expression ground truth from one or matched samples that have been processed "
+        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
+        " for multiple matched samples.",
         type=str,
+        action="append",
         default=None,
     )
-    bayestme.logging.add_logging_args(parser)
+    bayestme.log_config.add_logging_args(parser)
     return parser
 
 
 def main():
     args = get_parser().parse_args()
-    bayestme.logging.configure_logging(args)
+    bayestme.log_config.configure_logging(args)
 
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
         args.adata
     )
 
     if args.expression_truth:
-        expression_truth = deconvolution.load_expression_truth(
-            dataset, args.expression_truth
+        expression_truth_samples = []
+        for fn in args.expression_truth:
+            expression_truth_samples.append(
+                bayestme.expression_truth.load_expression_truth(dataset, fn)
+            )
+        n_components = expression_truth_samples[0].shape[0]
+
+        if not len(set([x.shape for x in expression_truth_samples])) == 1:
+            raise RuntimeError(
+                "Multiple expression truth arrays were provided, and they have different dimensions. "
+                "Please ensure --expression-truth arguments are correct."
+            )
+
+        expression_truth = bayestme.expression_truth.combine_multiple_expression_truth(
+            expression_truth_samples
         )
-        n_components = expression_truth.shape[0]
     else:
         expression_truth = None
         n_components = args.n_components

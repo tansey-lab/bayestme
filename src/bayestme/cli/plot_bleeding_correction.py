@@ -1,6 +1,6 @@
 import argparse
 
-import bayestme.logging
+import bayestme.log_config
 from bayestme import data, bleeding_correction
 
 
@@ -21,14 +21,14 @@ def get_parser():
     parser.add_argument(
         "--n-top", type=int, default=10, help="Plot top n genes by stddev"
     )
-    bayestme.logging.add_logging_args(parser)
+    bayestme.log_config.add_logging_args(parser)
 
     return parser
 
 
 def main():
     args = get_parser().parse_args()
-    bayestme.logging.configure_logging(args)
+    bayestme.log_config.configure_logging(args)
 
     before_correction = data.SpatialExpressionDataset.read_h5(args.raw_adata)
     after_correction = data.SpatialExpressionDataset.read_h5(args.corrected_adata)
