@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 
-import bayestme.logging
+import bayestme.log_config
 from bayestme import data, spatial_expression
 
 MODEL_DUMP_PATH = "sde_model_dump.h5"
@@ -74,14 +74,14 @@ def get_parser():
         " if this number is less than the total number of genes the top N"
         " by spatial variance will be selected",
     )
-    bayestme.logging.add_logging_args(parser)
+    bayestme.log_config.add_logging_args(parser)
 
     return parser
 
 
 def main():
     args = get_parser().parse_args()
-    bayestme.logging.configure_logging(args)
+    bayestme.log_config.configure_logging(args)
 
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
         args.adata

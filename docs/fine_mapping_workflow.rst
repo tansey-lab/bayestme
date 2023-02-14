@@ -28,3 +28,18 @@ be read into the BayesTME pipeline. Example usage:
 
 The output CSV, at ``<output dir>/average_expression.csv`` will be provided as the
 argument to ``deconvolve --expression-truth``.
+
+If you have multiple matched scRNA samples for a single ST dataset, you can run this workflow on all of them, and then
+provide the ``--expression-truth`` argument multiple times to deconvolve.
+
+For example:
+
+.. code::
+
+    deconvolve --expression-truth average_expression_sample_1.csv \
+        --expression-truth average_expression_sample_2.csv \
+        --expression-truth average_expression_sample_3.csv
+
+
+``deconvolve`` will consider all the samples jointly to determine baseline expression profiles
+for the different cell types.

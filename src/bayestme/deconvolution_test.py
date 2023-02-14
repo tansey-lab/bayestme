@@ -6,6 +6,7 @@ import numpy as np
 import numpy.testing
 import pandas
 
+import bayestme.expression_truth
 import bayestme.synthetic_data
 from bayestme import utils, deconvolution, data
 
@@ -570,7 +571,7 @@ def test_load_phi_truth():
 
     pandas.DataFrame(example_data).to_csv(os.path.join(tmpdir, "test.csv"), index=True)
 
-    result = deconvolution.load_expression_truth(
+    result = bayestme.expression_truth.load_expression_truth(
         dataset, os.path.join(tmpdir, "test.csv")
     )
 
