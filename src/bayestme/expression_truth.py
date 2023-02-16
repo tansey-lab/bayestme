@@ -55,7 +55,7 @@ def combine_multiple_expression_truth(
             )
         )
 
-    return numpy.vstack(per_celltype_alpha_parameters)
+    return np.vstack(per_celltype_alpha_parameters)
 
 
 def load_expression_truth(stdata: data.SpatialExpressionDataset, seurat_output: str):
