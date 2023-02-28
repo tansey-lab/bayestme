@@ -36,4 +36,9 @@ Please run `make install_precommit_hooks` from the root of the repository
 to install the pre-commit hooks.
 
 When you run any `git commit` command these pre-commit hooks will run and format any files that you changed in your commit.
+
 Any unchanged files will not be formatted.
+
+### Internal Contributions
+
+When contributing to this repository, please use the feature branch workflow documented here: https://github.com/tansey-lab/wiki/blob/master/FEATURE_BRANCH_WORKFLOW.md
