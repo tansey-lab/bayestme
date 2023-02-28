@@ -71,8 +71,10 @@ class GraphFusedMultinomial:
 
         # initialize gene expression profile
         self.alpha = np.ones(self.n_gene)
+        self.sc_guide = False
         if truth_expression is not None:
-            self.phi = truth_expression
+            self.phi = truth_expression / truth_expression.sum(axis=1, keepdims=True)
+            self.sc_guide = True
         elif lda_initialization:
             print("Initializing with lda")
             lda = LatentDirichletAllocation(
@@ -94,6 +96,23 @@ class GraphFusedMultinomial:
         if truth_cellnum is not None:
             self.cell_num[:, :-1] = truth_cellnum
             self.cell_num[:, -1] = 1
+        elif truth_expression is not None:
+            # with truth_expression, use a few top marker genes to initialize cell num
+            for ct_idx in range(self.n_components):
+                ct_filter = np.zeros(self.n_components).astype(bool)
+                ct_filter[ct_idx] = True
+                score = (
+                    truth_expression[ct_filter][0]
+                    - truth_expression[~ct_filter].max(axis=0)
+                ) / np.clip(truth_expression[ct_filter][0], 1e-6, None)
+                n_marker = int(min(0.5 * (score > 0.1).sum(), 5))
+                gene_idx = score.argsort()[::-1][:n_marker]
+                self.cell_num[:, ct_idx + 1] = (
+                    observations[:, gene_idx] / truth_expression[ct_idx, gene_idx]
+                ).mean(axis=1)
+            self.cell_num[:, 0] = self.cell_num.sum(axis=1)
+            self.probs[:, 0] = D / self.n_max
+            self.probs[:, 1:] = self.cell_num[:, 1:] / self.cell_num[:, 0:1]
         else:
             self.cell_num[:, 0] = self.rng.binomial(self.n_max, self.probs[:, 0])
             if self.bkg:
@@ -118,6 +137,8 @@ class GraphFusedMultinomial:
         self.b_beta = c**2 * mu / s**2
         if truth_beta is not None:
             self.beta = truth_beta
+        elif truth_expression is not None:
+            self.beta = truth_expression.sum(axis=1)
         else:
             self.beta = self.rng.gamma(self.a_beta, 1 / self.b_beta, size=n_components)
         if self.bkg:
@@ -225,7 +246,8 @@ class GraphFusedMultinomial:
 
     def sample(self, Obs):
         self.sample_reads(Obs)
-        self.sample_phi()
+        if not self.sc_guide:
+            self.sample_phi()
         self.sample_cell_num()
         self.sample_probs()
         self.sample_beta()

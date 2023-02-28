@@ -538,6 +538,32 @@ class DeconvolutionResult:
             f.attrs["lam2"] = self.lam2
             f.attrs["n_components"] = self.n_components
 
+    def align_celltype(self, sc_expression, n=50):
+        """
+        reorder the deconvolution results, aligned the detected cell type with the given scrna rerference
+        :param sc_expression: K by G matrix, K cell types and G genes
+        :returen: the ordering of the deconvolution result that matches the given scref
+        """
+        from scipy.stats import pearsonr
+
+        expression_post = self.expression_trace[:].mean(axis=0)
+        celltype_order = np.zeros(self.n_components)
+        for ct_idx in range(self.n_components):
+            ct_filter = np.zeros(self.n_components).astype(bool)
+            ct_filter[ct_idx] = True
+            score = (
+                sc_expression[ct_filter][0] - sc_expression[~ct_filter].max(axis=0)
+            ) / np.clip(sc_expression[ct_filter][0], 1e-6, None)
+            n_marker = int(min((score > 0.1).sum(), n))
+            gene_idx = score.argsort()[::-1][:n_marker]
+            score = np.zeros(self.n_components)
+            for i in range(self.n_components):
+                score[i] = pearsonr(
+                    sc_expression[ct_idx, gene_idx], expression_post[i, gene_idx]
+                )[0]
+            celltype_order[ct_idx] = score.argmax()
+        return celltype_order.astype(int)
+
     @property
     def omega(self):
         """
