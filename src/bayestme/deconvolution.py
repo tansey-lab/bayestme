@@ -27,6 +27,8 @@ def deconvolve(
     n_thin=10,
     bkg=False,
     lda=False,
+    n_max=120,
+    D=30,
     expression_truth=None,
     rng: Optional[np.random.Generator] = None,
 ) -> data.DeconvolutionResult:
@@ -61,10 +63,14 @@ def deconvolve(
     elif isinstance(n_gene, (list, np.ndarray)):
         n_gene = len(n_gene)
         Observation = reads[:, n_gene]
+        if expression_truth is not None:
+            expression_truth = expression_truth[:, n_gene]
     elif isinstance(n_gene, int):
         n_gene = min(n_gene, reads.shape[1])
         top = np.argsort(np.std(np.log(1 + reads), axis=0))[::-1]
         Observation = reads[:, top[:n_gene]]
+        if expression_truth is not None:
+            expression_truth = expression_truth[:, top[:n_gene]]
     else:
         raise ValueError("n_gene must be a integer or a list of indices of genes")
 
@@ -77,6 +83,8 @@ def deconvolve(
         background_noise=bkg,
         lda_initialization=lda,
         truth_expression=expression_truth,
+        n_max=n_max,
+        D=D,
         rng=rng,
     )
 
