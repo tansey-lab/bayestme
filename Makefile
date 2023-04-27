@@ -16,7 +16,7 @@ container:
 	docker build . --cache-from jeffquinnmsk/bayestme:latest --platform linux/amd64 -t jeffquinnmsk/bayestme:latest
 
 python-unittest:
-	pip install .[dev]
+	pip install ".[dev,test]"
 	pytest .
 
 
