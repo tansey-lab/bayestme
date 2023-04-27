@@ -401,8 +401,12 @@ def fit_spot_rates(Reads, tissue_mask, Weights, x_init=None):
     return global_rates, Rates, res
 
 
+def fit_bleed_spot_rates(Reads, tissue_mask, Weights):
+    return fit_spot_rates(Reads, tissue_mask, Weights)
+
+
 def decontaminate_spots(
-    Reads,
+    reads,
     tissue_mask,
     basis_idxs,
     basis_mask,
@@ -414,25 +418,28 @@ def decontaminate_spots(
     Rates_init=None,
 ):
     # Handle case where n_top is larger than the number of genes in the experiment
-    n_top = min(n_top, Reads.shape[1])
+    n_top = min(n_top, reads.shape[1])
 
     if Rates_init is None:
         # Initialize the rates to be the local observed reads
         Rates = np.copy(
-            Reads[:, :n_top] * tissue_mask[:, None] * RATE_INITIALIZATION_FACTOR
+            reads[:, :n_top] * tissue_mask[:, None] * RATE_INITIALIZATION_FACTOR
         ).clip(1e-2, None)
-        global_rates = np.median(Reads[:, :n_top], axis=0)
+        global_rates = np.median(reads[:, :n_top], axis=0)
     else:
         global_rates, Rates = rates_from_raw(
-            Rates_init, tissue_mask, (Reads.shape[0], n_top)
+            Rates_init, tissue_mask, (reads.shape[0], n_top)
         )
+
+    optimized_weights = None
+    optimized_basis_functions = None
 
     logger.info(f"Fitting basis functions to first {n_top} genes")
     for step in tqdm.trange(max_steps, desc="Fitting bleed correction basis functions"):
         logger.info(f"\nStep {step + 1}/{max_steps}")
 
-        basis_functions, Weights, res = fit_basis_functions(
-            Reads[:, :n_top],
+        basis_functions, weights, res = fit_basis_functions(
+            reads[:, :n_top],
             tissue_mask,
             Rates,
             global_rates,
@@ -445,22 +452,38 @@ def decontaminate_spots(
         basis_init = res.x
 
         global_rates, Rates, res = fit_spot_rates(
-            Reads[:, :n_top], tissue_mask, Weights, x_init=Rates_init
+            reads[:, :n_top], tissue_mask, weights, x_init=Rates_init
         )
         Rates_init = res.x
         loss = res.fun
 
         logger.info(f"\tLoss: {loss:.2f}")
 
-    Rates = np.zeros(Reads.shape)
-    global_rates = np.zeros(Reads.shape[1])
-    for g in tqdm.trange(Reads.shape[1], desc="Fitting bleed spot rates"):
-        logger.info(f"\nGene {g + 1}/{Reads.shape[1]}")
-        global_rates[g], Rates[:, g : g + 1], res = fit_spot_rates(
-            Reads[:, g : g + 1], tissue_mask, Weights, x_init=None
-        )
+        optimized_weights = weights
+        optimized_basis_functions = basis_functions
 
-    return global_rates, Rates, basis_functions, Weights, basis_init, Rates_init
+    Rates = np.zeros(reads.shape)
+    global_rates = np.zeros(reads.shape[1])
+    failed_indices = []
+
+    for g in tqdm.trange(reads.shape[1], desc="Fitting bleed spot rates"):
+        try:
+            global_rates[g], Rates[:, g : g + 1], res = fit_bleed_spot_rates(
+                reads[:, g : g + 1], tissue_mask, optimized_weights
+            )
+        except ValueError:
+            logger.exception(f"Error fitting spot rates for gene {g}")
+            failed_indices.append(g)
+
+    return (
+        global_rates,
+        Rates,
+        optimized_basis_functions,
+        optimized_weights,
+        basis_init,
+        Rates_init,
+        np.array(failed_indices),
+    )
 
 
 def select_local_weight(
@@ -520,6 +543,7 @@ def select_local_weight(
             Weights,
             basis_init,
             Rates_init,
+            _,
         ) = res
 
         # Reconstruct the weights and rates for the full dataset
@@ -766,7 +790,15 @@ def clean_bleed(
 
     n_top = min(n_top, dataset.n_gene)
 
-    global_rates, fit_rates, basis_functions, weights, _, _ = decontaminate_spots(
+    (
+        global_rates,
+        fit_rates,
+        basis_functions,
+        weights,
+        _,
+        _,
+        failed_genes,
+    ) = decontaminate_spots(
         dataset.raw_counts,
         dataset.tissue_mask,
         basis_idxs,
@@ -776,11 +808,15 @@ def clean_bleed(
         local_weight=local_weight,
     )
 
+    # N cell x N gene
     corrected_reads = np.round(
         fit_rates
         / fit_rates.sum(axis=0, keepdims=True)
         * dataset.raw_counts.sum(axis=0, keepdims=True)
     )
+
+    if len(failed_genes) > 0:
+        corrected_reads[:, failed_genes] = dataset.raw_counts[:, failed_genes]
 
     cleaned_dataset = data.SpatialExpressionDataset.from_arrays(
         raw_counts=corrected_reads,

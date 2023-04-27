@@ -60,6 +60,6 @@ setup(
     ],
     extras_require={
         "dev": ["check-manifest"],
-        "test": ["pytest", "tox"],
+        "test": ["pytest", "tox", "pytest-mock"],
     },
 )

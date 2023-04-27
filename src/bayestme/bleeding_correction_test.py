@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 import numpy as np
-
+import numpy.testing
 import bayestme.synthetic_data
 from bayestme import bleeding_correction, data
 
@@ -96,8 +96,9 @@ def test_decontaminate_spots():
         weights,
         basis_init,
         rates_init,
+        failed_genes,
     ) = bleeding_correction.decontaminate_spots(
-        Reads=bleed_counts,
+        reads=bleed_counts,
         tissue_mask=tissue_mask,
         basis_idxs=basis_idx,
         basis_mask=basis_mask,
@@ -203,6 +204,50 @@ def test_clean_bleed():
         assert bleed_correction_result.corrected_reads.shape == (12 * 12, 5)
         assert bleed_correction_result.global_rates.shape == (5,)
         assert cleaned_dataset.n_spot_in == tissue_mask.sum()
+        numpy.testing.assert_raises(
+            AssertionError,
+            numpy.testing.assert_array_equal,
+            bleed_correction_result.corrected_reads,
+            dataset.raw_counts,
+        )
+
+
+def test_clean_bleed_handles_failures(mocker):
+    np.random.seed(100)
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12, n_cols=12, n_genes=5
+    )
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["1", "2", "3", "4", "5"]),
+        layout=data.Layout.SQUARE,
+        barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+    )
+
+    with mocker.patch(
+        "bayestme.bleeding_correction.fit_bleed_spot_rates",
+        side_effect=ValueError("test error"),
+    ):
+        (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(
+            dataset, n_top=3, local_weight=None
+        )
+
+    assert cleaned_dataset.n_gene == 5
+
+    # For genes where bleed rate fitting failed,
+    # we should pass through the raw counts as is
+    numpy.testing.assert_array_equal(
+        bleed_correction_result.corrected_reads, dataset.raw_counts
+    )
 
 
 def test_plot_bleed_vectors():
