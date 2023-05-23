@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 process load_spaceranger {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path spaceranger_output_dir
@@ -33,7 +33,7 @@ def create_expression_truth_flag(expression_truth_values) {
 process filter_genes {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path dataset
@@ -59,7 +59,7 @@ process filter_genes {
 process bleeding_correction {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path dataset
@@ -85,7 +85,7 @@ process bleeding_correction {
 process plot_bleeding_correction {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path filtered_anndata
@@ -120,7 +120,7 @@ def create_lambda_values_flag(lambda_values) {
 process phenotype_selection {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         val job_index
@@ -162,10 +162,12 @@ process phenotype_selection {
 process deconvolve {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path adata
+        val n_components
+        val lambda
 
     output:
         path 'dataset_deconvolved.h5ad', emit: adata_output
@@ -183,8 +185,8 @@ process deconvolve {
     deconvolve --adata dataset_filtered_corrected.h5ad \
         --adata-output dataset_deconvolved.h5ad \
         --output deconvolution_samples.h5 \
-        --lam2 ${params.lambda} \
-        --n-components ${params.n_components} \
+        --lam2 ${lambda} \
+        --n-components ${n_components} \
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
@@ -198,7 +200,7 @@ process deconvolve {
 process select_marker_genes {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path adata
@@ -221,7 +223,7 @@ process select_marker_genes {
 process plot_deconvolution {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path adata
@@ -239,7 +241,7 @@ process plot_deconvolution {
 process spatial_expression {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path adata
@@ -285,7 +287,7 @@ def create_cell_type_names_flag(cell_type_names) {
 process plot_spatial_expression {
     memory '8 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path sde_samples
@@ -309,12 +311,13 @@ process plot_spatial_expression {
 process read_phenotype_selection_results {
     memory '1 GB'
     time '1h'
-    container = "docker://jeffquinnmsk/bayestme:latest"
+
 
     input:
         path phenotype_selection_result
     output:
-        path 'phenotype_selection_results.json', emit: result
+        env LAMBDA, emit: lambda
+        env N_COMPONENTS, emit: n_components
 
     script:
     def lambda_values_flag = "--lambda-values ${params.phenotype_selection_lambda_values}"
@@ -322,17 +325,17 @@ process read_phenotype_selection_results {
     plot_spatial_expression --adata ${adata} \
         --phenotype-selection-outputs ${phenotype_selection_result}* \
         ${lambda_values_flag} \
-        --output phenotype_selection_results.json
+        --output-lambda lambda \
+        --output-n-components n_components
+
+    LAMBDA=`cat lambda`
+    N_COMPONENTS=`cat n_components`
     """
 }
 
 def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_components, n_folds) {
     log.info "${lambdas}"
     return lambdas.size() * (max_n_components - min_n_components) * n_folds
-}
-
-def read_phenotype_selection_results_into_params(json_file_path) {
-    new groovy.json.JsonSlurper().parseText(json_file_path.text).each { k, v -> params[k] = v }
 }
 
 workflow {
@@ -366,13 +369,18 @@ workflow {
         phenotype_selection(job_indices, bleeding_correction.out.result)
 
         read_phenotype_selection_results( phenotype_selection.out.result.collect() )
-
-        read_phenotype_selection_results_into_params( read_phenotype_selection_results.out.result )
     } else {
         log.info "Got values ${params.lambda} and ${params.n_components} for lambda and n_components, will skip phenotype selection."
     }
 
-    deconvolve(bleeding_correction.out.adata_output)
+    def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
+    def lambda = params.lambda == null ? read_phenotype_selection_results.out.lambda : params.lambda
+
+    deconvolve(
+        bleeding_correction.out.adata_output,
+        n_components
+        lambda,
+    )
 
     select_marker_genes(deconvolve.out.adata_output, deconvolve.out.samples)
 

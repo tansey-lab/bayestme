@@ -31,7 +31,12 @@ def get_parser():
         "Defaults to (1, 1e1, 1e2, 1e3, 1e4, 1e5)",
     )
     parser.add_argument(
-        "--output",
+        "--output-n-components",
+        type=str,
+        help="Output file to write results to (for use in scripting and pipelines).",
+    )
+    parser.add_argument(
+        "--output-lambda",
         type=str,
         help="Output file to write results to (for use in scripting and pipelines).",
     )
@@ -60,11 +65,8 @@ def main():
     logger.info(
         f"Max likelihood n_components: {max_likelihood_n_components} lambda: {max_likelihood_lambda_value}"
     )
-    with open(args.output, "w") as of:
-        json.dump(
-            {
-                "n_components": max_likelihood_n_components,
-                "lambda": max_likelihood_lambda_value,
-            },
-            of,
-        )
+    with open(args.output_n_components, "w") as of:
+        of.write("{}".format(max_likelihood_n_components))
+
+    with open(args.output_lambda, "w") as of:
+        of.write("{}".format(max_likelihood_lambda_value))
