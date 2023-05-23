@@ -93,7 +93,7 @@ process plot_bleeding_correction {
         path bleed_correction_results
 
     output:
-        path 'bleed_correction_results', type: dir, emit: result
+        path 'bleed_correction_results', emit: result
 
     script:
     """
@@ -227,7 +227,7 @@ process plot_deconvolution {
         path adata
 
     output:
-        path 'deconvolution_plots', type: dir, emit: deconvolution_plots
+        path 'deconvolution_plots', emit: deconvolution_plots
 
     script:
     """
@@ -293,7 +293,7 @@ process plot_spatial_expression {
         path adata
 
     output:
-        path 'sde_plots', type: dir, emit: result
+        path 'sde_plots', emit: result
 
     script:
     def cell_type_names_flag = create_cell_type_names_flag(params.cell_type_names)
@@ -327,15 +327,15 @@ process read_phenotype_selection_results {
 }
 
 def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_components, n_folds) {
-    return lambdas.length * (max_n_components - min_n_components) * n_folds
+    log.info "${lambdas}"
+    return lambdas.size() * (max_n_components - min_n_components) * n_folds
 }
 
 def read_phenotype_selection_results_into_params(json_file_path) {
-    parameter_json = file(json_file_path)
-    new groovy.json.JsonSlurper().parseText(parameter_json.text).each { k, v -> params[k] = v }
+    new groovy.json.JsonSlurper().parseText(json_file_path.text).each { k, v -> params[k] = v }
 }
 
-workflow bayestme {
+workflow {
     if (params.input_adata == null) {
         load_spaceranger(file(params.spaceranger_dir, type: dir))
     }
@@ -352,15 +352,16 @@ workflow bayestme {
 
     if (params.lambda == null && params.n_components == null) {
         log.info "No values supplied for lambda and n_components, will run phenotype selection."
+        log.info "${params.phenotype_selection_lambda_values}"
         var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
             params.phenotype_selection_lambda_values,
             params.phenotype_selection_n_components_min,
             params.phenotype_selection_n_components_max,
-            params.phenotype_selection_n_fold) - 1
+            params.phenotype_selection_n_fold)
 
         log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
 
-        job_indices = Channel.of(0..n_phenotype_jobs)
+        job_indices = Channel.of(0..(n_phenotype_jobs-1))
 
         phenotype_selection(job_indices, bleeding_correction.out.result)
 
