@@ -37,9 +37,10 @@ def get_parser():
     )
     parser.add_argument(
         "--expression-truth",
+        help="Filter out genes not found in all expression truth datasets.",
         type=str,
+        action="append",
         default=None,
-        help="Filter out genes not found in the expression truth dataset.",
     )
     bayestme.log_config.add_logging_args(parser)
 
@@ -108,20 +109,22 @@ def main():
         )
 
     if args.expression_truth:
-        pre_filtering_genes = dataset.gene_names
+        for expression_truth_file in args.expression_truth:
+            pre_filtering_genes = dataset.gene_names
 
-        dataset = gene_filtering.filter_stdata_to_match_expression_truth(
-            dataset, args.expression_truth
-        )
-
-        post_filtering_genes = dataset.gene_names
-
-        logger.info(
-            "After intersecting with expression truth gene set went from {} to {} genes. Filtered genes: {}".format(
-                len(pre_filtering_genes),
-                len(post_filtering_genes),
-                ", ".join(set(pre_filtering_genes) - set(post_filtering_genes)),
+            dataset = gene_filtering.filter_stdata_to_match_expression_truth(
+                dataset, expression_truth_file
             )
-        )
+
+            post_filtering_genes = dataset.gene_names
+
+            logger.info(
+                "After intersecting with expression truth gene set from file {} went from {} to {} genes. Filtered genes: {}".format(
+                    expression_truth_file,
+                    len(pre_filtering_genes),
+                    len(post_filtering_genes),
+                    ", ".join(set(pre_filtering_genes) - set(post_filtering_genes)),
+                )
+            )
 
     dataset.save(args.output)

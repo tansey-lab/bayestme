@@ -12,18 +12,31 @@ from bayestme import data
 logger = logging.getLogger(__name__)
 
 
-def load_likelihoods(output_dir):
+def load_likelihoods(output_dir=None, output_files=None):
     results = []
     fold_nums = []
     lam_vals = []
     k_vals = []
-    for fn in glob.glob(os.path.join(output_dir, "fold_*.h5ad")):
-        result = data.PhenotypeSelectionResult.read_h5(fn)
-        fold_nums.append(result.fold_number)
-        lam_vals.append(result.lam)
-        k_vals.append(result.n_components)
+    if not output_files or output_dir:
+        raise ValueError("Must specify either output_dir or output_files")
 
-        results.append(data.PhenotypeSelectionResult.read_h5(fn))
+    if output_dir is not None:
+        for fn in glob.glob(os.path.join(output_dir, "fold_*.h5ad")):
+            result = data.PhenotypeSelectionResult.read_h5(fn)
+            fold_nums.append(result.fold_number)
+            lam_vals.append(result.lam)
+            k_vals.append(result.n_components)
+
+            results.append(data.PhenotypeSelectionResult.read_h5(fn))
+
+    if output_files is not None:
+        for fn in output_files:
+            result = data.PhenotypeSelectionResult.read_h5(fn)
+            fold_nums.append(result.fold_number)
+            lam_vals.append(result.lam)
+            k_vals.append(result.n_components)
+
+            results.append(data.PhenotypeSelectionResult.read_h5(fn))
 
     fold_nums = sorted(set(fold_nums))
     lam_vals = sorted(set(lam_vals))
