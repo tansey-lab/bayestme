@@ -18,7 +18,7 @@ process load_spaceranger {
 }
 
 def create_expression_truth_flag(expression_truth_values) {
-    if (lambda_values == null || expression_truth_values.length == 0) {
+    if (expression_truth_values == null || expression_truth_values.length == 0) {
         return ""
     } else {
         var expression_truth_flag = ""
@@ -69,7 +69,7 @@ process bleeding_correction {
         path 'bleed_correction_results.h5', emit: bleed_correction_output
 
     script:
-    def n_top_flag = params.bleed_correction_n_top_genes == null ? "" : "--n-top ${params.n_top}"
+    def n_top_flag = params.bleed_correction_n_top_genes == null ? "" : "--n-top ${params.bleed_correction_n_top_genes}"
     def bleed_correction_n_em_steps_flag = params.bleed_correction_n_em_steps == null ? "" : "--max-steps ${params.bleed_correction_n_em_steps}"
     def bleed_correction_local_weight_flag = params.bleed_correction_local_weight == null ? "" : "--local-weight ${params.bleed_correction_local_weight}"
     """
@@ -366,7 +366,7 @@ workflow {
 
         job_indices = Channel.of(0..(n_phenotype_jobs-1))
 
-        phenotype_selection(job_indices, bleeding_correction.out.result)
+        phenotype_selection(job_indices, bleeding_correction.out.adata_output)
 
         read_phenotype_selection_results( phenotype_selection.out.result.collect() )
     } else {
@@ -384,7 +384,7 @@ workflow {
 
     select_marker_genes(deconvolve.out.adata_output, deconvolve.out.samples)
 
-    plot_deconvolution(select_marker_genes.out.adata_output)
+    plot_deconvolution(select_marker_genes.out.result )
 
     spatial_expression( select_marker_genes.out.result )
 
