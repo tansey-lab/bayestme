@@ -57,8 +57,8 @@ process filter_genes {
 }
 
 process bleeding_correction {
-    memory '8 GB'
-    time '1h'
+    memory '64 GB'
+    time '24h'
 
 
     input:
@@ -118,8 +118,8 @@ def create_lambda_values_flag(lambda_values) {
 }
 
 process phenotype_selection {
-    memory '8 GB'
-    time '1h'
+    memory '96 GB'
+    time '96h'
 
 
     input:
@@ -160,8 +160,8 @@ process phenotype_selection {
 }
 
 process deconvolve {
-    memory '8 GB'
-    time '1h'
+    memory '96 GB'
+    time '96h'
 
 
     input:
@@ -198,8 +198,8 @@ process deconvolve {
 }
 
 process select_marker_genes {
-    memory '8 GB'
-    time '1h'
+    memory '64 GB'
+    time '2h'
 
 
     input:
@@ -221,7 +221,7 @@ process select_marker_genes {
 }
 
 process plot_deconvolution {
-    memory '8 GB'
+    memory '64 GB'
     time '1h'
 
 
@@ -239,8 +239,8 @@ process plot_deconvolution {
 }
 
 process spatial_expression {
-    memory '8 GB'
-    time '1h'
+    memory '96 GB'
+    time '96h'
 
 
     input:
@@ -289,7 +289,7 @@ def create_cell_type_names_flag(cell_type_names) {
 }
 
 process plot_spatial_expression {
-    memory '8 GB'
+    memory '64 GB'
     time '1h'
 
 
@@ -313,7 +313,7 @@ process plot_spatial_expression {
 }
 
 process read_phenotype_selection_results {
-    memory '1 GB'
+    memory '64 GB'
     time '1h'
 
 
