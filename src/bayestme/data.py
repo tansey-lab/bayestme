@@ -264,7 +264,7 @@ class SpatialExpressionDataset:
         barcodes_path = os.path.join(data_path, "raw_feature_bc_matrix/barcodes.tsv.gz")
 
         tissue_positions_lists = glob.glob(
-            os.path.join(data_path, "spatial/tissue_positions_list.*")
+            os.path.join(data_path, "spatial/tissue_positions*.*")
         )
 
         positions_path = [fn for fn in tissue_positions_lists if is_csv_tsv(fn)][0]
