@@ -4,8 +4,13 @@ import logging
 import numpy as np
 
 import bayestme.log_config
+import bayestme
 
-import bayestme.expression_truth
+try:
+    import bayestme.expression_truth
+except (RuntimeError, ImportError):
+    pass
+
 from bayestme import data, deconvolution
 
 logger = logging.getLogger(__name__)
@@ -45,7 +50,7 @@ def get_parser():
     )
     parser.add_argument(
         "--lam2",
-        type=int,
+        type=float,
         help="Smoothness parameter, this tuning parameter expected to be determined"
         "from cross validation.",
     )

@@ -93,14 +93,14 @@ process plot_bleeding_correction {
         path bleed_correction_results
 
     output:
-        path 'bleed_correction_results', emit: result
+        path '*.pdf', emit: result
 
     script:
     """
     plot_bleeding_correction --raw-adata ${filtered_anndata} \
         --corrected-adata ${bleed_corrected_anndata} \
         --bleed-correction-results ${bleed_correction_results} \
-        --output-dir bleed_correction_results
+        --output-dir .
     """
 }
 
@@ -127,7 +127,7 @@ process phenotype_selection {
         path adata
 
     output:
-        path 'fold_${job_index}.h5ad', emit: result
+        path 'fold_*.h5ad', emit: result
 
     script:
     def n_fold_flag = "--n-fold ${params.phenotype_selection_n_fold}"
@@ -229,12 +229,12 @@ process plot_deconvolution {
         path adata
 
     output:
-        path 'deconvolution_plots', emit: deconvolution_plots
+        path '*.pdf', emit: deconvolution_plots
 
     script:
     """
     plot_deconvolution --adata ${adata} \
-        --output-dir deconvolution_plots
+        --output-dir .
     """
 }
 
@@ -245,11 +245,13 @@ process spatial_expression {
 
     input:
         path adata
+        path deconvolution_samples
 
     output:
         path 'sde_samples.h5', emit: samples
 
     script:
+    def n_spatial_patterns_flag = "--n-spatial-patterns ${params.spatial_expression_n_spatial_patterns}"
     def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
     def n_burn_flag = "--n-burn ${params.deconvolution_n_burn}"
     def n_thin_flag = "--n-thin ${params.deconvolution_n_thin}"
@@ -261,6 +263,8 @@ process spatial_expression {
     """
     spatial_expression --adata ${adata} \
         --output sde_samples.h5 \
+        --deconvolve-results ${deconvolution_samples} \
+        ${n_spatial_patterns_flag} \
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
@@ -295,7 +299,7 @@ process plot_spatial_expression {
         path adata
 
     output:
-        path 'sde_plots', emit: result
+        path '*.pdf', emit: result, optional: true
 
     script:
     def cell_type_names_flag = create_cell_type_names_flag(params.cell_type_names)
@@ -304,7 +308,7 @@ process plot_spatial_expression {
         --deconvolution-result ${deconvolution_samples} \
         --sde-result ${sde_samples} \
         ${cell_type_names_flag} \
-        --output-dir sde_plots
+        --output-dir .
     """
 }
 
@@ -320,9 +324,9 @@ process read_phenotype_selection_results {
         env N_COMPONENTS, emit: n_components
 
     script:
-    def lambda_values_flag = "--lambda-values ${params.phenotype_selection_lambda_values}"
+    def lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
     """
-    plot_spatial_expression --adata ${adata} \
+    read_phenotype_selection_results \
         --phenotype-selection-outputs ${phenotype_selection_result}* \
         ${lambda_values_flag} \
         --output-lambda lambda \
@@ -386,7 +390,7 @@ workflow {
 
     plot_deconvolution(select_marker_genes.out.result )
 
-    spatial_expression( select_marker_genes.out.result )
+    spatial_expression( select_marker_genes.out.result, deconvolve.out.samples )
 
     plot_spatial_expression( spatial_expression.out.samples, deconvolve.out.samples, select_marker_genes.out.result )
 }
