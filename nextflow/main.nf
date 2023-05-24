@@ -328,7 +328,7 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
     return lambdas.size() * (max_n_components - min_n_components) * n_folds
 }
 
-workflow {
+workflow BAYESTME {
     if (params.input_adata == null) {
         load_spaceranger(file(params.spaceranger_dir, type: "dir"))
     }
