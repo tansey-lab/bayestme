@@ -5,7 +5,7 @@ process load_spaceranger {
 
 
     input:
-        path spaceranger_output_dir
+        path spaceranger_input_dir
 
     output:
         path 'dataset.h5ad', emit: result
@@ -330,7 +330,7 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 
 workflow {
     if (params.input_adata == null) {
-        load_spaceranger(file(params.spaceranger_dir, type: dir))
+        load_spaceranger(file(params.spaceranger_dir, type: "dir"))
     }
 
     var adata = params.input_adata == null ? load_spaceranger.out.result : file(params.input_adata)
