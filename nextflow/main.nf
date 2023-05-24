@@ -1,8 +1,7 @@
 nextflow.enable.dsl=2
 
 process load_spaceranger {
-    memory '8 GB'
-    time '1h'
+    label 'small_mem'
 
 
     input:
@@ -31,9 +30,7 @@ def create_expression_truth_flag(expression_truth_values) {
 }
 
 process filter_genes {
-    memory '8 GB'
-    time '1h'
-
+    label 'small_mem'
 
     input:
         path dataset
@@ -57,8 +54,7 @@ process filter_genes {
 }
 
 process bleeding_correction {
-    memory '64 GB'
-    time '24h'
+    label 'big_mem'
 
 
     input:
@@ -83,8 +79,7 @@ process bleeding_correction {
 }
 
 process plot_bleeding_correction {
-    memory '8 GB'
-    time '1h'
+    label 'small_mem'
 
 
     input:
@@ -118,8 +113,7 @@ def create_lambda_values_flag(lambda_values) {
 }
 
 process phenotype_selection {
-    memory '96 GB'
-    time '96h'
+    label 'big_mem'
 
 
     input:
@@ -160,8 +154,7 @@ process phenotype_selection {
 }
 
 process deconvolve {
-    memory '96 GB'
-    time '96h'
+    label 'big_mem'
 
 
     input:
@@ -198,8 +191,7 @@ process deconvolve {
 }
 
 process select_marker_genes {
-    memory '64 GB'
-    time '2h'
+    label 'small_mem'
 
 
     input:
@@ -221,9 +213,7 @@ process select_marker_genes {
 }
 
 process plot_deconvolution {
-    memory '64 GB'
-    time '1h'
-
+    label 'small_mem'
 
     input:
         path adata
@@ -239,9 +229,7 @@ process plot_deconvolution {
 }
 
 process spatial_expression {
-    memory '96 GB'
-    time '96h'
-
+    label 'big_mem'
 
     input:
         path adata
@@ -289,9 +277,7 @@ def create_cell_type_names_flag(cell_type_names) {
 }
 
 process plot_spatial_expression {
-    memory '64 GB'
-    time '1h'
-
+    label 'small_mem'
 
     input:
         path sde_samples
@@ -313,20 +299,20 @@ process plot_spatial_expression {
 }
 
 process read_phenotype_selection_results {
-    memory '64 GB'
-    time '1h'
-
+    label 'small_mem'
 
     input:
         path phenotype_selection_result
     output:
         env LAMBDA, emit: lambda
         env N_COMPONENTS, emit: n_components
+        path "*.pdf", emit: plots
 
     script:
     def lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
     """
-    read_phenotype_selection_results \
+    process_phenotype_selection_results \
+        --plot-output . \
         --phenotype-selection-outputs ${phenotype_selection_result}* \
         ${lambda_values_flag} \
         --output-lambda lambda \

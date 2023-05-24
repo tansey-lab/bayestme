@@ -17,7 +17,7 @@ def load_likelihoods(output_dir=None, output_files=None):
     fold_nums = []
     lam_vals = []
     k_vals = []
-    if not output_files or output_dir:
+    if not output_files and not output_dir:
         raise ValueError("Must specify either output_dir or output_files")
 
     if output_dir is not None:
@@ -68,7 +68,7 @@ def plot_likelihoods(likelihood_path, out_file, normalize=False):
         fold_nums,
         lam_vals,
         k_vals,
-    ) = load_likelihoods(likelihood_path)
+    ) = load_likelihoods(output_dir=likelihood_path)
     # Plot the averages for train and test
     like_means = []
     with sns.axes_style("white"):
@@ -118,8 +118,10 @@ def plot_likelihoods(likelihood_path, out_file, normalize=False):
     return np.array(like_means)
 
 
-def plot_cv_running(results_path, out_path, output_format="pdf"):
-    likelihoods, fold_nums, lam_vals, k_vals = load_likelihoods(results_path)
+def plot_cv_running(results_dir, results_files, out_path, output_format="pdf"):
+    likelihoods, fold_nums, lam_vals, k_vals = load_likelihoods(
+        output_dir=results_dir, output_files=results_files
+    )
     # Plot the averages for train and test
     with sns.axes_style("white"):
         plt.rc("font", weight="bold")

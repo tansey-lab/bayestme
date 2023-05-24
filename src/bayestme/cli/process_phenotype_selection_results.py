@@ -12,6 +12,11 @@ def get_parser():
         description="Read phenotype selection results and print to stdout."
     )
     parser.add_argument(
+        "--plot-output",
+        type=str,
+        help="Dir to write plot to",
+    )
+    parser.add_argument(
         "--phenotype-selection-output-dir",
         type=str,
         default=None,
@@ -65,6 +70,13 @@ def main():
     logger.info(
         f"Max likelihood n_components: {max_likelihood_n_components} lambda: {max_likelihood_lambda_value}"
     )
+
+    cv_likelihoods.plot_cv_running(
+        args.phenotype_selection_output_dir,
+        args.phenotype_selection_outputs,
+        out_path=args.plot_output,
+    )
+
     with open(args.output_n_components, "w") as of:
         of.write("{}".format(max_likelihood_n_components))
 

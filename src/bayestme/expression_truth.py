@@ -1,11 +1,15 @@
 from typing import List
 
 import numpy as np
-import numpyro
 import pandas
-from jax import random
-from numpyro import distributions as dist
-from numpyro.infer import MCMC, NUTS
+
+try:
+    import numpyro
+    from jax import random
+    from numpyro import distributions as dist
+    from numpyro.infer import MCMC, NUTS
+except (ImportError, RuntimeError):
+    pass
 
 from bayestme import data
 

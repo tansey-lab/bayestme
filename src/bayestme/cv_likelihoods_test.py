@@ -64,7 +64,7 @@ def test_load_likelihoods():
 
     try:
         likelihoods, fold_nums, lam_vals, k_vals = cv_likelihoods.load_likelihoods(
-            tempdir
+            output_dir=tempdir
         )
 
         assert fold_nums == list(range(n_fold))
@@ -109,7 +109,7 @@ def test_plot_cv_running():
 
     try:
         pathlib.Path(os.path.join(tempdir, "plot")).mkdir(parents=True, exist_ok=True)
-        cv_likelihoods.plot_cv_running(tempdir, os.path.join(tempdir, "plot"))
+        cv_likelihoods.plot_cv_running(tempdir, None, os.path.join(tempdir, "plot"))
 
         assert os.path.exists(os.path.join(tempdir, "plot/cv_running.pdf"))
         assert os.path.exists(os.path.join(tempdir, "plot/k_folds.pdf"))
