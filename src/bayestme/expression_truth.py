@@ -3,13 +3,10 @@ from typing import List
 import numpy as np
 import pandas
 
-try:
-    import numpyro
-    from jax import random
-    from numpyro import distributions as dist
-    from numpyro.infer import MCMC, NUTS
-except (ImportError, RuntimeError):
-    pass
+import pyro
+import torch
+from pyro import distributions as dist
+from pyro.infer import MCMC, NUTS
 
 from bayestme import data
 
@@ -18,21 +15,22 @@ def dirichlet_alpha_model(expression_truth, N=None, J=None):
     if expression_truth is not None:
         N = expression_truth.shape[0]
         J = expression_truth.shape[1]
-    alpha = numpyro.sample("alpha", dist.Gamma(0.1, 0.1), sample_shape=(J,))
+    alpha = pyro.sample("alpha", dist.Gamma(torch.ones(J) * 0.1, torch.ones(J) * 0.1))
 
-    with numpyro.plate("N", N):
-        numpyro.sample("obs", dist.Dirichlet(alpha), obs=expression_truth)
+    with pyro.plate("N", N):
+        pyro.sample("obs", dist.Dirichlet(alpha), obs=expression_truth)
 
 
 def fit_alpha_for_multiple_samples(data, num_warmup=200, num_samples=200):
     L = np.min(data[data > 0]) / 10.0
     data[data == 0] = L
     data = data / data.sum(axis=1)[:, None]
-
+    data = torch.tensor(data)
     mcmc = MCMC(
-        NUTS(dirichlet_alpha_model), num_warmup=num_warmup, num_samples=num_samples
+        NUTS(dirichlet_alpha_model), warmup_steps=num_warmup, num_samples=num_samples
     )
-    mcmc.run(random.PRNGKey(0), expression_truth=data)
+
+    mcmc.run(data)
 
     return mcmc.get_samples()["alpha"].mean(axis=0)
 
