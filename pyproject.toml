@@ -66,6 +66,7 @@ plot_deconvolution="bayestme.cli.plot_deconvolution:main"
 plot_spatial_expression="bayestme.cli.plot_spatial_expression:main"
 phenotype_selection="bayestme.cli.phenotype_selection:main"
 select_marker_genes="bayestme.cli.select_marker_genes:main"
+process_phenotype_selection_results="bayestme.cli.process_phenotype_selection_results:main"
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]

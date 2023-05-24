@@ -4,8 +4,13 @@ import logging
 import numpy as np
 
 import bayestme.log_config
+import bayestme
 
-import bayestme.expression_truth
+try:
+    import bayestme.expression_truth
+except (RuntimeError, ImportError):
+    pass
+
 from bayestme import data, deconvolution
 
 logger = logging.getLogger(__name__)
@@ -45,7 +50,7 @@ def get_parser():
     )
     parser.add_argument(
         "--lam2",
-        type=int,
+        type=float,
         help="Smoothness parameter, this tuning parameter expected to be determined"
         "from cross validation.",
     )
@@ -56,17 +61,23 @@ def get_parser():
         default=100,
     )
     parser.add_argument(
-        "--n-burnin", type=int, help="Number of burn-in samples", default=1000
+        "--n-burn", type=int, help="Number of burn-in samples", default=1000
     )
     parser.add_argument(
         "--n-thin", type=int, help="Thinning factor for sampling", default=10
     )
     parser.add_argument("--random-seed", type=int, help="Random seed", default=0)
     parser.add_argument(
-        "--bkg", help="Turn background noise on", action="store_true", default=False
+        "--background-noise",
+        help="Turn background noise on",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        "--lda", help="Turn LDA Initialization on", action="store_true", default=False
+        "--lda-initialization",
+        help="Turn LDA Initialization on",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--expression-truth",
@@ -124,10 +135,10 @@ def main():
         n_components=n_components,
         lam2=args.lam2,
         n_samples=args.n_samples,
-        n_burnin=args.n_burnin,
+        n_burnin=args.n_burn,
         n_thin=args.n_thin,
-        bkg=args.bkg,
-        lda=args.lda,
+        bkg=args.background_noise,
+        lda=args.lda_initialization,
         expression_truth=expression_truth,
         rng=rng,
     )

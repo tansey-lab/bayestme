@@ -12,18 +12,31 @@ from bayestme import data
 logger = logging.getLogger(__name__)
 
 
-def load_likelihoods(output_dir):
+def load_likelihoods(output_dir=None, output_files=None):
     results = []
     fold_nums = []
     lam_vals = []
     k_vals = []
-    for fn in glob.glob(os.path.join(output_dir, "fold_*.h5ad")):
-        result = data.PhenotypeSelectionResult.read_h5(fn)
-        fold_nums.append(result.fold_number)
-        lam_vals.append(result.lam)
-        k_vals.append(result.n_components)
+    if not output_files and not output_dir:
+        raise ValueError("Must specify either output_dir or output_files")
 
-        results.append(data.PhenotypeSelectionResult.read_h5(fn))
+    if output_dir is not None:
+        for fn in glob.glob(os.path.join(output_dir, "fold_*.h5ad")):
+            result = data.PhenotypeSelectionResult.read_h5(fn)
+            fold_nums.append(result.fold_number)
+            lam_vals.append(result.lam)
+            k_vals.append(result.n_components)
+
+            results.append(data.PhenotypeSelectionResult.read_h5(fn))
+
+    if output_files is not None:
+        for fn in output_files:
+            result = data.PhenotypeSelectionResult.read_h5(fn)
+            fold_nums.append(result.fold_number)
+            lam_vals.append(result.lam)
+            k_vals.append(result.n_components)
+
+            results.append(data.PhenotypeSelectionResult.read_h5(fn))
 
     fold_nums = sorted(set(fold_nums))
     lam_vals = sorted(set(lam_vals))
@@ -55,7 +68,7 @@ def plot_likelihoods(likelihood_path, out_file, normalize=False):
         fold_nums,
         lam_vals,
         k_vals,
-    ) = load_likelihoods(likelihood_path)
+    ) = load_likelihoods(output_dir=likelihood_path)
     # Plot the averages for train and test
     like_means = []
     with sns.axes_style("white"):
@@ -105,8 +118,10 @@ def plot_likelihoods(likelihood_path, out_file, normalize=False):
     return np.array(like_means)
 
 
-def plot_cv_running(results_path, out_path, output_format="pdf"):
-    likelihoods, fold_nums, lam_vals, k_vals = load_likelihoods(results_path)
+def plot_cv_running(results_dir, results_files, out_path, output_format="pdf"):
+    likelihoods, fold_nums, lam_vals, k_vals = load_likelihoods(
+        output_dir=results_dir, output_files=results_files
+    )
     # Plot the averages for train and test
     with sns.axes_style("white"):
         plt.rc("font", weight="bold")

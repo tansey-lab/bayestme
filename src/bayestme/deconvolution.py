@@ -121,8 +121,11 @@ def deconvolve(
 
 
 class MarkerGeneMethod(Enum):
-    TIGHT = 1
-    FALSE_DISCOVERY_RATE = 2
+    TIGHT = "TIGHT"
+    FALSE_DISCOVERY_RATE = "FALSE_DISCOVERY_RATE"
+
+    def __str__(self):
+        return self.value
 
 
 def select_marker_genes(
