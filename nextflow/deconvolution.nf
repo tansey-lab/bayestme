@@ -1,6 +1,19 @@
+def create_expression_truth_flag(expression_truth_values) {
+    if (expression_truth_values == null || expression_truth_values.length == 0) {
+        return ""
+    } else {
+        var expression_truth_flag = ""
+        for (expression_truth_value in expression_truth_values) {
+            expression_truth_flag += "--expression-truth ${expression_truth_value} "
+        }
+
+        return expression_truth_flag
+    }
+}
+
 process DECONVOLVE {
     label 'big_mem'
-
+    publishDir "${params.outdir}/deconvolution"
 
     input:
         path adata
@@ -37,7 +50,7 @@ process DECONVOLVE {
 
 process SELECT_MARKER_GENES {
     label 'small_mem'
-
+    publishDir "${params.outdir}/marker_gene_selection"
 
     input:
         path adata
@@ -62,6 +75,7 @@ process SELECT_MARKER_GENES {
 
 process PLOT_DECONVOLUTION {
     label 'small_mem'
+    publishDir "${params.outdir}/deconvolution_plots"
 
     input:
         path adata
@@ -86,7 +100,7 @@ workflow DECONVOLUTION {
         marker_gene_method
 
     main:
-        DECONVOLVE(adata, n_components, lambda)
+        DECONVOLVE (adata, n_components, lambda)
 
         SELECT_MARKER_GENES (DECONVOLVE.out.adata_output, DECONVOLVE.out.samples, n_marker_genes, marker_gene_alpha_cutoff, marker_gene_method)
 

@@ -1,5 +1,3 @@
-nextflow.enable.dsl=2
-
 include { DECONVOLUTION } from './deconvolution'
 
 process load_spaceranger {
@@ -33,6 +31,7 @@ def create_expression_truth_flag(expression_truth_values) {
 
 process filter_genes {
     label 'small_mem'
+    publishDir "${params.outdir}/filter_genes"
 
     input:
         path dataset
@@ -57,7 +56,7 @@ process filter_genes {
 
 process bleeding_correction {
     label 'big_mem'
-
+    publishDir "${params.outdir}/bleeding_correction"
 
     input:
         path dataset
@@ -82,7 +81,7 @@ process bleeding_correction {
 
 process plot_bleeding_correction {
     label 'small_mem'
-
+    publishDir "${params.outdir}/bleeding_correction_plots"
 
     input:
         path filtered_anndata
@@ -157,6 +156,7 @@ process phenotype_selection {
 
 process spatial_expression {
     label 'big_mem'
+    publishDir "${params.outdir}/spatial_differential_expression"
 
     input:
         path adata
@@ -205,6 +205,7 @@ def create_cell_type_names_flag(cell_type_names) {
 
 process plot_spatial_expression {
     label 'small_mem'
+    publishDir "${params.outdir}/spatial_differential_expression_plots"
 
     input:
         path sde_samples
@@ -301,7 +302,7 @@ workflow BAYESTME {
         params.marker_gene_method
     )
 
-    spatial_expression( select_marker_genes.out.result, deconvolve.out.samples )
+    spatial_expression( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
 
-    plot_spatial_expression( spatial_expression.out.samples, deconvolve.out.samples, select_marker_genes.out.result )
+    plot_spatial_expression( spatial_expression.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
 }
