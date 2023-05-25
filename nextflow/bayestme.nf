@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { DECONVOLUTION } from './deconvolution'
 
 process load_spaceranger {
     label 'small_mem'
@@ -31,6 +31,7 @@ def create_expression_truth_flag(expression_truth_values) {
 
 process filter_genes {
     label 'small_mem'
+    publishDir "${params.outdir}/filter_genes"
 
     input:
         path dataset
@@ -55,7 +56,7 @@ process filter_genes {
 
 process bleeding_correction {
     label 'big_mem'
-
+    publishDir "${params.outdir}/bleeding_correction"
 
     input:
         path dataset
@@ -80,7 +81,7 @@ process bleeding_correction {
 
 process plot_bleeding_correction {
     label 'small_mem'
-
+    publishDir "${params.outdir}/bleeding_correction_plots"
 
     input:
         path filtered_anndata
@@ -153,83 +154,9 @@ process phenotype_selection {
     """
 }
 
-process deconvolve {
-    label 'big_mem'
-
-
-    input:
-        path adata
-        val n_components
-        val lambda
-
-    output:
-        path 'dataset_deconvolved.h5ad', emit: adata_output
-        path 'deconvolution_samples.h5', emit: samples
-
-    script:
-    def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
-    def n_burn_flag = "--n-burn ${params.deconvolution_n_burn}"
-    def n_thin_flag = "--n-thin ${params.deconvolution_n_thin}"
-    def n_gene_flag = "--n-gene ${params.deconvolution_n_gene}"
-    def phenotype_selection_background_noise_flag = params.phenotype_selection_background_noise_flag ? "--background-noise" : ""
-    def phenotype_selection_lda_initialization_flag = params.phenotype_selection_lda_initialization ? "--lda-initialization" : ""
-    def expression_truth_flag = create_expression_truth_flag(params.expression_truth_files)
-    """
-    deconvolve --adata dataset_filtered_corrected.h5ad \
-        --adata-output dataset_deconvolved.h5ad \
-        --output deconvolution_samples.h5 \
-        --lam2 ${lambda} \
-        --n-components ${n_components} \
-        ${n_samples_flag} \
-        ${n_burn_flag} \
-        ${n_thin_flag} \
-        ${n_gene_flag} \
-        ${phenotype_selection_background_noise_flag} \
-        ${phenotype_selection_lda_initialization_flag} \
-        ${expression_truth_flag}
-    """
-}
-
-process select_marker_genes {
-    label 'small_mem'
-
-
-    input:
-        path adata
-        path deconvolution_samples
-
-    output:
-        path 'dataset_deconvolved_marker_genes.h5ad', emit: result
-
-    script:
-    """
-    select_marker_genes --adata ${adata} \
-        --adata-output dataset_deconvolved_marker_genes.h5ad \
-        --deconvolution-result ${deconvolution_samples} \
-        --n-marker-genes ${params.n_marker_genes} \
-        --alpha ${params.marker_gene_alpha_cutoff} \
-        --marker-gene-method ${params.marker_gene_method}
-    """
-}
-
-process plot_deconvolution {
-    label 'small_mem'
-
-    input:
-        path adata
-
-    output:
-        path '*.pdf', emit: deconvolution_plots
-
-    script:
-    """
-    plot_deconvolution --adata ${adata} \
-        --output-dir .
-    """
-}
-
 process spatial_expression {
     label 'big_mem'
+    publishDir "${params.outdir}/spatial_differential_expression"
 
     input:
         path adata
@@ -278,6 +205,7 @@ def create_cell_type_names_flag(cell_type_names) {
 
 process plot_spatial_expression {
     label 'small_mem'
+    publishDir "${params.outdir}/spatial_differential_expression_plots"
 
     input:
         path sde_samples
@@ -366,17 +294,15 @@ workflow BAYESTME {
     def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
     def lambda = params.lambda == null ? read_phenotype_selection_results.out.lambda : params.lambda
 
-    deconvolve(
-        bleeding_correction.out.adata_output,
+    DECONVOLUTION (bleeding_correction.out.adata_output,
         n_components,
-        lambda
+        lambda,
+        params.n_marker_genes,
+        params.marker_gene_alpha_cutoff,
+        params.marker_gene_method
     )
 
-    select_marker_genes(deconvolve.out.adata_output, deconvolve.out.samples)
+    spatial_expression( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
 
-    plot_deconvolution(select_marker_genes.out.result )
-
-    spatial_expression( select_marker_genes.out.result, deconvolve.out.samples )
-
-    plot_spatial_expression( spatial_expression.out.samples, deconvolve.out.samples, select_marker_genes.out.result )
+    plot_spatial_expression( spatial_expression.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
 }
