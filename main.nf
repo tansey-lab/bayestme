@@ -1,4 +1,4 @@
-include { BAYESTME } from './nextflow/main'
+include { BAYESTME } from './nextflow/bayestme'
 
 workflow {
     BAYESTME ()
