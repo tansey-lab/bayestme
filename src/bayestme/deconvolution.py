@@ -211,6 +211,8 @@ def add_deconvolution_results_to_dataset(
 
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
     stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
+    stdata.adata.varm[data.OMEGA_ATTR] = result.omega.T
+    stdata.adata.varm[data.RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T
 
 
 def add_marker_gene_results_to_dataset(
@@ -555,3 +557,28 @@ def create_top_gene_lists(
         results.append(result)
 
     pandas.concat(results).to_csv(output_path, header=True, index=False)
+
+
+def create_marker_gene_ranking_csvs(
+    stdata: data.SpatialExpressionDataset,
+    deconvolution_result: data.DeconvolutionResult,
+    output_dir: str,
+):
+    relative_expression_df = pandas.DataFrame(
+        index=stdata.gene_names,
+        columns=range(deconvolution_result.n_components),
+    )
+
+    omega_df = pandas.DataFrame(
+        index=stdata.gene_names,
+        columns=range(deconvolution_result.n_components),
+    )
+
+    for k in range(deconvolution_result.n_components):
+        relative_expression_df[k] = deconvolution_result.relative_expression[k]
+        omega_df[k] = deconvolution_result.omega[k]
+
+    relative_expression_df.to_csv(
+        os.path.join(output_dir, "relative_expression.csv"), index=False
+    )
+    omega_df.to_csv(os.path.join(output_dir, "omega.csv"), index=False)
