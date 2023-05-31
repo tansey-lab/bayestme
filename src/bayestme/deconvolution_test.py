@@ -482,6 +482,61 @@ def test_create_top_gene_lists():
     )
 
 
+def test_create_marker_gene_ranking_csvs():
+    n_components = 3
+    n_marker = 2
+    n_genes = 100
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12, n_cols=12, n_genes=n_genes
+    )
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+    )
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene,
+    )
+
+    deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset, result=deconvolve_results
+    )
+
+    marker_genes = deconvolution.select_marker_genes(
+        deconvolution_result=deconvolve_results, n_marker=n_marker, alpha=0.99
+    )
+
+    deconvolution.add_marker_gene_results_to_dataset(
+        stdata=dataset, marker_genes=marker_genes
+    )
+
+    tempdir = tempfile.mkdtemp()
+
+    deconvolution.create_marker_gene_ranking_csvs(
+        stdata=dataset,
+        deconvolution_result=deconvolve_results,
+        output_dir=tempdir,
+    )
+
+    df = pandas.read_csv(os.path.join(tempdir, "relative_expression.csv"))
+    assert df.shape == (dataset.n_gene, deconvolve_results.n_components)
+    df = pandas.read_csv(os.path.join(tempdir, "omega.csv"))
+    assert df.shape == (dataset.n_gene, deconvolve_results.n_components)
+
+
 def test_load_phi_truth():
     example_data = {
         "0": {
