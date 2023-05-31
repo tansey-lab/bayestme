@@ -211,6 +211,8 @@ def add_deconvolution_results_to_dataset(
 
     stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
     stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
+    stdata.adata.varm[data.OMEGA_ATTR] = result.omega.T
+    stdata.adata.varm[data.RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T
 
 
 def add_marker_gene_results_to_dataset(
