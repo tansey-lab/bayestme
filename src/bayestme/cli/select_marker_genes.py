@@ -1,7 +1,8 @@
 import argparse
 
 import bayestme.log_config
-from bayestme import data, deconvolution
+from bayestme import data
+from bayestme.mcmc import deconvolution
 
 
 def get_parser():

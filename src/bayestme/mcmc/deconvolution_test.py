@@ -8,7 +8,8 @@ import pandas
 
 import bayestme.expression_truth
 import bayestme.synthetic_data
-from bayestme import utils, deconvolution, data
+from bayestme import utils, data
+from bayestme.mcmc import deconvolution
 
 
 def create_toy_deconvolve_result(

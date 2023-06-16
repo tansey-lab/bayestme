@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 
 from bayestme import utils, data, plotting
 from bayestme.model_bkg import GraphFusedMultinomial
+from bayestme.common import InferenceType
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +208,7 @@ def run_phenotype_selection_single_job(
     n_gene: int,
     background_noise: bool,
     lda_initialization: bool,
+    inference_type: InferenceType = InferenceType.MCMC,
 ) -> data.PhenotypeSelectionResult:
     train = stdata.reads.copy()
     test = stdata.reads.copy()

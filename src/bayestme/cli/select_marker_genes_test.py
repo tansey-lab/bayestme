@@ -7,7 +7,7 @@ import numpy as np
 
 import bayestme
 from bayestme import data
-from bayestme import deconvolution_test, deconvolution
+from bayestme.mcmc import deconvolution, deconvolution_test
 from bayestme.cli import select_marker_genes
 
 

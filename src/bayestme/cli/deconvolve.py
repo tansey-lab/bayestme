@@ -11,7 +11,9 @@ try:
 except (RuntimeError, ImportError):
     pass
 
-from bayestme import data, deconvolution
+from bayestme import data
+from bayestme.mcmc import deconvolution
+from bayestme.common import InferenceType
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +89,13 @@ def get_parser():
         type=str,
         action="append",
         default=None,
+    )
+    parser.add_argument(
+        "--inference-type",
+        type=InferenceType,
+        choices=list(InferenceType),
+        default=InferenceType.MCMC,
+        help="Method for conducting inference.",
     )
     bayestme.log_config.add_logging_args(parser)
     return parser

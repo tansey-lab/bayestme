@@ -3,6 +3,7 @@ import os
 
 import bayestme.log_config
 from bayestme import phenotype_selection, data
+from bayestme.common import InferenceType
 
 
 def get_parser():
@@ -79,6 +80,13 @@ def get_parser():
     parser.add_argument("--background-noise", default=False, action="store_true")
     parser.add_argument("--lda-initialization", default=False, action="store_true")
     parser.add_argument(
+        "--inference-type",
+        type=InferenceType,
+        choices=list(InferenceType),
+        default=InferenceType.MCMC,
+        help="Method for conducting inference.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         help="Output directory. N new files will be saved in this directory, "
@@ -132,6 +140,7 @@ def main():
                 n_gene=args.n_gene,
                 background_noise=args.background_noise,
                 lda_initialization=args.lda_initialization,
+                inference_type=args.inference_type,
             )
         )
 

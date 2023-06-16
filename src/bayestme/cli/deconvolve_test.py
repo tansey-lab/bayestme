@@ -5,7 +5,8 @@ from unittest import mock
 
 import numpy as np
 
-from bayestme import data, deconvolution_test
+from bayestme import data
+from bayestme.mcmc import deconvolution_test
 from bayestme.cli import deconvolve
 from bayestme.data_test import generate_toy_stdataset
 
