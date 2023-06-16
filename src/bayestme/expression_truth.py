@@ -2,26 +2,30 @@ from typing import List
 
 import numpy as np
 import pandas
-
-try:
-    import numpyro
-    from jax import random
-    from numpyro import distributions as dist
-    from numpyro.infer import MCMC, NUTS
-except (ImportError, RuntimeError):
-    pass
+import torch
+import pyro
+from pyro import distributions as dist
+from pyro.infer import MCMC, NUTS
 
 from bayestme import data
 
 
-def dirichlet_alpha_model(expression_truth, N=None, J=None):
+def dirichlet_alpha_model(expression_truth=None, N=None, J=None, K=None):
     if expression_truth is not None:
         N = expression_truth.shape[0]
-        J = expression_truth.shape[1]
-    alpha = numpyro.sample("alpha", dist.Gamma(0.1, 0.1), sample_shape=(J,))
+        K = expression_truth.shape[1]
+        J = expression_truth.shape[2]
 
-    with numpyro.plate("N", N):
-        numpyro.sample("obs", dist.Dirichlet(alpha), obs=expression_truth)
+    with pyro.plate("J", J):
+        with pyro.plate("K", K):
+            alpha = pyro.sample("alpha", dist.Gamma(1, 1))
+
+    with pyro.plate("N", N):
+        sampled = pyro.sample(
+            "obs", dist.Dirichlet(alpha).to_event(1), obs=expression_truth
+        )
+
+    return sampled
 
 
 def fit_alpha_for_multiple_samples(data, num_warmup=200, num_samples=200):
@@ -29,11 +33,11 @@ def fit_alpha_for_multiple_samples(data, num_warmup=200, num_samples=200):
     data[data == 0] = L
     data = data / data.sum(axis=1)[:, None]
 
-    mcmc = MCMC(
-        NUTS(dirichlet_alpha_model), num_warmup=num_warmup, num_samples=num_samples
-    )
-    mcmc.run(random.PRNGKey(0), expression_truth=data)
+    tensor_data = torch.Tensor(data)
 
+    mcmc_kernel = NUTS(dirichlet_alpha_model)
+    mcmc = MCMC(mcmc_kernel, warmup_steps=num_warmup, num_samples=num_samples)
+    mcmc.run(expression_truth=tensor_data)
     return mcmc.get_samples()["alpha"].mean(axis=0)
 
 
@@ -43,23 +47,22 @@ def combine_multiple_expression_truth(
     if len(expression_truth_arrays) < 2:
         return next(iter(expression_truth_arrays))
 
-    cell_types = np.arange(expression_truth_arrays[0].shape[0])
-
-    per_celltype_alpha_parameters = []
-
-    for cell_type_idx in cell_types:
-        cell_type_specific_counts = np.vstack(
-            [arr[cell_type_idx, :] for arr in expression_truth_arrays]
+    arr = np.empty(
+        (
+            len(expression_truth_arrays),
+            expression_truth_arrays[0].shape[0],
+            expression_truth_arrays[0].shape[1],
         )
-        per_celltype_alpha_parameters.append(
-            fit_alpha_for_multiple_samples(
-                cell_type_specific_counts.astype(float),
-                num_warmup=num_warmup,
-                num_samples=num_samples,
-            )
-        )
+    )
 
-    return np.vstack(per_celltype_alpha_parameters)
+    for index, sample in enumerate(expression_truth_arrays):
+        arr[index, :, :] = sample
+
+    return fit_alpha_for_multiple_samples(
+        arr.astype(float),
+        num_warmup=num_warmup,
+        num_samples=num_samples,
+    )
 
 
 def load_expression_truth(stdata: data.SpatialExpressionDataset, seurat_output: str):
