@@ -58,11 +58,13 @@ def combine_multiple_expression_truth(
     for index, sample in enumerate(expression_truth_arrays):
         arr[index, :, :] = sample
 
-    return fit_alpha_for_multiple_samples(
+    result = fit_alpha_for_multiple_samples(
         arr.astype(float),
         num_warmup=num_warmup,
         num_samples=num_samples,
     )
+
+    return result.detach().numpy()
 
 
 def load_expression_truth(stdata: data.SpatialExpressionDataset, seurat_output: str):
