@@ -7,7 +7,6 @@ import numpy as np
 import bayestme.cli.plot_deconvolution
 import bayestme.synthetic_data
 from bayestme import data
-from bayestme.mcmc import deconvolution_test
 
 
 def test_plot_deconvolution():
@@ -52,7 +51,7 @@ def test_plot_deconvolution():
     ]
 
     with mock.patch(
-        "bayestme.mcmc.deconvolution.plot_deconvolution"
+        "bayestme.plot.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()
@@ -106,7 +105,7 @@ def test_plot_deconvolution_with_cell_type_names():
     ]
 
     with mock.patch(
-        "bayestme.mcmc.deconvolution.plot_deconvolution"
+        "bayestme.plot.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()

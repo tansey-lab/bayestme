@@ -6,12 +6,7 @@ import numpy as np
 import bayestme.data
 import bayestme.log_config
 import bayestme
-import bayestme.plot.plot_deconvolution
-
-try:
-    import bayestme.expression_truth
-except (RuntimeError, ImportError):
-    pass
+import bayestme.expression_truth
 
 from bayestme import data
 from bayestme.mcmc import deconvolution

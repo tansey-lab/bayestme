@@ -21,8 +21,9 @@ from scipy.stats import nbinom
 from scipy.stats import pearsonr
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from bayestme import utils, data, plotting, fast_multivariate_normal
+from bayestme import utils, data, fast_multivariate_normal
 from bayestme.utils import ilogit, stable_softmax
+from bayestme.plot import common
 
 logger = logging.getLogger(__name__)
 
@@ -818,7 +819,7 @@ def plot_spatial_pattern(
     vmax = max(1e-4, w_plot[plot_mask].max())
     norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
-    plotting.plot_colored_spatial_polygon(
+    common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
         coords=stdata.positions_tissue,
@@ -934,7 +935,7 @@ def plot_spatial_pattern_and_all_constituent_genes(
 
         gene_fig, gene_ax = plt.subplots()
 
-        plotting.plot_colored_spatial_polygon(
+        common.plot_colored_spatial_polygon(
             fig=gene_fig,
             ax=gene_ax,
             coords=stdata.positions_tissue,

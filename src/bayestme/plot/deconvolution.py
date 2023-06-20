@@ -57,7 +57,7 @@ def plot_cell_num(
                 title = f"Cell Type {i + 1}"
 
             ax.set_title(title)
-            plotting.plot_colored_spatial_polygon(
+            common.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
                 coords=stdata.positions_tissue,

@@ -4,7 +4,8 @@ import tempfile
 
 from matplotlib import pyplot as plt
 
-from bayestme import plotting, synthetic_data, data
+from bayestme import synthetic_data, data
+import bayestme.plot.common
 
 
 def test_plot_gene_raw_counts():
@@ -23,7 +24,7 @@ def test_plot_gene_raw_counts():
     counts = counts
     positions = sq_stdata.positions
 
-    plotting.plot_colored_spatial_polygon(
+    bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig, ax=ax1, coords=positions, values=counts, layout=sq_stdata.layout
     )
 
@@ -31,7 +32,7 @@ def test_plot_gene_raw_counts():
     counts = counts
     positions = hex_stdata.positions
 
-    plotting.plot_colored_spatial_polygon(
+    bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig, ax=ax2, coords=positions, values=counts, layout=hex_stdata.layout
     )
 
