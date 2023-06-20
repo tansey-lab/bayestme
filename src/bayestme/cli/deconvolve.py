@@ -5,6 +5,7 @@ import numpy as np
 
 import bayestme.log_config
 import bayestme
+import bayestme.plot_deconvolution
 
 try:
     import bayestme.expression_truth
@@ -154,7 +155,9 @@ def main():
 
     results.save(args.output)
 
-    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=results)
+    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+        stdata=dataset, result=results
+    )
 
     if args.inplace:
         dataset.save(args.adata)

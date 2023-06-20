@@ -6,6 +6,7 @@ from unittest import mock
 import numpy as np
 
 import bayestme
+import bayestme.plot_deconvolution
 from bayestme import data
 from bayestme.mcmc import deconvolution, deconvolution_test
 from bayestme.cli import select_marker_genes
@@ -37,7 +38,7 @@ def test_select_marker_genes():
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
-    deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 

@@ -2,6 +2,7 @@ import argparse
 import logging
 
 import bayestme.log_config
+import bayestme.plot_deconvolution
 from bayestme import data
 from bayestme.mcmc import deconvolution
 
@@ -38,6 +39,6 @@ def main():
     else:
         cell_type_names = None
 
-    deconvolution.plot_deconvolution(
+    bayestme.plot_deconvolution.plot_deconvolution(
         stdata=stdata, output_dir=args.output_dir, cell_type_names=cell_type_names
     )
