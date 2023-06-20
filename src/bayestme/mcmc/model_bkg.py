@@ -6,7 +6,7 @@ from scipy.stats import binom
 from sklearn.decomposition import LatentDirichletAllocation
 
 from bayestme import utils
-from bayestme.gfbt_multinomial import GraphFusedBinomialTree
+from bayestme.mcmc.gfbt_multinomial import GraphFusedBinomialTree
 from bayestme.hmm_fast import HMM, transition_mat_vec
 
 

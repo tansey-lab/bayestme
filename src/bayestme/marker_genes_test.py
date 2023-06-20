@@ -5,13 +5,13 @@ import tempfile
 import numpy as np
 import pandas
 
+import bayestme.data
 import bayestme.marker_genes
-import bayestme.plot_deconvolution
 import bayestme.synthetic_data
 from bayestme import data
-from bayestme.mcmc.deconvolution_test import (
-    create_toy_deconvolve_result,
+from bayestme.synthetic_data import (
     create_deconvolve_dataset,
+    create_toy_deconvolve_result,
 )
 
 
@@ -141,7 +141,7 @@ def test_add_marker_gene_results_to_dataset():
         n_gene=dataset.n_gene,
     )
 
-    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 
@@ -186,7 +186,7 @@ def test_add_marker_gene_results_to_dataset_with_obs_names():
         n_gene=dataset.n_gene,
     )
 
-    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 
@@ -231,7 +231,7 @@ def test_create_top_gene_lists():
         n_gene=dataset.n_gene,
     )
 
-    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 
@@ -292,7 +292,7 @@ def test_create_marker_gene_ranking_csvs():
         n_gene=dataset.n_gene,
     )
 
-    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 

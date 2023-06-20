@@ -866,3 +866,32 @@ class SpatialDifferentialExpressionResult:
                 c_samples=c_samples,
                 w_samples=w_samples,
             )
+
+
+def add_deconvolution_results_to_dataset(
+    stdata: SpatialExpressionDataset, result: DeconvolutionResult
+):
+    """
+    Modify stdata in-place to annotate it with selected marker genes
+
+    :param stdata: data.SpatialExpressionDataset to modify
+    :param result: data.DeconvolutionResult to use
+    """
+    cell_num_matrix = result.cell_num_trace[:, :, 1:].mean(axis=0)
+    cell_prob_matrix = result.cell_prob_trace[:, :, 1:].mean(axis=0)
+
+    cell_prob_matrix_full = np.zeros((stdata.n_spot, cell_prob_matrix.shape[1]))
+
+    cell_prob_matrix_full[stdata.tissue_mask] = cell_prob_matrix
+
+    cell_num_matrix_full = np.zeros((stdata.n_spot, cell_num_matrix.shape[1]))
+
+    cell_num_matrix_full[stdata.tissue_mask] = cell_num_matrix
+
+    stdata.adata.obsm[CELL_TYPE_PROB_ATTR] = cell_prob_matrix_full
+    stdata.adata.obsm[CELL_TYPE_COUNT_ATTR] = cell_num_matrix_full
+
+    stdata.adata.uns[N_CELL_TYPES_ATTR] = result.n_components
+    stdata.adata.varm[OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
+    stdata.adata.varm[OMEGA_ATTR] = result.omega.T
+    stdata.adata.varm[RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T

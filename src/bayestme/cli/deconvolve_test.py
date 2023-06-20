@@ -5,6 +5,7 @@ from unittest import mock
 
 import numpy as np
 
+import bayestme.synthetic_data
 from bayestme import data
 from bayestme.mcmc import deconvolution_test
 from bayestme.cli import deconvolve
@@ -19,7 +20,7 @@ def test_deconvolve():
     output_path = os.path.join(tmpdir, "deconvolve.h5")
     adata_output_path = os.path.join(tmpdir, "data_out.h5")
 
-    deconvolve_rv = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_rv = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
@@ -84,7 +85,7 @@ def test_deconvolve_with_expression_truth():
     input_path = os.path.join(tmpdir, "data.h5")
     output_path = os.path.join(tmpdir, "deconvolve.h5")
     adata_output_path = os.path.join(tmpdir, "data_out.h5")
-    deconvolve_rv = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_rv = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 

@@ -9,8 +9,9 @@ from matplotlib.patches import Patch
 from scipy.stats import multinomial
 from sklearn.model_selection import KFold
 
-from bayestme import utils, data, plotting
-from bayestme.model_bkg import GraphFusedMultinomial
+from bayestme import utils, data
+from bayestme.plot import common
+from bayestme.mcmc.model_bkg import GraphFusedMultinomial
 from bayestme.common import InferenceType
 
 logger = logging.getLogger(__name__)
@@ -62,16 +63,16 @@ def plot_folds(stdata, folds, output_dir: str):
 
     patches = []
     for v, label in [(0, "Heldout"), (1, "Not Heldout")]:
-        patches.append(Patch(color=plotting.Glasbey30(v), label=label))
+        patches.append(Patch(color=common.Glasbey30(v), label=label))
 
     for k, mask in enumerate(folds):
-        _, cb, _, _, _ = plotting.plot_colored_spatial_polygon(
+        _, cb, _, _, _ = common.plot_colored_spatial_polygon(
             fig=fig,
             ax=ax[k],
             coords=stdata.positions_tissue.T,
             values=(~mask).astype(int),
             normalize=False,
-            colormap=plotting.Glasbey30,
+            colormap=common.Glasbey30,
             plotting_coordinates=stdata.positions,
             layout=stdata.layout,
         )

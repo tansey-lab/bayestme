@@ -5,7 +5,8 @@ import numpy as np
 import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from bayestme import model_bkg, data
+from bayestme import data
+from bayestme.mcmc import model_bkg
 
 logger = logging.getLogger(__name__)
 

@@ -1,39 +1,10 @@
 import os
 from typing import Optional, List
-import numpy as np
 from matplotlib import cm as cm, pyplot as plt
 
-from bayestme import data, plotting
+from bayestme import data
+from bayestme.plot import common
 from bayestme.marker_genes import plot_marker_genes
-
-
-def add_deconvolution_results_to_dataset(
-    stdata: data.SpatialExpressionDataset, result: data.DeconvolutionResult
-):
-    """
-    Modify stdata in-place to annotate it with selected marker genes
-
-    :param stdata: data.SpatialExpressionDataset to modify
-    :param result: data.DeconvolutionResult to use
-    """
-    cell_num_matrix = result.cell_num_trace[:, :, 1:].mean(axis=0)
-    cell_prob_matrix = result.cell_prob_trace[:, :, 1:].mean(axis=0)
-
-    cell_prob_matrix_full = np.zeros((stdata.n_spot, cell_prob_matrix.shape[1]))
-
-    cell_prob_matrix_full[stdata.tissue_mask] = cell_prob_matrix
-
-    cell_num_matrix_full = np.zeros((stdata.n_spot, cell_num_matrix.shape[1]))
-
-    cell_num_matrix_full[stdata.tissue_mask] = cell_num_matrix
-
-    stdata.adata.obsm[data.CELL_TYPE_PROB_ATTR] = cell_prob_matrix_full
-    stdata.adata.obsm[data.CELL_TYPE_COUNT_ATTR] = cell_num_matrix_full
-
-    stdata.adata.uns[data.N_CELL_TYPES_ATTR] = result.n_components
-    stdata.adata.varm[data.OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
-    stdata.adata.varm[data.OMEGA_ATTR] = result.omega.T
-    stdata.adata.varm[data.RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T
 
 
 def plot_cell_num(
@@ -59,7 +30,7 @@ def plot_cell_num(
                 title = f"Cell Type {i + 1}"
 
             ax.set_title(title)
-            plotting.plot_colored_spatial_polygon(
+            common.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
                 coords=stdata.positions_tissue,
@@ -120,7 +91,7 @@ def plot_cell_prob(
                 title = f"Cell Type {i + 1}"
 
             ax.set_title(title)
-            plotting.plot_colored_spatial_polygon(
+            common.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
                 coords=stdata.positions_tissue,
@@ -148,7 +119,7 @@ def plot_cell_prob(
                 title = f"Cell Type {i + 1}"
 
             ax.set_title(title)
-            plotting.plot_colored_spatial_polygon(
+            common.plot_colored_spatial_polygon(
                 fig=fig,
                 ax=ax,
                 coords=stdata.positions_tissue,
@@ -180,7 +151,7 @@ def plot_cell_num_scatterpie(
 
     fig, ax = plt.subplots()
 
-    plotting.plot_spatial_pie_charts(
+    common.plot_spatial_pie_charts(
         fig,
         ax,
         stdata.positions_tissue,

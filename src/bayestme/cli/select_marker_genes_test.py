@@ -6,9 +6,12 @@ from unittest import mock
 import numpy as np
 
 import bayestme
-import bayestme.plot_deconvolution
+import bayestme.plot.plot_deconvolution
+
+import bayestme.data
+import bayestme.synthetic_data
 from bayestme import data
-from bayestme.mcmc import deconvolution, deconvolution_test
+from bayestme.mcmc import deconvolution_test
 from bayestme.cli import select_marker_genes
 
 
@@ -34,11 +37,11 @@ def test_select_marker_genes():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
-    bayestme.plot_deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 

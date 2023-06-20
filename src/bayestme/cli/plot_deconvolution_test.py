@@ -32,7 +32,7 @@ def test_plot_deconvolution():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
@@ -84,7 +84,7 @@ def test_plot_deconvolution_with_cell_type_names():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
