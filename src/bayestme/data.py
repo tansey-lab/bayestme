@@ -625,6 +625,14 @@ class DeconvolutionResult:
 
         return expression
 
+    @property
+    def nb_probs(self):
+        rates = (
+            self.cell_prob_trace[..., None]
+            * (self.beta_trace[..., None] * self.expression_trace)[:, None, ...]
+        )
+        return rates.sum(axis=2) / rates.sum(axis=(2, 3))[..., None]
+
     @classmethod
     def read_h5(cls, path):
         """

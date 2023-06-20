@@ -101,9 +101,9 @@ def test_deconvolution_results_properties():
     n_samples = 100
     n_nodes = 25
     n_components = 4
-    n_gene = 100
-    cell_prob_trace = rng.random((n_samples, n_nodes, n_components + 1))
-    cell_num_trace = rng.random((n_samples, n_nodes, n_components + 1))
+    n_gene = 50
+    cell_prob_trace = rng.random((n_samples, n_nodes, n_components))
+    cell_num_trace = rng.random((n_samples, n_nodes, n_components))
     expression_trace = rng.random((n_samples, n_components, n_gene))
     beta_trace = rng.random((n_samples, n_components))
     reads_trace = rng.random((n_samples, n_nodes, n_gene, n_components))
@@ -120,7 +120,7 @@ def test_deconvolution_results_properties():
     )
 
     assert dataset.omega.shape == (n_components, n_gene)
-    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 100
+    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 50
 
     assert dataset.omega_difference.shape == (n_components, n_gene)
     assert np.all(dataset.omega_difference <= 1.0)
@@ -129,6 +129,8 @@ def test_deconvolution_results_properties():
     assert np.all(dataset.relative_expression <= 1.0) and np.all(
         dataset.relative_expression >= -1.0
     )
+
+    assert dataset.nb_probs.shape == (n_samples, n_nodes, n_components)
 
 
 def test_create_anndata_object():
