@@ -2,7 +2,7 @@ from bayestme.data import SpatialExpressionDataset
 from numpy.random import Generator
 from typing import Optional
 from bayestme.common import InferenceType
-
+from bayestme import data
 import bayestme.mcmc.deconvolution
 import bayestme.svi.deconvolution
 
@@ -15,9 +15,9 @@ def sample_from_posterior(
     expression_truth=None,
     inference_type=InferenceType.MCMC,
     rng: Optional[Generator] = None,
-):
+) -> data.DeconvolutionResult:
     if inference_type == InferenceType.MCMC:
-        bayestme.mcmc.deconvolution.deconvolve(
+        return bayestme.mcmc.deconvolution.deconvolve(
             reads=data.reads,
             edges=data.edges,
             n_samples=n_samples,
@@ -30,6 +30,12 @@ def sample_from_posterior(
             rng=rng,
         )
     elif inference_type == InferenceType.SVI:
-        pass
+        return bayestme.svi.deconvolution.deconvolve(
+            stdata=data,
+            n_components=n_components,
+            rho=spatial_smoothing_parameter,
+            n_samples=n_samples,
+            rng=rng,
+        )
     else:
         raise ValueError()

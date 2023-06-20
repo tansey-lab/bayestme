@@ -11,6 +11,8 @@ import tqdm
 from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
 import logging
 from collections import defaultdict
+from typing import Optional
+from bayestme import data
 
 logger = logging.getLogger(__name__)
 
@@ -251,3 +253,19 @@ class BayesTME_VI:
             lam2=self.sp_reg_coeff,
             n_components=K,
         )
+
+
+def deconvolve(
+    stdata: SpatialExpressionDataset,
+    n_components=None,
+    rho=None,
+    n_samples=100,
+    rng: Optional[np.random.Generator] = None,
+) -> data.DeconvolutionResult:
+    return BayesTME_VI(
+        stdata=stdata,
+        rho=rho,
+    ).deconvolution(
+        n_traces=n_samples,
+        K=n_components,
+    )
