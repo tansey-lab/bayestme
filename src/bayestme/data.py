@@ -122,6 +122,10 @@ class SpatialExpressionDataset:
         return self.adata.X
 
     @property
+    def counts(self) -> np.ndarray:
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+
+    @property
     def positions(self) -> np.ndarray:
         return self.adata.obsm[SPATIAL_ATTR]
 
@@ -514,10 +518,10 @@ class DeconvolutionResult:
     ):
         """
 
-        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components> matrix
         :param expression_trace: <N samples> x <N components> x <N markers> matrix
         :param beta_trace: <N samples> x <N components> matrix
-        :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param cell_num_trace: <N samples> x <N tissue spots> x <N components> matrix
         :param reads_trace: <N samples> x <N tissue spots> x <N markers> x <N components>
         :param lam2: lambda smoothing parameter used for the posterior distribution
         :param n_components: N components value for the posterior distribution

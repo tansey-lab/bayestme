@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.distributions.constraints as constraints
 import pyro
@@ -7,7 +8,11 @@ import pyro.distributions as dist
 from pyro import poutine
 from bayestme.utils import get_edges
 import tqdm
-from bayestme.data import SpatialExpressionDataset
+from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
+import logging
+from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 
 def construct_edge_adjacency(neighbors):
@@ -46,6 +51,19 @@ def construct_trendfilter(adjacency_matrix, k):
     return transformed_edge_adjacency_matrix
 
 
+def create_reads_trace(psi, exp_profile, exp_load, cell_num_total):
+    """
+    :param psi: <N tissue spots> x <N components> matrix
+    :param exp_profile: <N components> x <N markers> matrix
+    :param exp_load: <N components> matrix
+    :param cell_num_total: <N tissue spots> matrix
+    :return: <N tissue spots> x <N markers> x <N components> matrix
+    """
+    number_of_cells_per_component = (psi.T * cell_num_total).T * exp_load.T
+    result = number_of_cells_per_component[:, :, None] * exp_profile[None, :, :]
+    return np.transpose(result, (0, 2, 1))
+
+
 class BayesTME_VI:
     def __init__(
         self,
@@ -64,10 +82,10 @@ class BayesTME_VI:
         self.opt_params = {"lr": lr, "betas": (beta_1, beta_2)}
         self.optimizer = Adam(self.opt_params)
 
-        self.Obs = torch.tensor(stdata.cell_type_counts)
+        self.Obs = torch.tensor(stdata.counts)
         self.N = stdata.n_spot_in
         self.G = stdata.n_gene
-        self.edges = get_edges(stdata.positions, layout=stdata.layout)
+        self.edges = get_edges(stdata.positions_tissue, layout=stdata.layout.value)
         self.D = construct_edge_adjacency(self.edges)
         self.D = construct_trendfilter(self.D, 0)
         self.sp_reg_coeff = rho
@@ -102,7 +120,7 @@ class BayesTME_VI:
         # TODO: potentially can speed this up further
         #       calc something like log_prob = (data_flat * log(expected_exp_flat) - expected_exp_flat).sum()
         #       do pyro.factor('obs', log_prob)
-        pyro.sample("obs", dist.Poisson(expected_exp).to_event(), obs=data)
+        return pyro.sample("obs", dist.Poisson(expected_exp).to_event(), obs=data)
 
     def guide(self, data, n_class, n_genes):
         """
@@ -167,12 +185,12 @@ class BayesTME_VI:
         # x should be of size n_spot by n_celltype
         return torch.abs(self.Delta @ x.reshape(-1, 1)).sum() * self.sp_reg_coeff
 
-    def deconvolution(self, K, n_iter=10000, use_spatial_guide=True):
+    def deconvolution(self, K, n_iter=10000, n_traces=1000, use_spatial_guide=True):
         self.K = K
         # TODO: maybe make Delta sparse, but need to change spatial_regularizer as well (double check if sparse grad is supported)
         self.Delta = torch.kron(torch.eye(self.K), self.D.to_dense())
-        print("Optimizer: {} {}".format("Adam", self.opt_params))
-        print(
+        logger.info("Optimizer: {} {}".format("Adam", self.opt_params))
+        logger.info(
             "Deconvolving: {} spots, {} genes, {} cell types".format(
                 self.N, self.G, self.K
             )
@@ -180,33 +198,56 @@ class BayesTME_VI:
 
         if use_spatial_guide:
             guide = self.spatial_guide
-            print("with spatial regularizer")
+            logger.info("with spatial regularizer")
         else:
             guide = self.guide
-            print("without spatial regularizer")
+            logger.info("without spatial regularizer")
 
         pyro.clear_param_store()
         svi = SVI(self.model, guide, self.optimizer, loss=Trace_ELBO())
         for step in tqdm.trange(n_iter):
             svi.step(self.Obs, self.K, self.G)
 
-        guide_trace = poutine.trace(guide).get_trace(self.Obs, self.K, self.G)
-        model_trace = poutine.trace(poutine.replay(self.model, guide_trace)).get_trace(
-            self.Obs, self.K, self.G
-        )
-        sample = {
-            name: site["value"]
-            for name, site in model_trace.nodes.items()
-            if (
-                (site["type"] == "sample")
-                and (
-                    (not site.get("is_observed", True))
-                    or (site.get("infer", False).get("_deterministic", False))
+        result = defaultdict(list)
+        for _ in tqdm.trange(n_traces):
+            guide_trace = poutine.trace(guide).get_trace(self.Obs, self.K, self.G)
+            model_trace = poutine.trace(
+                poutine.replay(self.model, guide_trace)
+            ).get_trace(self.Obs, self.K, self.G)
+            sample = {
+                name: site["value"]
+                for name, site in model_trace.nodes.items()
+                if (
+                    (site["type"] == "sample")
+                    and (
+                        (not site.get("is_observed", True))
+                        or (site.get("infer", False).get("_deterministic", False))
+                    )
+                    and not isinstance(
+                        site.get("fn", None), poutine.subsample_messenger._Subsample
+                    )
                 )
-                and not isinstance(
-                    site.get("fn", None), poutine.subsample_messenger._Subsample
+            }
+            sample = {name: site.detach().numpy() for name, site in sample.items()}
+            for k, v in sample.items():
+                result[k].append(v)
+
+            result["read_trace"].append(
+                create_reads_trace(
+                    psi=sample["psi"],
+                    exp_profile=sample["exp_profile"],
+                    exp_load=sample["exp_load"],
+                    cell_num_total=sample["cell_num_total"],
                 )
             )
-        }
-        sample = {name: site.detach() for name, site in sample.items()}
-        return sample
+
+        samples = {k: np.stack(v) for k, v in result.items()}
+        return DeconvolutionResult(
+            cell_prob_trace=samples["psi"],
+            expression_trace=samples["exp_profile"],
+            beta_trace=samples["exp_load"],
+            cell_num_trace=(samples["cell_num_total"].T * samples["psi"].T).T,
+            reads_trace=samples["read_trace"],
+            lam2=self.sp_reg_coeff,
+            n_components=K,
+        )

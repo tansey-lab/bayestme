@@ -107,8 +107,8 @@ def test_deconvolve():
 
     assert result.lam2 == lam2
     assert result.n_components == n_components
-    assert result.cell_prob_trace.shape == (n_samples, n_nodes, n_components + 1)
-    assert result.cell_num_trace.shape == (n_samples, n_nodes, n_components + 1)
+    assert result.cell_prob_trace.shape == (n_samples, n_nodes, n_components)
+    assert result.cell_num_trace.shape == (n_samples, n_nodes, n_components)
     assert result.expression_trace.shape == (n_samples, n_components, n_gene)
     assert result.beta_trace.shape == (n_samples, n_components)
     assert result.reads_trace.shape == (n_samples, n_nodes, n_gene, n_components)

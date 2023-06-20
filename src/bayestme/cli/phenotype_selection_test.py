@@ -6,6 +6,7 @@ import numpy as np
 
 from bayestme.cli import phenotype_selection
 from bayestme.data_test import generate_toy_stdataset
+from bayestme.common import InferenceType
 
 
 def test_phenotype_selection_all_job():
@@ -75,6 +76,7 @@ def test_phenotype_selection_all_job():
                             n_gene=999,
                             background_noise=False,
                             lda_initialization=False,
+                            inference_type=InferenceType.MCMC,
                         ),
                         mock.call(
                             stdata=mock.ANY,
@@ -89,6 +91,7 @@ def test_phenotype_selection_all_job():
                             n_gene=999,
                             background_noise=False,
                             lda_initialization=False,
+                            inference_type=InferenceType.MCMC,
                         ),
                         mock.call(
                             stdata=mock.ANY,
@@ -103,6 +106,7 @@ def test_phenotype_selection_all_job():
                             n_gene=999,
                             background_noise=False,
                             lda_initialization=False,
+                            inference_type=InferenceType.MCMC,
                         ),
                     ],
                     any_order=True,
@@ -183,4 +187,5 @@ def test_phenotype_selection_single_job():
                     n_gene=999,
                     background_noise=False,
                     lda_initialization=False,
+                    inference_type=InferenceType.MCMC,
                 )

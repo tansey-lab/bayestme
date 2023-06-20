@@ -49,7 +49,9 @@ def test_deconvolve():
         dataset.save(input_path)
 
         with mock.patch("sys.argv", command_line_arguments):
-            with mock.patch("bayestme.deconvolution.deconvolve") as deconvolve_mock:
+            with mock.patch(
+                "bayestme.mcmc.deconvolution.deconvolve"
+            ) as deconvolve_mock:
                 deconvolve_mock.return_value = deconvolve_rv
 
                 deconvolve.main()
@@ -112,7 +114,9 @@ def test_deconvolve_with_expression_truth():
         dataset.save(input_path)
 
         with mock.patch("sys.argv", command_line_arguments):
-            with mock.patch("bayestme.deconvolution.deconvolve") as deconvolve_mock:
+            with mock.patch(
+                "bayestme.mcmc.deconvolution.deconvolve"
+            ) as deconvolve_mock:
                 with mock.patch(
                     "bayestme.expression_truth.load_expression_truth"
                 ) as load_expression_truth_mock:

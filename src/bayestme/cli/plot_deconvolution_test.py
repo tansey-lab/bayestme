@@ -52,7 +52,7 @@ def test_plot_deconvolution():
     ]
 
     with mock.patch(
-        "bayestme.deconvolution.plot_deconvolution"
+        "bayestme.mcmc.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()
@@ -106,7 +106,7 @@ def test_plot_deconvolution_with_cell_type_names():
     ]
 
     with mock.patch(
-        "bayestme.deconvolution.plot_deconvolution"
+        "bayestme.mcmc.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()

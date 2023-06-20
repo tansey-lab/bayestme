@@ -110,10 +110,10 @@ def deconvolve(
                 reads_trace[idx] = gfm.reads
 
     return data.DeconvolutionResult(
-        cell_prob_trace=cell_prob_trace,
+        cell_prob_trace=cell_prob_trace[:, :, 1:],
         expression_trace=expression_trace,
         beta_trace=beta_trace,
-        cell_num_trace=cell_num_trace,
+        cell_num_trace=cell_num_trace[:, :, 1:],
         reads_trace=reads_trace,
         lam2=lam2,
         n_components=n_components,
