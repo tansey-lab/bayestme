@@ -90,7 +90,6 @@ def test_plot_folds():
 def test_run_phenotype_selection_single_fold():
     n_genes = 10
     n_samples = 2
-    n_top = 1
     n_components = 3
     (
         locations,

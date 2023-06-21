@@ -5,6 +5,9 @@ from bayestme.common import InferenceType
 
 def add_deconvolution_arguments(parser: argparse.ArgumentParser):
     parser.add_argument(
+        "--seed", type=int, default=None, help="Seed value for random number generator."
+    )
+    parser.add_argument(
         "--inference-type",
         type=InferenceType,
         choices=list(InferenceType),
@@ -38,54 +41,48 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
         default=None,
     )
 
-    parser.add_argument_group(
+    mcmc = parser.add_argument_group(
         "MCMC", "MCMC Arguments (only used when --inference-type MCMC is specified)"
     )
-    parser.add_argument(
+    mcmc.add_argument(
         "--n-burn",
         type=int,
         help="Number of burn-in samples",
         default=1000,
-        group="MCMC",
     )
-    parser.add_argument(
+    mcmc.add_argument(
         "--n-thin",
         type=int,
         help="Thinning factor for sampling",
         default=10,
-        group="MCMC",
     )
-    parser.add_argument(
+    mcmc.add_argument(
         "--background-noise",
         help="Turn background noise on",
         action="store_true",
         default=False,
-        group="MCMC",
     )
-    parser.add_argument(
+    mcmc.add_argument(
         "--lda-initialization",
         help="Turn LDA Initialization on",
         action="store_true",
         default=False,
-        group="MCMC",
     )
-    parser.add_argument_group(
+    svi = parser.add_argument_group(
         "SVI", "SVI Arguments (only used when --inference-type SVI is specified)"
     )
 
-    parser.add_argument(
+    svi.add_argument(
         "--n-svi-steps",
         type=int,
         help="Number of steps for fitting variational family",
         default=10_000,
-        group="SVI",
     )
-    parser.add_argument(
+    svi.add_argument(
         "--use-spatial-guide",
         help="Use spatial guide (variational family with spatial priors) for SVI",
         action="store_true",
         default=False,
-        group="SVI",
     )
 
     return parser

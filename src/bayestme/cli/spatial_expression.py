@@ -61,7 +61,7 @@ def get_parser():
         default=100.0,
     )
     parser.add_argument(
-        "--lam2",
+        "--spatial-smoothing-parameter",
         type=int,
         help="Smoothness parameter, this tuning parameter expected to be determined "
         "from cross validation.",
@@ -107,7 +107,7 @@ def main():
         edges=dataset.edges,
         alpha=alpha,
         prior_vars=prior_vars,
-        lam2=args.lam2,
+        lam2=args.spatial_smoothing_parameter,
     )
 
     sde.initialize()

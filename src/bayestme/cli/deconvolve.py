@@ -9,8 +9,9 @@ import bayestme
 import bayestme.expression_truth
 
 from bayestme import data
-from bayestme.mcmc import deconvolution
+from bayestme import deconvolution
 import bayestme.cli.common
+from bayestme.common import create_rng, InferenceType
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,8 @@ def main():
         args.adata
     )
 
+    rng = create_rng(args.seed)
+
     if args.expression_truth:
         expression_truth_samples = []
         for fn in args.expression_truth:
@@ -79,20 +82,17 @@ def main():
             "--n-components not explicitly provided, and no expression truth provided."
         )
 
-    rng = np.random.default_rng(seed=args.random_seed)
-
-    results: data.DeconvolutionResult = deconvolution.deconvolve(
-        reads=dataset.reads,
-        edges=dataset.edges,
-        n_gene=args.n_gene,
+    results: data.DeconvolutionResult = deconvolution.sample_from_posterior(
+        data=dataset,
         n_components=n_components,
-        lam2=args.lam2,
+        spatial_smoothing_parameter=args.spatial_smoothing_parameter,
         n_samples=args.n_samples,
-        n_burnin=args.n_burn,
-        n_thin=args.n_thin,
+        mcmc_n_burn=args.n_burn,
+        mcmc_n_thin=args.n_thin,
         background_noise=args.background_noise,
         lda_initialization=args.lda_initialization,
         expression_truth=expression_truth,
+        inference_type=args.inference_type,
         rng=rng,
     )
 

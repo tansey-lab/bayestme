@@ -4,7 +4,7 @@ import os
 import bayestme.log_config
 import bayestme.cli.common
 from bayestme import phenotype_selection, data
-from bayestme.common import InferenceType
+from bayestme.common import InferenceType, create_rng
 
 
 def get_parser():
@@ -46,6 +46,13 @@ def get_parser():
         help="Maximum number of cell types to try.",
     )
     parser.add_argument(
+        "--spatial-smoothing-values",
+        type=float,
+        action="append",
+        help="Potential values of the spatial smoothing parameter to try. "
+        "Defaults to (1, 1e1, 1e2, 1e3, 1e4, 1e5)",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         help="Output directory. N new files will be saved in this directory, "
@@ -64,6 +71,8 @@ def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
 
+    rng = create_rng(args.seed)
+
     stdata = data.SpatialExpressionDataset.read_h5(args.adata)
 
     all_jobs = [
@@ -73,7 +82,9 @@ def main():
                 stdata=stdata,
                 n_fold=args.n_fold,
                 n_splits=args.n_splits,
-                lams=DEFAULT_LAMBDAS if not args.lambda_values else args.lambda_values,
+                lams=DEFAULT_LAMBDAS
+                if not args.spatial_smoothing_values
+                else args.spatial_smoothing_values,
                 n_components_min=args.n_components_min,
                 n_components_max=args.n_components_max,
             )
@@ -85,10 +96,15 @@ def main():
     if args.job_index is not None:
         all_jobs = [all_jobs[args.job_index]]
 
-    for job_index, (lam, n_components_for_job, mask, fold_number) in all_jobs:
+    for job_index, (
+        spatial_smoothing_param,
+        n_components_for_job,
+        mask,
+        fold_number,
+    ) in all_jobs:
         result: data.PhenotypeSelectionResult = (
             phenotype_selection.run_phenotype_selection_single_job(
-                spatial_smoothing_parameter=lam,
+                spatial_smoothing_parameter=spatial_smoothing_param,
                 n_components=n_components_for_job,
                 mask=mask,
                 fold_number=fold_number,
@@ -99,6 +115,7 @@ def main():
                 background_noise=args.background_noise,
                 lda_initialization=args.lda_initialization,
                 inference_type=args.inference_type,
+                rng=rng,
             )
         )
 

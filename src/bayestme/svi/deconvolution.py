@@ -262,6 +262,20 @@ def deconvolve(
     n_samples=100,
     rng: Optional[np.random.Generator] = None,
 ) -> data.DeconvolutionResult:
+    if rng:
+        try:
+            seed_sequence = np.random.SeedSequence(rng.__getstate__()["state"]["state"])
+            states = seed_sequence.generate_state(3)
+            pyro.util.set_rng_state(
+                {
+                    "pyro": states[0],
+                    "torch": states[1],
+                    "numpy": states[2],
+                }
+            )
+        except KeyError:
+            logger.warning("RNG state init failed, using default")
+
     return BayesTME_VI(
         stdata=stdata,
         rho=rho,

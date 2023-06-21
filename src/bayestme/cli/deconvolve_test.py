@@ -7,9 +7,9 @@ import numpy as np
 
 import bayestme.synthetic_data
 from bayestme import data
-from bayestme.mcmc import deconvolution_test
 from bayestme.cli import deconvolve
 from bayestme.data_test import generate_toy_stdataset
+from bayestme.common import InferenceType
 
 
 def test_deconvolve():
@@ -32,9 +32,9 @@ def test_deconvolve():
         adata_output_path,
         "--output",
         output_path,
-        "--n-gene",
-        "1000",
-        "--lam2",
+        "--seed",
+        "42",
+        "--spatial-smoothing-parameter",
         "1000",
         "--n-samples",
         "100",
@@ -44,6 +44,8 @@ def test_deconvolve():
         "2",
         "--n-components",
         "5",
+        "--inference-type",
+        "MCMC",
     ]
 
     try:
@@ -51,7 +53,7 @@ def test_deconvolve():
 
         with mock.patch("sys.argv", command_line_arguments):
             with mock.patch(
-                "bayestme.mcmc.deconvolution.deconvolve"
+                "bayestme.deconvolution.sample_from_posterior"
             ) as deconvolve_mock:
                 deconvolve_mock.return_value = deconvolve_rv
 
@@ -61,19 +63,19 @@ def test_deconvolve():
                 data.SpatialExpressionDataset.read_h5(adata_output_path)
 
                 deconvolve_mock.assert_called_once_with(
-                    reads=mock.ANY,
-                    edges=mock.ANY,
-                    n_gene=1000,
+                    data=mock.ANY,
                     n_components=5,
-                    lam2=1000,
+                    spatial_smoothing_parameter=1000.0,
                     n_samples=100,
-                    n_burnin=500,
-                    n_thin=2,
-                    bkg=False,
-                    lda=False,
+                    mcmc_n_burn=500,
+                    mcmc_n_thin=2,
+                    background_noise=False,
+                    lda_initialization=False,
                     expression_truth=None,
+                    inference_type=InferenceType.MCMC,
                     rng=mock.ANY,
                 )
+
     finally:
         shutil.rmtree(tmpdir)
 
@@ -97,9 +99,9 @@ def test_deconvolve_with_expression_truth():
         adata_output_path,
         "--output",
         output_path,
-        "--n-gene",
-        "1000",
-        "--lam2",
+        "--seed",
+        "42",
+        "--spatial-smoothing-parameter",
         "1000",
         "--n-samples",
         "100",
@@ -109,6 +111,8 @@ def test_deconvolve_with_expression_truth():
         "2",
         "--expression-truth",
         "xxx",
+        "--inference-type",
+        "MCMC",
     ]
 
     try:
@@ -116,7 +120,7 @@ def test_deconvolve_with_expression_truth():
 
         with mock.patch("sys.argv", command_line_arguments):
             with mock.patch(
-                "bayestme.mcmc.deconvolution.deconvolve"
+                "bayestme.deconvolution.sample_from_posterior"
             ) as deconvolve_mock:
                 with mock.patch(
                     "bayestme.expression_truth.load_expression_truth"
@@ -131,17 +135,16 @@ def test_deconvolve_with_expression_truth():
                     data.SpatialExpressionDataset.read_h5(adata_output_path)
 
                     deconvolve_mock.assert_called_once_with(
-                        reads=mock.ANY,
-                        edges=mock.ANY,
-                        n_gene=1000,
+                        data=mock.ANY,
                         n_components=9,
-                        lam2=1000,
+                        spatial_smoothing_parameter=1000.0,
                         n_samples=100,
-                        n_burnin=500,
-                        n_thin=2,
-                        bkg=False,
-                        lda=False,
+                        mcmc_n_burn=500,
+                        mcmc_n_thin=2,
+                        background_noise=False,
+                        lda_initialization=False,
                         expression_truth=mock.ANY,
+                        inference_type=InferenceType.MCMC,
                         rng=mock.ANY,
                     )
     finally:

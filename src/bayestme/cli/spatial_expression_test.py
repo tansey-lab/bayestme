@@ -45,7 +45,7 @@ def test_spatial_expression():
         "2",
         "--n-burn",
         "100",
-        "--lam2",
+        "--spatial-smoothing-parameter",
         "1000",
         "--simple",
     ]
