@@ -1,4 +1,8 @@
 import enum
+import numpy
+
+
+ArrayType = numpy.array
 
 
 class InferenceType(enum.Enum):

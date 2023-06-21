@@ -13,6 +13,7 @@ from bayestme import utils, data
 from bayestme.plot import common
 from bayestme.mcmc.model_bkg import GraphFusedMultinomial
 from bayestme.common import InferenceType
+from bayestme import deconvolution
 
 logger = logging.getLogger(__name__)
 
@@ -210,40 +211,27 @@ def run_phenotype_selection_single_job(
     background_noise: bool,
     lda_initialization: bool,
     inference_type: InferenceType = InferenceType.MCMC,
+    rng: Optional[np.random.Generator] = None,
 ) -> data.PhenotypeSelectionResult:
-    train = stdata.reads.copy()
-    test = stdata.reads.copy()
-    train[mask] = 0
-    test[~mask] = 0
+    stdata = stdata.copy()
+    stdata.add_cv_mask(mask)
 
-    n_gene = min(n_gene, stdata.n_gene)
-
-    stddev_ordering = utils.get_stddev_ordering(train)
-    train = train[:, stddev_ordering[:n_gene]]
-    test = test[:, stddev_ordering[:n_gene]]
-
-    (
-        cell_prob_trace,
-        cell_num_trace,
-        expression_trace,
-        beta_trace,
-        loglhtest_trace,
-        loglhtrain_trace,
-    ) = sample_graph_fused_multinomial(
-        train=train,
-        test=test,
+    deconvolution_samples = deconvolution.sample_from_posterior(
+        data=stdata,
         n_components=n_components,
-        edges=stdata.edges,
-        n_gene=n_gene,
-        lam_psi=lam,
-        background_noise=background_noise,
-        lda_initialization=lda_initialization,
-        mask=mask,
-        n_max=max_ncell,
+        spatial_smoothing_parameter=lam,
         n_samples=n_samples,
-        n_thin=n_thin,
-        n_burn=n_burn,
+        inference_type=inference_type,
+        rng=rng,
     )
+
+    nb_probs = deconvolution_samples.nb_probs
+    loglhtest_trace[idx] = np.array(
+        [multinomial.logpmf(test[i], test[i].sum(), nb_probs[i]) for i in heldout_spots]
+    ).sum()
+    loglhtrain_trace[idx] = np.array(
+        [multinomial.logpmf(train[i], train[i].sum(), nb_probs[i]) for i in train_spots]
+    ).sum()
 
     return data.PhenotypeSelectionResult(
         mask=mask,

@@ -11,8 +11,8 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import csr_matrix
-
-from . import utils
+from bayestme.common import ArrayType
+from bayestme import utils
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ IN_TISSUE_ATTR = "in_tissue"
 SPATIAL_ATTR = "spatial"
 LAYOUT_ATTR = "layout"
 CONNECTIVITIES_ATTR = "connectivities"
+CV_MASK_ATTR = "cv_mask"
 BAYESTME_ANNDATA_PREFIX = "bayestme"
 N_CELL_TYPES_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_n_cell_types"
 CELL_TYPE_COUNT_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_counts"
@@ -98,11 +99,11 @@ class SpatialExpressionDataset:
         self.adata: anndata.AnnData = adata
 
     @property
-    def reads(self) -> np.ndarray:
+    def reads(self) -> ArrayType:
         return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
     @property
-    def positions_tissue(self) -> np.ndarray:
+    def positions_tissue(self) -> ArrayType:
         return self.adata[self.adata.obs[IN_TISSUE_ATTR]].obsm[SPATIAL_ATTR]
 
     @property
@@ -118,27 +119,39 @@ class SpatialExpressionDataset:
         return self.adata.n_vars
 
     @property
-    def raw_counts(self) -> np.ndarray:
+    def raw_counts(self) -> ArrayType:
         return self.adata.X
 
     @property
-    def counts(self) -> np.ndarray:
-        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+    def counts(self) -> ArrayType:
+        if CV_MASK_ATTR in self.adata.obs:
+            counts = self.adata.X.copy()
+            counts[self.adata.obs[CV_MASK_ATTR]] = 0
+            return counts[self.adata.obs[IN_TISSUE_ATTR], :]
+        else:
+            return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
     @property
-    def positions(self) -> np.ndarray:
+    def positions(self) -> ArrayType:
         return self.adata.obsm[SPATIAL_ATTR]
 
     @property
-    def tissue_mask(self) -> np.array:
+    def cv_mask(self) -> Optional[ArrayType]:
+        if CV_MASK_ATTR in self.adata.obs:
+            return self.adata.obsm[CV_MASK_ATTR]
+        else:
+            return None
+
+    @property
+    def tissue_mask(self) -> ArrayType:
         return self.adata.obs[IN_TISSUE_ATTR].to_numpy()
 
     @property
-    def gene_names(self) -> np.array:
+    def gene_names(self) -> ArrayType:
         return self.adata.var_names
 
     @property
-    def edges(self) -> np.ndarray:
+    def edges(self) -> ArrayType:
         return np.array(self.adata.obsp[CONNECTIVITIES_ATTR].nonzero()).T
 
     @property
@@ -151,17 +164,17 @@ class SpatialExpressionDataset:
             return self.adata.uns[N_CELL_TYPES_ATTR]
 
     @property
-    def cell_type_probabilities(self) -> Optional[np.ndarray]:
+    def cell_type_probabilities(self) -> Optional[ArrayType]:
         if CELL_TYPE_PROB_ATTR in self.adata.obsm:
             return self.adata[self.tissue_mask].obsm[CELL_TYPE_PROB_ATTR]
 
     @property
-    def cell_type_counts(self) -> Optional[np.ndarray]:
+    def cell_type_counts(self) -> Optional[ArrayType]:
         if CELL_TYPE_COUNT_ATTR in self.adata.obsm:
             return self.adata[self.tissue_mask].obsm[CELL_TYPE_COUNT_ATTR]
 
     @property
-    def marker_gene_names(self) -> Optional[List[np.ndarray]]:
+    def marker_gene_names(self) -> Optional[List[ArrayType]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
 
@@ -173,7 +186,7 @@ class SpatialExpressionDataset:
         return outputs
 
     @property
-    def marker_gene_indices(self) -> Optional[List[np.ndarray]]:
+    def marker_gene_indices(self) -> Optional[List[ArrayType]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
         outputs = []
@@ -191,7 +204,7 @@ class SpatialExpressionDataset:
         return outputs
 
     @property
-    def omega_difference(self) -> Optional[np.ndarray]:
+    def omega_difference(self) -> Optional[ArrayType]:
         if OMEGA_DIFFERENCE_ATTR not in self.adata.varm:
             return
 
@@ -199,6 +212,18 @@ class SpatialExpressionDataset:
 
     def save(self, path):
         self.adata.write_h5ad(path)
+
+    def add_cv_mask(self, cv_mask: np.ndarray):
+        """
+        Add a boolean mask to the dataset to indicate which spots are used for cross validation.
+        :param cv_mask: An array of dimensions (n_spots,) where True indicates that the
+        spot will be held out (all counts for that spot will set to zero).
+        :return:
+        """
+        if cv_mask.dtype != bool:
+            raise ValueError("cv_mask must be a boolean array")
+
+        self.adata.obs[CV_MASK_ATTR] = cv_mask
 
     @classmethod
     def from_arrays(
@@ -361,6 +386,14 @@ class SpatialExpressionDataset:
         :return: SpatialExpressionDataset
         """
         return cls(anndata.read_h5ad(path))
+
+    def copy(self) -> "SpatialExpressionDataset":
+        """
+        Return a copy of this object
+        :return: A copy of this object
+        """
+        ad = self.adata.copy()
+        return SpatialExpressionDataset(ad)
 
 
 class BleedCorrectionResult:
