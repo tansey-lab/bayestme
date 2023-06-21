@@ -130,12 +130,11 @@ process phenotype_selection {
     def n_samples_flag = "--n-samples ${params.phenotype_selection_n_samples}"
     def n_burn_flag = "--n-burn ${params.phenotype_selection_n_burn}"
     def n_thin_flag = "--n-thin ${params.phenotype_selection_n_thin}"
-    def n_gene_flag = "--n-gene ${params.phenotype_selection_n_gene}"
     def n_components_min_flag = "--n-components-min ${params.phenotype_selection_n_components_min}"
     def phenotype_selection_lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
-    def phenotype_selection_max_ncell_flag = "--max-ncell ${params.phenotype_selection_max_ncell}"
     def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
     def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
+    def inference_type_flag = "--inference-type ${params.inference_type}"
     """
     phenotype_selection --adata ${adata} \
         --output-dir . \
@@ -145,12 +144,11 @@ process phenotype_selection {
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
-        ${n_gene_flag} \
         ${n_components_min_flag} \
         ${phenotype_selection_lambda_values_flag} \
-        ${phenotype_selection_max_ncell_flag} \
         ${phenotype_selection_background_noise_flag} \
-        ${phenotype_selection_lda_initialization_flag}
+        ${phenotype_selection_lda_initialization_flag} \
+        ${inference_type_flag}
     """
 }
 
@@ -292,7 +290,7 @@ workflow BAYESTME {
     }
 
     def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
-    def lambda = params.lambda == null ? read_phenotype_selection_results.out.lambda : params.lambda
+    def lambda = params.spatial_smoothing_parameter == null ? read_phenotype_selection_results.out.lambda : params.spatial_smoothing_parameter
 
     DECONVOLUTION (bleeding_correction.out.adata_output,
         n_components,
@@ -300,6 +298,8 @@ workflow BAYESTME {
         params.n_marker_genes,
         params.marker_gene_alpha_cutoff,
         params.marker_gene_method
+        params.deconvolution_selection_use_spatial_guide,
+        params.inference_type
     )
 
     spatial_expression( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
