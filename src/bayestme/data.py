@@ -20,7 +20,6 @@ IN_TISSUE_ATTR = "in_tissue"
 SPATIAL_ATTR = "spatial"
 LAYOUT_ATTR = "layout"
 CONNECTIVITIES_ATTR = "connectivities"
-CV_MASK_ATTR = "cv_mask"
 BAYESTME_ANNDATA_PREFIX = "bayestme"
 N_CELL_TYPES_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_n_cell_types"
 CELL_TYPE_COUNT_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_counts"
@@ -124,23 +123,11 @@ class SpatialExpressionDataset:
 
     @property
     def counts(self) -> ArrayType:
-        if CV_MASK_ATTR in self.adata.obs:
-            counts = self.adata.X.copy()
-            counts[self.adata.obs[CV_MASK_ATTR]] = 0
-            return counts[self.adata.obs[IN_TISSUE_ATTR], :]
-        else:
-            return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
     @property
     def positions(self) -> ArrayType:
         return self.adata.obsm[SPATIAL_ATTR]
-
-    @property
-    def cv_mask(self) -> Optional[ArrayType]:
-        if CV_MASK_ATTR in self.adata.obs:
-            return self.adata.obsm[CV_MASK_ATTR]
-        else:
-            return None
 
     @property
     def tissue_mask(self) -> ArrayType:
@@ -212,18 +199,6 @@ class SpatialExpressionDataset:
 
     def save(self, path):
         self.adata.write_h5ad(path)
-
-    def add_cv_mask(self, cv_mask: np.ndarray):
-        """
-        Add a boolean mask to the dataset to indicate which spots are used for cross validation.
-        :param cv_mask: An array of dimensions (n_spots,) where True indicates that the
-        spot will be held out (all counts for that spot will set to zero).
-        :return:
-        """
-        if cv_mask.dtype != bool:
-            raise ValueError("cv_mask must be a boolean array")
-
-        self.adata.obs[CV_MASK_ATTR] = cv_mask
 
     @classmethod
     def from_arrays(
@@ -471,8 +446,8 @@ class PhenotypeSelectionResult:
         :param expression_trace: <N samples> x <N components> x <N markers> matrix
         :param beta_trace: <N samples> x <N components> matrix
         :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
-        :param log_lh_train_trace: -log likelihood for training set
-        :param log_lh_test_trace: -log likelihood for test set
+        :param log_lh_train_trace: total log likelihood for each sample calculated over the non-held out spots
+        :param log_lh_test_trace: total log likelihood for each sample calculated over the held out spots
         :param n_components: Number of cell types for posterior distribution being sampled in this job
         :param lam: Lambda parameter of posterior distribution for this job
         :param fold_number: Index into the k-fold series

@@ -213,11 +213,11 @@ def run_phenotype_selection_single_job(
     inference_type: InferenceType = InferenceType.MCMC,
     rng: Optional[np.random.Generator] = None,
 ) -> data.PhenotypeSelectionResult:
-    stdata = stdata.copy()
-    stdata.add_cv_mask(mask)
+    stdata_holdout = stdata.copy()
+    stdata_holdout.counts[mask, :] = 0
 
     deconvolution_samples = deconvolution.sample_from_posterior(
-        data=stdata,
+        data=stdata_holdout,
         n_components=n_components,
         spatial_smoothing_parameter=lam,
         n_samples=n_samples,
@@ -226,19 +226,26 @@ def run_phenotype_selection_single_job(
     )
 
     nb_probs = deconvolution_samples.nb_probs
-    loglhtest_trace[idx] = np.array(
-        [multinomial.logpmf(test[i], test[i].sum(), nb_probs[i]) for i in heldout_spots]
-    ).sum()
-    loglhtrain_trace[idx] = np.array(
-        [multinomial.logpmf(train[i], train[i].sum(), nb_probs[i]) for i in train_spots]
-    ).sum()
+
+    heldout_counts = stdata.counts[None, mask, :]
+    train_counts = stdata.counts[None, ~mask, :]
+
+    nb_probs_holdout = nb_probs[:, mask, :]
+    nb_probs_train = nb_probs[:, ~mask, :]
+
+    loglhtest_trace = multinomial.logpmf(
+        heldout_counts, heldout_counts.sum(axis=-1), nb_probs_holdout
+    ).sum(axis=-1)
+    loglhtrain_trace = multinomial.logpmf(
+        train_counts, train_counts.sum(axis=-1), nb_probs_train
+    ).sum(axis=-1)
 
     return data.PhenotypeSelectionResult(
         mask=mask,
-        cell_prob_trace=cell_prob_trace,
-        expression_trace=expression_trace,
-        beta_trace=beta_trace,
-        cell_num_trace=cell_num_trace,
+        cell_prob_trace=deconvolution_samples.cell_prob_trace,
+        expression_trace=deconvolution_samples.expression_trace,
+        beta_trace=deconvolution_samples.beta_trace,
+        cell_num_trace=deconvolution_samples.cell_num_trace,
         log_lh_train_trace=loglhtrain_trace,
         log_lh_test_trace=loglhtest_trace,
         lam=lam,
