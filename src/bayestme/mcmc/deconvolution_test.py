@@ -34,8 +34,8 @@ def test_deconvolve():
         n_samples=3,
         n_burnin=1,
         n_thin=1,
-        bkg=False,
-        lda=False,
+        background_noise=False,
+        lda_initialization=False,
     )
 
     assert result.lam2 == lam2

@@ -1,7 +1,22 @@
 import argparse
 
+from bayestme.common import InferenceType
 
-def add_deconvolution_arguments(parser):
+
+def add_deconvolution_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--inference-type",
+        type=InferenceType,
+        choices=list(InferenceType),
+        default=InferenceType.MCMC,
+        help="Method for conducting inference.",
+    )
+    parser.add_argument(
+        "--n-components",
+        type=int,
+        help="Number of cell types to deconvolve into.",
+        default=None,
+    )
     parser.add_argument(
         "--spatial-smoothing-parameter",
         type=float,
@@ -72,3 +87,5 @@ def add_deconvolution_arguments(parser):
         default=False,
         group="SVI",
     )
+
+    return parser

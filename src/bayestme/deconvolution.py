@@ -12,8 +12,12 @@ def sample_from_posterior(
     n_components: int = None,
     spatial_smoothing_parameter=None,
     n_samples=100,
+    mcmc_n_burn=1000,
+    mcmc_n_thin=5,
     expression_truth=None,
     inference_type=InferenceType.MCMC,
+    background_noise=False,
+    lda_initialization=False,
     rng: Optional[Generator] = None,
 ) -> data.DeconvolutionResult:
     if inference_type == InferenceType.MCMC:
@@ -21,12 +25,14 @@ def sample_from_posterior(
             reads=data.reads,
             edges=data.edges,
             n_samples=n_samples,
-            n_burnin=1000,
-            n_thin=5,
+            n_burnin=mcmc_n_burn,
+            n_thin=mcmc_n_thin,
             n_gene=data.n_gene,
             n_components=n_components,
             lam2=spatial_smoothing_parameter,
             expression_truth=expression_truth,
+            lda_initialization=lda_initialization,
+            background_noise=background_noise,
             rng=rng,
         )
     elif inference_type == InferenceType.SVI:

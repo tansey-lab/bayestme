@@ -125,16 +125,14 @@ def test_run_phenotype_selection_single_fold():
     lam, n_components_for_job, mask, fold_number = params[0]
 
     result = phenotype_selection.run_phenotype_selection_single_job(
-        lam=lam,
+        spatial_smoothing_parameter=lam,
         n_components=n_components_for_job,
         mask=mask,
         fold_number=fold_number,
         stdata=stdata,
         n_samples=n_samples,
-        n_burn=1,
-        n_thin=1,
-        max_ncell=1,
-        n_gene=n_top,
+        mcmc_n_burn=1,
+        mcmc_n_thin=1,
         background_noise=False,
         lda_initialization=False,
     )

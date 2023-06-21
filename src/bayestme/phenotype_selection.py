@@ -198,16 +198,14 @@ def sample_graph_fused_multinomial(
 
 
 def run_phenotype_selection_single_job(
-    lam: float,
+    spatial_smoothing_parameter: float,
     n_components: int,
     mask: np.ndarray,
     fold_number: int,
     stdata: data.SpatialExpressionDataset,
     n_samples: int,
-    n_burn: int,
-    n_thin: int,
-    max_ncell: int,
-    n_gene: int,
+    mcmc_n_burn: int,
+    mcmc_n_thin: int,
     background_noise: bool,
     lda_initialization: bool,
     inference_type: InferenceType = InferenceType.MCMC,
@@ -219,7 +217,7 @@ def run_phenotype_selection_single_job(
     deconvolution_samples = deconvolution.sample_from_posterior(
         data=stdata_holdout,
         n_components=n_components,
-        spatial_smoothing_parameter=lam,
+        spatial_smoothing_parameter=spatial_smoothing_parameter,
         n_samples=n_samples,
         inference_type=inference_type,
         rng=rng,
@@ -248,7 +246,7 @@ def run_phenotype_selection_single_job(
         cell_num_trace=deconvolution_samples.cell_num_trace,
         log_lh_train_trace=loglhtrain_trace,
         log_lh_test_trace=loglhtest_trace,
-        lam=lam,
+        lam=spatial_smoothing_parameter,
         n_components=n_components,
         fold_number=fold_number,
     )

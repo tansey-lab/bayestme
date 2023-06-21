@@ -21,8 +21,8 @@ def deconvolve(
     n_samples=100,
     n_burnin=1000,
     n_thin=10,
-    bkg=False,
-    lda=False,
+    background_noise=False,
+    lda_initialization=False,
     n_max=120,
     D=30,
     expression_truth=None,
@@ -39,8 +39,8 @@ def deconvolve(
     :param n_samples: Number of total samples from the posterior distribution
     :param n_burnin: Number of burn in samples before samples are saved
     :param n_thin: Proportion of samples to save
-    :param bkg:
-    :param lda: If true use LDA initialization
+    :param background_noise: If true use model with background noise
+    :param lda_initialization: If true use LDA initialization
     :param expression_truth: If provided, use ground truth per cell type relative expression values,
     output from companion scRNA fine mapping.
     :param rng: Numpy random generator to use
@@ -76,8 +76,8 @@ def deconvolve(
         observations=Observation,
         n_gene=n_gene,
         lam_psi=lam2,
-        background_noise=bkg,
-        lda_initialization=lda,
+        background_noise=background_noise,
+        lda_initialization=lda_initialization,
         truth_expression=expression_truth,
         n_max=n_max,
         D=D,
