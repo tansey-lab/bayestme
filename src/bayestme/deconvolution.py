@@ -21,6 +21,7 @@ def sample_from_posterior(
     inference_type=InferenceType.MCMC,
     background_noise=False,
     lda_initialization=False,
+    use_spatial_guide=True,
     rng: Optional[Generator] = None,
 ) -> data.DeconvolutionResult:
     if inference_type == InferenceType.MCMC:
@@ -45,6 +46,7 @@ def sample_from_posterior(
             rho=spatial_smoothing_parameter,
             n_samples=n_samples,
             n_svi_steps=n_svi_steps,
+            use_spatial_guide=use_spatial_guide,
             rng=rng,
         )
     else:

@@ -6,6 +6,7 @@ import numpy as np
 
 import bayestme.log_config
 from bayestme import data, spatial_expression
+from bayestme.common import create_rng
 
 MODEL_DUMP_PATH = "sde_model_dump.h5"
 
@@ -22,6 +23,9 @@ def get_parser():
         "--output",
         type=str,
         help="Path to store SpatialDifferentialExpressionResult in h5 format",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Seed value for random number generator."
     )
     parser.add_argument(
         "--n-cell-min",
@@ -82,7 +86,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
-
+    rng = create_rng(args.seed)
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
         args.adata
     )
@@ -108,6 +112,7 @@ def main():
         alpha=alpha,
         prior_vars=prior_vars,
         lam2=args.spatial_smoothing_parameter,
+        rng=rng,
     )
 
     sde.initialize()

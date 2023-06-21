@@ -36,6 +36,7 @@ def test_phenotype_selection_all_job():
         "4",
         "--n-components-max",
         "6",
+        "--use-spatial-guide",
         "--output-dir",
         tmpdir,
     ]
@@ -69,6 +70,7 @@ def test_phenotype_selection_all_job():
                             n_svi_steps=10_000,
                             background_noise=False,
                             lda_initialization=False,
+                            use_spatial_guide=True,
                             inference_type=InferenceType.MCMC,
                             rng=mock.ANY,
                         ),
@@ -84,6 +86,7 @@ def test_phenotype_selection_all_job():
                             n_svi_steps=10_000,
                             background_noise=False,
                             lda_initialization=False,
+                            use_spatial_guide=True,
                             inference_type=InferenceType.MCMC,
                             rng=mock.ANY,
                         ),
@@ -99,6 +102,7 @@ def test_phenotype_selection_all_job():
                             n_svi_steps=10_000,
                             background_noise=False,
                             lda_initialization=False,
+                            use_spatial_guide=True,
                             inference_type=InferenceType.MCMC,
                             rng=mock.ANY,
                         ),
@@ -136,6 +140,7 @@ def test_phenotype_selection_single_job():
         "4",
         "--n-components-max",
         "4",
+        "--use-spatial-guide",
         "--output-dir",
         tmpdir,
     ]
@@ -174,6 +179,7 @@ def test_phenotype_selection_single_job():
                     n_svi_steps=10_000,
                     background_noise=False,
                     lda_initialization=False,
+                    use_spatial_guide=True,
                     inference_type=InferenceType.MCMC,
                     rng=mock.ANY,
                 )

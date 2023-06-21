@@ -263,6 +263,7 @@ def deconvolve(
     rho=None,
     n_svi_steps=10_000,
     n_samples=100,
+    use_spatial_guide=True,
     rng: Optional[np.random.Generator] = None,
 ) -> data.DeconvolutionResult:
     if rng:
@@ -286,4 +287,5 @@ def deconvolve(
         n_traces=n_samples,
         n_iter=n_svi_steps,
         K=n_components,
+        use_spatial_guide=use_spatial_guide,
     )

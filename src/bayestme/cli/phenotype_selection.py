@@ -115,6 +115,7 @@ def main():
                 n_svi_steps=args.n_svi_steps,
                 background_noise=args.background_noise,
                 lda_initialization=args.lda_initialization,
+                use_spatial_guide=args.use_spatial_guide,
                 inference_type=args.inference_type,
                 rng=rng,
             )

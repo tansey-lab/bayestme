@@ -112,6 +112,8 @@ def test_spatial_expression_save_state_on_error():
         input_path,
         "--output",
         output,
+        "--seed",
+        "1",
         "--n-spatial-patterns",
         "10",
         "--n-samples",

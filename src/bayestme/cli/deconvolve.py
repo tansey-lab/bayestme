@@ -91,6 +91,7 @@ def main():
         lda_initialization=args.lda_initialization,
         expression_truth=expression_truth,
         inference_type=args.inference_type,
+        use_spatial_guide=args.use_spatial_guide,
         rng=rng,
     )
 

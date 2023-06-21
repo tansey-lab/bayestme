@@ -119,6 +119,7 @@ def run_phenotype_selection_single_job(
     n_svi_steps: int,
     background_noise: bool,
     lda_initialization: bool,
+    use_spatial_guide: bool,
     inference_type: InferenceType = InferenceType.MCMC,
     rng: Optional[np.random.Generator] = None,
 ) -> data.PhenotypeSelectionResult:
@@ -136,6 +137,7 @@ def run_phenotype_selection_single_job(
         n_svi_steps=n_svi_steps,
         background_noise=background_noise,
         lda_initialization=lda_initialization,
+        use_spatial_guide=use_spatial_guide,
         rng=rng,
     )
 
