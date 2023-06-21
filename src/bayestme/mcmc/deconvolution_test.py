@@ -1,9 +1,9 @@
 import bayestme.data
 import bayestme.expression_truth
 import bayestme.marker_genes
+import bayestme.synthetic_data
 from bayestme import utils, data
 from bayestme.mcmc import deconvolution
-import bayestme.synthetic_data
 
 
 def test_deconvolve():

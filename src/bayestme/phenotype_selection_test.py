@@ -2,9 +2,11 @@ import shutil
 import tempfile
 
 import numpy as np
+import pytest
 
 import bayestme.synthetic_data
 from bayestme import data, phenotype_selection
+from bayestme.common import InferenceType
 
 
 def test_get_phenotype_selection_parameters_for_folds():
@@ -87,7 +89,8 @@ def test_plot_folds():
         shutil.rmtree(tempdir)
 
 
-def test_run_phenotype_selection_single_fold():
+@pytest.mark.parametrize("inference_type", [InferenceType.MCMC, InferenceType.SVI])
+def test_run_phenotype_selection_single_fold(inference_type):
     n_genes = 10
     n_samples = 2
     n_components = 3
@@ -132,8 +135,10 @@ def test_run_phenotype_selection_single_fold():
         n_samples=n_samples,
         mcmc_n_burn=1,
         mcmc_n_thin=1,
+        n_svi_steps=1,
         background_noise=False,
         lda_initialization=False,
+        inference_type=inference_type,
     )
 
     assert result.cell_prob_trace.shape == (

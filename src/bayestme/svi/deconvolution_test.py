@@ -1,14 +1,10 @@
-import os
-import shutil
-import tempfile
+import numpy as np
 
 import numpy as np
-import numpy.testing
-import pandas
 
 import bayestme.expression_truth
 import bayestme.synthetic_data
-from bayestme import utils, data
+from bayestme import data
 from bayestme.svi import deconvolution
 
 

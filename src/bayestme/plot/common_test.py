@@ -4,8 +4,8 @@ import tempfile
 
 from matplotlib import pyplot as plt
 
-from bayestme import synthetic_data, data
 import bayestme.plot.common
+from bayestme import synthetic_data, data
 
 
 def test_plot_gene_raw_counts():

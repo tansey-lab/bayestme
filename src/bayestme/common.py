@@ -1,7 +1,8 @@
 import enum
+from typing import Optional
+
 import numpy
 import numpy.random
-from typing import Optional
 
 ArrayType = numpy.array
 

@@ -3,7 +3,6 @@ import argparse
 import bayestme.log_config
 import bayestme.marker_genes
 from bayestme import data
-from bayestme.mcmc import deconvolution
 
 
 def get_parser():

@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import tqdm
-import bayestme.plot.common
 from autograd_minimize import minimize
 from scipy.stats import multinomial
 from torch.distributions.multinomial import Multinomial
 from torch.nn import Softmax
 from torch.nn import Softplus
 
+import bayestme.plot.common
 from bayestme import data, utils
 from bayestme.utils import stable_softmax
 

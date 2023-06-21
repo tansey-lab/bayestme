@@ -7,7 +7,6 @@ import pandas
 import bayestme.data
 import bayestme.expression_truth
 import bayestme.synthetic_data
-
 from bayestme import expression_truth, data
 
 

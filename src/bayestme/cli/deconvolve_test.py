@@ -8,8 +8,8 @@ import numpy as np
 import bayestme.synthetic_data
 from bayestme import data
 from bayestme.cli import deconvolve
-from bayestme.data_test import generate_toy_stdataset
 from bayestme.common import InferenceType
+from bayestme.data_test import generate_toy_stdataset
 
 
 def test_deconvolve():
@@ -109,6 +109,8 @@ def test_deconvolve_with_expression_truth():
         "500",
         "--n-thin",
         "2",
+        "--n-svi-steps",
+        "99",
         "--expression-truth",
         "xxx",
         "--inference-type",
@@ -141,6 +143,7 @@ def test_deconvolve_with_expression_truth():
                         n_samples=100,
                         mcmc_n_burn=500,
                         mcmc_n_thin=2,
+                        n_svi_steps=99,
                         background_noise=False,
                         lda_initialization=False,
                         expression_truth=mock.ANY,

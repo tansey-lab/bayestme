@@ -120,7 +120,7 @@ def test_spatial_expression_save_state_on_error():
         "2",
         "--n-burn",
         "100",
-        "--lam2",
+        "--spatial-smoothing-parameter",
         "1000",
         "--simple",
     ]

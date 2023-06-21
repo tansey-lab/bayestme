@@ -1,10 +1,12 @@
-from bayestme.data import SpatialExpressionDataset
-from numpy.random import Generator
 from typing import Optional
-from bayestme.common import InferenceType
-from bayestme import data
+
+from numpy.random import Generator
+
 import bayestme.mcmc.deconvolution
 import bayestme.svi.deconvolution
+from bayestme import data
+from bayestme.common import InferenceType
+from bayestme.data import SpatialExpressionDataset
 
 
 def sample_from_posterior(
@@ -14,6 +16,7 @@ def sample_from_posterior(
     n_samples=100,
     mcmc_n_burn=1000,
     mcmc_n_thin=5,
+    n_svi_steps=10_000,
     expression_truth=None,
     inference_type=InferenceType.MCMC,
     background_noise=False,
@@ -41,6 +44,7 @@ def sample_from_posterior(
             n_components=n_components,
             rho=spatial_smoothing_parameter,
             n_samples=n_samples,
+            n_svi_steps=n_svi_steps,
             rng=rng,
         )
     else:

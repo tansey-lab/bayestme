@@ -1,10 +1,10 @@
 import argparse
 import os
 
-import bayestme.log_config
 import bayestme.cli.common
+import bayestme.log_config
 from bayestme import phenotype_selection, data
-from bayestme.common import InferenceType, create_rng
+from bayestme.common import create_rng
 
 
 def get_parser():
@@ -112,6 +112,7 @@ def main():
                 n_samples=args.n_samples,
                 mcmc_n_burn=args.n_burn,
                 mcmc_n_thin=args.n_thin,
+                n_svi_steps=args.n_svi_steps,
                 background_noise=args.background_noise,
                 lda_initialization=args.lda_initialization,
                 inference_type=args.inference_type,

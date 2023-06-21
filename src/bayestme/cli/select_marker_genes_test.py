@@ -6,7 +6,6 @@ from unittest import mock
 import numpy as np
 
 import bayestme
-
 import bayestme.data
 import bayestme.synthetic_data
 from bayestme import data

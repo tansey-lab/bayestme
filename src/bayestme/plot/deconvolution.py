@@ -1,10 +1,11 @@
 import os
 from typing import Optional, List
+
 from matplotlib import cm as cm, pyplot as plt
 
 from bayestme import data
-from bayestme.plot import common
 from bayestme.marker_genes import plot_marker_genes
+from bayestme.plot import common
 
 
 def plot_cell_num(

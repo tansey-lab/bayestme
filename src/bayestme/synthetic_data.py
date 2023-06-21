@@ -3,7 +3,6 @@ from scipy.stats import multivariate_normal, multivariate_t
 
 import bayestme.data
 import bayestme.marker_genes
-
 from bayestme import data
 
 

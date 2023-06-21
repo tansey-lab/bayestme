@@ -130,7 +130,7 @@ def test_deconvolution_results_properties():
         dataset.relative_expression >= -1.0
     )
 
-    assert dataset.nb_probs.shape == (n_samples, n_nodes, n_components)
+    assert dataset.nb_probs.shape == (n_samples, n_nodes, n_gene)
 
 
 def test_create_anndata_object():

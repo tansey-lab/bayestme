@@ -1,17 +1,14 @@
 import argparse
 import logging
 
-import numpy as np
-
-import bayestme.data
-import bayestme.log_config
 import bayestme
+import bayestme.cli.common
+import bayestme.data
 import bayestme.expression_truth
-
+import bayestme.log_config
 from bayestme import data
 from bayestme import deconvolution
-import bayestme.cli.common
-from bayestme.common import create_rng, InferenceType
+from bayestme.common import create_rng
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +86,7 @@ def main():
         n_samples=args.n_samples,
         mcmc_n_burn=args.n_burn,
         mcmc_n_thin=args.n_thin,
+        n_svi_steps=args.n_svi_steps,
         background_noise=args.background_noise,
         lda_initialization=args.lda_initialization,
         expression_truth=expression_truth,

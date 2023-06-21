@@ -2,7 +2,6 @@ import os
 import tempfile
 from unittest import mock
 
-import numpy
 import numpy as np
 
 import bayestme.cli.plot_spatial_expression

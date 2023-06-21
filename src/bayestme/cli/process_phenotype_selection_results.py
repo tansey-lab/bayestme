@@ -1,7 +1,7 @@
 import argparse
-import json
-import bayestme.log_config
 import logging
+
+import bayestme.log_config
 from bayestme import cv_likelihoods
 
 logger = logging.getLogger(__name__)

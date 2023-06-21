@@ -7,7 +7,6 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 
 from bayestme import data
 from bayestme.mcmc import model_bkg
-from scipy.stats import multinomial
 
 logger = logging.getLogger(__name__)
 

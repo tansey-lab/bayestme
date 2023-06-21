@@ -11,8 +11,9 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import csr_matrix
-from bayestme.common import ArrayType
+
 from bayestme import utils
+from bayestme.common import ArrayType
 
 logger = logging.getLogger(__name__)
 

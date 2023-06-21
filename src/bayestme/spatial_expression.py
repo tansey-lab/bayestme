@@ -22,8 +22,8 @@ from scipy.stats import pearsonr
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from bayestme import utils, data, fast_multivariate_normal
-from bayestme.utils import ilogit, stable_softmax
 from bayestme.plot import common
+from bayestme.utils import ilogit, stable_softmax
 
 logger = logging.getLogger(__name__)
 

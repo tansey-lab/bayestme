@@ -1,18 +1,20 @@
-import numpy as np
-import torch
-import torch.distributions.constraints as constraints
-import pyro
-from pyro.optim import Adam
-from pyro.infer import SVI, Trace_ELBO
-import pyro.distributions as dist
-from pyro import poutine
-from bayestme.utils import get_edges
-import tqdm
-from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
 import logging
 from collections import defaultdict
 from typing import Optional
+
+import numpy as np
+import pyro
+import pyro.distributions as dist
+import torch
+import torch.distributions.constraints as constraints
+import tqdm
+from pyro import poutine
+from pyro.infer import SVI, Trace_ELBO
+from pyro.optim import Adam
+
 from bayestme import data
+from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
+from bayestme.utils import get_edges
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +261,7 @@ def deconvolve(
     stdata: SpatialExpressionDataset,
     n_components=None,
     rho=None,
+    n_svi_steps=10_000,
     n_samples=100,
     rng: Optional[np.random.Generator] = None,
 ) -> data.DeconvolutionResult:
@@ -281,5 +284,6 @@ def deconvolve(
         rho=rho,
     ).deconvolution(
         n_traces=n_samples,
+        n_iter=n_svi_steps,
         K=n_components,
     )
