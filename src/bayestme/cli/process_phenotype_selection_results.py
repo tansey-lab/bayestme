@@ -29,10 +29,10 @@ def get_parser():
         help="Individual phenotype selection outputs",
     )
     parser.add_argument(
-        "--lambda-values",
+        "--spatial-smoothing-values",
         type=float,
         action="append",
-        help="Potential values of the lambda smoothing parameter to try. "
+        help="Potential values of the spatial smoothing parameter to try. "
         "Defaults to (1, 1e1, 1e2, 1e3, 1e4, 1e5)",
     )
     parser.add_argument(
@@ -64,7 +64,7 @@ def main():
     )
 
     max_likelihood_lambda_value = cv_likelihoods.get_best_lambda_value(
-        likelihoods, max_likelihood_n_components, args.lambda_values, k_vals
+        likelihoods, max_likelihood_n_components, args.spatial_smoothing_values, k_vals
     )
 
     logger.info(

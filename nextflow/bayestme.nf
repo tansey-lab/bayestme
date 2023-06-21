@@ -106,7 +106,7 @@ def create_lambda_values_flag(lambda_values) {
     } else {
         var lambda_values_flag = ""
         for (lambda_value in lambda_values) {
-            lambda_values_flag += "--lambda-values ${lambda_value} "
+            lambda_values_flag += "--spatial-smoothing-values ${lambda_value} "
         }
 
         return lambda_values_flag
@@ -269,11 +269,11 @@ workflow BAYESTME {
         bleeding_correction.out.adata_output,
         bleeding_correction.out.bleed_correction_output)
 
-    if (params.lambda == null && params.n_components == null) {
-        log.info "No values supplied for lambda and n_components, will run phenotype selection."
-        log.info "${params.phenotype_selection_lambda_values}"
+    if (params.spatial_smoothing_parameter == null && params.n_components == null) {
+        log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
+        log.info "${params.phenotype_selection_spatial_smoothing_values}"
         var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-            params.phenotype_selection_lambda_values,
+            params.phenotype_selection_spatial_smoothing_values,
             params.phenotype_selection_n_components_min,
             params.phenotype_selection_n_components_max,
             params.phenotype_selection_n_fold)
@@ -286,7 +286,7 @@ workflow BAYESTME {
 
         read_phenotype_selection_results( phenotype_selection.out.result.collect() )
     } else {
-        log.info "Got values ${params.lambda} and ${params.n_components} for lambda and n_components, will skip phenotype selection."
+        log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
     }
 
     def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
@@ -297,7 +297,7 @@ workflow BAYESTME {
         lambda,
         params.n_marker_genes,
         params.marker_gene_alpha_cutoff,
-        params.marker_gene_method
+        params.marker_gene_method,
         params.deconvolution_selection_use_spatial_guide,
         params.inference_type
     )
