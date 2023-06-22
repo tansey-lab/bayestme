@@ -64,6 +64,12 @@ def test_plot_spatial_expression():
         deconvolve_results_fn,
         "--sde-result",
         sde_results_fn,
+        "--moran-i-score-threshold",
+        "0.9",
+        "--tissue-threshold",
+        "5",
+        "--gene-spatial-pattern-proportion-threshold",
+        "0.95",
         "--output-dir",
         tmpdir,
     ]
@@ -80,6 +86,9 @@ def test_plot_spatial_expression():
                 sde_result=mock.ANY,
                 output_dir=tmpdir,
                 cell_type_names=None,
+                moran_i_score_threshold=0.9,
+                tissue_threshold=5,
+                gene_spatial_pattern_proportion_threshold=0.95,
             )
 
 
@@ -140,6 +149,12 @@ def test_plot_spatial_expression_with_cell_type_names():
         sde_results_fn,
         "--output-dir",
         tmpdir,
+        "--moran-i-score-threshold",
+        "0.9",
+        "--tissue-threshold",
+        "5",
+        "--gene-spatial-pattern-proportion-threshold",
+        "0.95",
         "--cell-type-names",
         "type 1, type 2, type 3",
     ]
@@ -156,4 +171,7 @@ def test_plot_spatial_expression_with_cell_type_names():
                 sde_result=mock.ANY,
                 output_dir=tmpdir,
                 cell_type_names=["type 1", "type 2", "type 3"],
+                moran_i_score_threshold=0.9,
+                tissue_threshold=5,
+                gene_spatial_pattern_proportion_threshold=0.95,
             )

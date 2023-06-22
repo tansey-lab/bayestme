@@ -73,6 +73,7 @@ def test_deconvolve():
                     lda_initialization=False,
                     expression_truth=None,
                     n_svi_steps=10000,
+                    use_spatial_guide=False,
                     inference_type=InferenceType.MCMC,
                     rng=mock.ANY,
                 )
@@ -112,6 +113,7 @@ def test_deconvolve_with_expression_truth():
         "2",
         "--n-svi-steps",
         "99",
+        "--use-spatial-guide",
         "--expression-truth",
         "xxx",
         "--inference-type",

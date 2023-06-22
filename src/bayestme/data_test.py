@@ -269,12 +269,12 @@ def test_add_deconvolution_results_to_dataset():
 
     numpy.testing.assert_equal(
         dataset.cell_type_probabilities,
-        deconvolve_results.cell_prob_trace[:, :, 1:].mean(axis=0),
+        deconvolve_results.cell_prob_trace.mean(axis=0),
     )
 
     numpy.testing.assert_equal(
         dataset.cell_type_counts,
-        deconvolve_results.cell_num_trace[:, :, 1:].mean(axis=0),
+        deconvolve_results.cell_num_trace.mean(axis=0),
     )
 
     assert dataset.n_cell_types == n_components
@@ -318,12 +318,12 @@ def test_add_deconvolution_results_to_dataset_with_obs_names():
 
     numpy.testing.assert_equal(
         dataset.cell_type_probabilities,
-        deconvolve_results.cell_prob_trace[:, :, 1:].mean(axis=0),
+        deconvolve_results.cell_prob_trace.mean(axis=0),
     )
 
     numpy.testing.assert_equal(
         dataset.cell_type_counts,
-        deconvolve_results.cell_num_trace[:, :, 1:].mean(axis=0),
+        deconvolve_results.cell_num_trace.mean(axis=0),
     )
 
     assert dataset.n_cell_types == n_components

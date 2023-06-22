@@ -138,6 +138,7 @@ def test_run_phenotype_selection_single_fold(inference_type):
         n_svi_steps=1,
         background_noise=False,
         lda_initialization=False,
+        use_spatial_guide=False,
         inference_type=inference_type,
     )
 

@@ -15,6 +15,7 @@ from pyro.optim import Adam
 from bayestme import data
 from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
 from bayestme.utils import get_edges
+from bayestme.common import ArrayType
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,7 @@ class BayesTME_VI:
         lr=0.001,
         beta_1=0.90,
         beta_2=0.999,
+        expression_truth: Optional[ArrayType] = None,
     ):
         # Obs:  ST count mat
         #       etiher np array or torch tensor
@@ -93,6 +95,10 @@ class BayesTME_VI:
         self.D = construct_edge_adjacency(self.edges)
         self.D = construct_trendfilter(self.D, 0)
         self.sp_reg_coeff = rho
+        if expression_truth is not None:
+            self.expression_truth = torch.Tensor(expression_truth)
+        else:
+            self.expression_truth = None
 
     def model(self, data, n_class, n_genes):
         # expression coeff
@@ -101,9 +107,14 @@ class BayesTME_VI:
         beta = pyro.sample("exp_load", dist.Gamma(a_0, b_0).expand([self.K]).to_event())
         # expression profile
         alpha_0 = torch.ones(self.G)
-        phi = pyro.sample(
-            "exp_profile", dist.Dirichlet(alpha_0).expand([self.K]).to_event()
-        )
+        if self.expression_truth is None:
+            phi = pyro.sample(
+                "exp_profile", dist.Dirichlet(alpha_0).expand([self.K]).to_event()
+            )
+        else:
+            phi = pyro.sample(
+                "exp_profile", dist.Dirichlet(self.expression_truth).to_event(1)
+            )
         # expression
         celltype_exp = beta[:, None] * phi
 
@@ -264,6 +275,7 @@ def deconvolve(
     n_svi_steps=10_000,
     n_samples=100,
     use_spatial_guide=True,
+    expression_truth=None,
     rng: Optional[np.random.Generator] = None,
 ) -> data.DeconvolutionResult:
     if rng:
@@ -283,6 +295,7 @@ def deconvolve(
     return BayesTME_VI(
         stdata=stdata,
         rho=rho,
+        expression_truth=expression_truth,
     ).deconvolution(
         n_traces=n_samples,
         n_iter=n_svi_steps,

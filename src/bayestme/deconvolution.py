@@ -47,6 +47,7 @@ def sample_from_posterior(
             n_samples=n_samples,
             n_svi_steps=n_svi_steps,
             use_spatial_guide=use_spatial_guide,
+            expression_truth=expression_truth,
             rng=rng,
         )
     else:
