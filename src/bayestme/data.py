@@ -78,7 +78,7 @@ def create_anndata_object(
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
         shape=(adata.n_obs, adata.n_obs),
-        dtype=np.bool,
+        dtype=bool,
     )
     adata.obsp[CONNECTIVITIES_ATTR] = connectivities
 
