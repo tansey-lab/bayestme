@@ -240,7 +240,9 @@ def plot_spatial_pie_charts(
     return ax, hcoord, vcoord
 
 
-def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset, gene: str):
+def plot_gene_in_tissue_counts(
+    stdata: data.SpatialExpressionDataset, gene: str, output_file: str
+):
     gene_idx = np.argmax(stdata.gene_names == gene)
     counts = stdata.raw_counts[:, gene_idx]
     counts = counts[stdata.tissue_mask]
@@ -248,7 +250,7 @@ def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset, gene: str)
 
     fig, ax = plt.subplots(1)
 
-    ax, cb, norm, hcoord, vcoord = plot_colored_spatial_polygon(
+    plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
         coords=positions,
@@ -257,7 +259,8 @@ def plot_gene_in_tissue_counts(stdata: data.SpatialExpressionDataset, gene: str)
         plotting_coordinates=stdata.positions,
     )
 
-    return fig, ax, cb, norm, hcoord, vcoord
+    fig.savefig(output_file)
+    plt.close(fig)
 
 
 def plot_gene_raw_counts(
