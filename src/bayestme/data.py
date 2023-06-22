@@ -894,8 +894,8 @@ def add_deconvolution_results_to_dataset(
     :param stdata: data.SpatialExpressionDataset to modify
     :param result: data.DeconvolutionResult to use
     """
-    cell_num_matrix = result.cell_num_trace[:, :, 1:].mean(axis=0)
-    cell_prob_matrix = result.cell_prob_trace[:, :, 1:].mean(axis=0)
+    cell_num_matrix = result.cell_num_trace.mean(axis=0)
+    cell_prob_matrix = result.cell_prob_trace.mean(axis=0)
 
     cell_prob_matrix_full = np.zeros((stdata.n_spot, cell_prob_matrix.shape[1]))
 

@@ -53,6 +53,9 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info(
+        "process_phenotype_selection_results called with arguments: {}".format(args)
+    )
 
     likelihoods, fold_nums, lam_vals, k_vals = cv_likelihoods.load_likelihoods(
         output_dir=args.phenotype_selection_output_dir,

@@ -3,8 +3,12 @@ import os
 
 import bayestme.cli.common
 import bayestme.log_config
+import logging
 from bayestme import phenotype_selection, data
 from bayestme.common import create_rng
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -70,6 +74,7 @@ DEFAULT_LAMBDAS = (1, 1e1, 1e2, 1e3, 1e4, 1e5)
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("phenotype_selection called with arguments: {}".format(args))
 
     rng = create_rng(args.seed)
 

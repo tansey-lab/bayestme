@@ -33,7 +33,7 @@ process DECONVOLVE {
     def inference_type_flag = "--inference-type ${params.inference_type}"
     def lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
     def background_noise_flag = params.background_noise ? "--background-noise" : ""
-    def use_spatial_guide_flag = params.use_spatial_guide ? "--use-spatial-guide" : ""
+    def use_spatial_guide_flag = use_spatial_guide ? "--use-spatial-guide" : ""
     def expression_truth_flag = create_expression_truth_flag(params.expression_truth_files)
     """
     deconvolve --adata ${adata} \
@@ -44,7 +44,6 @@ process DECONVOLVE {
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
-        ${n_gene_flag} \
         ${use_spatial_guide_flag} \
         ${background_noise_flag} \
         ${lda_initialization_flag} \

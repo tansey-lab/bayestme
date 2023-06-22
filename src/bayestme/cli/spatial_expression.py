@@ -10,6 +10,8 @@ from bayestme.common import create_rng
 
 MODEL_DUMP_PATH = "sde_model_dump.h5"
 
+logger = logging.getLogger(__name__)
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -86,6 +88,8 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("spatial_expression called with arguments: {}".format(args))
+
     rng = create_rng(args.seed)
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
         args.adata

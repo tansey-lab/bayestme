@@ -131,7 +131,7 @@ process phenotype_selection {
     def n_burn_flag = "--n-burn ${params.phenotype_selection_n_burn}"
     def n_thin_flag = "--n-thin ${params.phenotype_selection_n_thin}"
     def n_components_min_flag = "--n-components-min ${params.phenotype_selection_n_components_min}"
-    def phenotype_selection_lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
     def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
     def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
     def inference_type_flag = "--inference-type ${params.inference_type}"
@@ -145,7 +145,7 @@ process phenotype_selection {
         ${n_burn_flag} \
         ${n_thin_flag} \
         ${n_components_min_flag} \
-        ${phenotype_selection_lambda_values_flag} \
+        ${phenotype_selection_spatial_smoothing_values_flag} \
         ${phenotype_selection_background_noise_flag} \
         ${phenotype_selection_lda_initialization_flag} \
         ${inference_type_flag}
@@ -165,10 +165,10 @@ process spatial_expression {
 
     script:
     def n_spatial_patterns_flag = "--n-spatial-patterns ${params.spatial_expression_n_spatial_patterns}"
-    def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
-    def n_burn_flag = "--n-burn ${params.deconvolution_n_burn}"
-    def n_thin_flag = "--n-thin ${params.deconvolution_n_thin}"
-    def n_gene_flag = "--n-gene ${params.deconvolution_n_gene}"
+    def n_samples_flag = "--n-samples ${params.spatial_expression_n_samples}"
+    def n_burn_flag = "--n-burn ${params.spatial_expression_n_burn}"
+    def n_thin_flag = "--n-thin ${params.spatial_expression_n_thin}"
+    def n_gene_flag = "--n-gene ${params.spatial_expression_n_genes}"
     def simple_flag = params.use_simple_spatial_expression_model ? "--simple" : ""
     def alpha0_flag = "--alpha0 ${params.spatial_expression_alpha0}"
     def prior_var_flag = "--prior-var ${params.spatial_expression_prior_var}"
@@ -226,6 +226,7 @@ process plot_spatial_expression {
 
 process read_phenotype_selection_results {
     label 'small_mem'
+    publishDir "${params.outdir}/phenotype_selection_plots"
 
     input:
         path phenotype_selection_result
@@ -235,12 +236,12 @@ process read_phenotype_selection_results {
         path "*.pdf", emit: plots
 
     script:
-    def lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
     """
     process_phenotype_selection_results \
         --plot-output . \
         --phenotype-selection-outputs ${phenotype_selection_result}* \
-        ${lambda_values_flag} \
+        ${phenotype_selection_spatial_smoothing_values_flag} \
         --output-lambda lambda \
         --output-n-components n_components
 
@@ -298,7 +299,7 @@ workflow BAYESTME {
         params.n_marker_genes,
         params.marker_gene_alpha_cutoff,
         params.marker_gene_method,
-        params.deconvolution_selection_use_spatial_guide,
+        params.deconvolution_use_spatial_guide,
         params.inference_type
     )
 

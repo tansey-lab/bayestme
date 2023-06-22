@@ -40,7 +40,7 @@ def filter_genes_by_spot_threshold(
 ):
     n_spots = dataset.reads.shape[0]
 
-    keep = (dataset.reads > 0).sum(axis=0) < int(n_spots * spot_threshold)
+    keep = (dataset.reads > 0).sum(axis=0) <= int(n_spots * spot_threshold)
 
     input_adata = dataset.adata
     return data.SpatialExpressionDataset(input_adata[:, keep])

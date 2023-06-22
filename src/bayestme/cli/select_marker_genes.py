@@ -1,8 +1,11 @@
 import argparse
+import logging
 
 import bayestme.log_config
 import bayestme.marker_genes
 from bayestme import data
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -53,6 +56,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("select_marker_genes called with arguments: {}".format(args))
 
     stdata = data.SpatialExpressionDataset.read_h5(args.adata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)

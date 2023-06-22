@@ -431,7 +431,7 @@ class SpatialDifferentialExpression:
             n_posterior_sample = 0
 
         if n_posterior_sample > 0:
-            cell_type_filter = (cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min).T
+            cell_type_filter = (cell_num_trace.mean(axis=0) > ncell_min).T
             rate = np.array(
                 [
                     beta_trace[i][:, None] * expression_trace[i]
@@ -439,12 +439,12 @@ class SpatialDifferentialExpression:
                 ]
             )
             reads = reads_trace.mean(axis=0).astype(int)
-            lambdas = cell_num_trace.mean(axis=0)[:, 1:, None] * rate.mean(axis=0)[None]
+            lambdas = cell_num_trace.mean(axis=0)[:, :, None] * rate.mean(axis=0)[None]
         else:
-            cell_type_filter = (cell_num_trace[:, 1:] > ncell_min).T
+            cell_type_filter = (cell_num_trace.mean(axis=0)[:, :] > ncell_min).T
             rate = beta_trace[:, None] * expression_trace
             reads = reads_trace.astype(int)
-            lambdas = cell_num_trace[:, 1:, None] * rate[None]
+            lambdas = cell_num_trace[:, :, None] * rate[None]
 
         with logging_redirect_tqdm():
             for step in tqdm.trange(
@@ -664,11 +664,11 @@ def select_significant_spatial_programs(
     """
     for k in range(sde_result.n_components):
         cell_number_mask = (
-            decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
+            decon_result.cell_num_trace[:, :, k].mean(axis=0) > tissue_threshold
         )
-        n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k + 1].mean(
-            axis=0
-        )[cell_number_mask]
+        n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k].mean(axis=0)[
+            cell_number_mask
+        ]
         pos_filter = stdata.positions_tissue[cell_number_mask, :].astype(int)
         edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
 
@@ -804,7 +804,7 @@ def plot_spatial_pattern(
     colormap,
     plot_threshold: int = 2,
 ):
-    plot_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > plot_threshold
+    plot_mask = decon_result.cell_num_trace[:, :, k].mean(axis=0) > plot_threshold
     loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
     rank = abs(loadings).argsort()[::-1]
     loadings = loadings[rank]
