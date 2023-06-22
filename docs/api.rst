@@ -44,6 +44,23 @@ bayestme.deconvolution module
    :undoc-members:
    :show-inheritance:
 
+bayestme.mcmc.deconvolution module
+----------------------------------
+
+.. automodule:: bayestme.mcmc.deconvolution
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bayestme.svi.deconvolution module
+---------------------------------
+
+.. automodule:: bayestme.svi.deconvolution
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 bayestme.expression_truth module
 --------------------------------
 
@@ -68,10 +85,10 @@ bayestme.gene\_filtering module
    :undoc-members:
    :show-inheritance:
 
-bayestme.gfbt\_multinomial module
----------------------------------
+bayestme.mcmc.gfbt\_multinomial module
+--------------------------------------
 
-.. automodule:: bayestme.gfbt_multinomial
+.. automodule:: bayestme.mcmc.gfbt_multinomial
    :members:
    :undoc-members:
    :show-inheritance:
@@ -92,10 +109,10 @@ bayestme.log_config module
    :undoc-members:
    :show-inheritance:
 
-bayestme.model\_bkg module
---------------------------
+bayestme.mcmc.model\_bkg module
+-------------------------------
 
-.. automodule:: bayestme.model_bkg
+.. automodule:: bayestme.mcmc.model_bkg
    :members:
    :undoc-members:
    :show-inheritance:
@@ -108,10 +125,18 @@ bayestme.phenotype\_selection module
    :undoc-members:
    :show-inheritance:
 
-bayestme.plotting module
-------------------------
+bayestme.plot.common module
+---------------------------
 
-.. automodule:: bayestme.plotting
+.. automodule:: bayestme.plot.common
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bayestme.plot.deconvolution module
+----------------------------------
+
+.. automodule:: bayestme.plot.deconvolution
    :members:
    :undoc-members:
    :show-inheritance:

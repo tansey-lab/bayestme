@@ -7,6 +7,9 @@ This purpose of this document is to give you a sense of how you can string the d
 to analyze your data. This is a maximal example, you don't necessarily need to perform all of these steps,
 but some of them do depend on the output of each other.
 
+The nextflow workflow will run all of these steps correctly for you, this document is for informational
+purposes to see how all the individual steps work. See :ref:`nextflow` for more information.
+
 1. Assuming your data is the output of the visium/10x spaceranger pipeline, the first step is to convert that spaceranger
 output into an anndata archive, which is the primary data format of BayesTME. You can do this with the :ref:`load_spaceranger <cli_load_spaceranger>`
 command:
@@ -50,10 +53,16 @@ command:
 
 
 5. Run phenotype selection / cross validation using the :ref:`phenotype_selection <cli_bleeding_correction>`.
-This step is very computationally expensive as we need to re-run the deconvolution gibbs sampler thousands of times
+
+We offer two different equivalent methods for inference during this step, MCMC and SVI. You can select between
+them using the `--inference-type` argument.
+
+Using the MCMC method this step is very computationally expensive as we need to re-run the deconvolution gibbs sampler thousands of times
 in order to do cross validation to learn the number of cell types and the lambda parameter.
 This step cannot be feasibly accomplished on a single computer,
 a computational cluster or cloud service provider needs to be used in order to run many MCMC samplers in parallel.
+
+Using the SVI method this step in much faster, but still requires significant resources.
 
 If you have some outside data telling you how many cell types are in your sample you can feasibly skip this step and go straight to step 6,
 however you will need to have a reasonable guess for the lambda parameter. If you are taking this quick and dirty approach,
@@ -67,7 +76,8 @@ command N times in parallel:
 
     phenotype_selection --adata dataset_filtered_corrected.h5ad \
         --output-dir phenotype_selection_results \
-        --job-index ${JOB_INDEX}
+        --job-index ${JOB_INDEX} \
+        --inference-type MCMC
 
 The number of jobs that need to be run to complete the sweep of the parameter space will be equal to
 (n_lambda parameters) * (n_folds) * (number of different cell types).
@@ -93,10 +103,19 @@ the results and see which value of lambda and n_cell_types performed the best.
         --adata-output dataset_deconvolved.h5ad \
         --output deconvolution_samples.h5 \
         --lam2 <value of lambda learned from step 4> \
-        --n-components <value of n cell types learned from step 4>
+        --n-components <value of n cell types learned from step 4> \
+        --inference-type MCMC
+
+We offer two equivalent methods for inference during this step, MCMC and SVI. SVI is much faster than MCMC.
+You can select between them using the `--inference-type` argument.
+
+The deconvolve step is basically the same model used in the
+phenotype_selection step, in phenotype_selection we just run deconvolve many times in order to select
+the best parameters via cross validation.
 
 This will create a new anndata archive ``dataset_deconvolved.h5ad`` which has been updated to
 include the summarized deconvolution results.
+
 This will also create another h5 archive, which is a serialized :py:class:`bayestme.data.DeconvolutionResult`.
 The serialized :py:class:`bayestme.data.DeconvolutionResult` can be very large (~ 10GB) as it saves all of the MCMC
 samples, each of which are high dimensional numerical arrays.
