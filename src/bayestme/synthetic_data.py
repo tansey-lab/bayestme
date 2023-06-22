@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.stats import multivariate_normal, multivariate_t
 
+import bayestme.data
+import bayestme.marker_genes
 from bayestme import data
 
 
@@ -262,4 +264,65 @@ def generate_demo_dataset():
         ),
         layout=data.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+    )
+
+
+def create_deconvolve_dataset(
+    n_nodes: int = 12,
+    n_components: int = 5,
+    n_samples: int = 100,
+    n_genes: int = 100,
+    n_marker_gene: int = 5,
+):
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=n_nodes, n_cols=n_nodes, n_genes=n_genes
+    )
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+    )
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=n_samples,
+        n_gene=dataset.n_gene,
+    )
+
+    bayestme.data.add_deconvolution_results_to_dataset(
+        stdata=dataset, result=deconvolve_results
+    )
+
+    marker_genes = bayestme.marker_genes.select_marker_genes(
+        deconvolution_result=deconvolve_results, n_marker=n_marker_gene, alpha=0.99
+    )
+
+    bayestme.marker_genes.add_marker_gene_results_to_dataset(
+        stdata=dataset, marker_genes=marker_genes
+    )
+
+    return dataset
+
+
+def create_toy_deconvolve_result(
+    n_nodes: int, n_components: int, n_samples: int, n_gene: int
+) -> data.DeconvolutionResult:
+    return data.DeconvolutionResult(
+        lam2=1000,
+        n_components=n_components,
+        cell_num_trace=np.random.random((n_samples, n_nodes, n_components)),
+        cell_prob_trace=np.random.random((n_samples, n_nodes, n_components)),
+        expression_trace=np.random.random((n_samples, n_components, n_gene)),
+        beta_trace=np.random.random((n_samples, n_components)),
+        reads_trace=np.random.random((n_samples, n_nodes, n_gene, n_components)),
     )

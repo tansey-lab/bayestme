@@ -52,7 +52,7 @@ def test_filter_genes():
 
         result = data.SpatialExpressionDataset.read_h5(output_path)
 
-        np.testing.assert_equal(result.gene_names, np.array([]))
+        np.testing.assert_equal(result.gene_names, np.array(["keep_me"]))
     finally:
         shutil.rmtree(tmpdir)
 

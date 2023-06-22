@@ -1,7 +1,11 @@
 import argparse
+import logging
 
 import bayestme.log_config
-from bayestme import data, deconvolution
+import bayestme.marker_genes
+from bayestme import data
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -39,9 +43,9 @@ def get_parser():
     )
     parser.add_argument(
         "--marker-gene-method",
-        type=deconvolution.MarkerGeneMethod,
-        choices=list(deconvolution.MarkerGeneMethod),
-        default=deconvolution.MarkerGeneMethod.TIGHT,
+        type=bayestme.marker_genes.MarkerGeneMethod,
+        choices=list(bayestme.marker_genes.MarkerGeneMethod),
+        default=bayestme.marker_genes.MarkerGeneMethod.TIGHT,
         help="Method for choosing marker genes.",
     )
     bayestme.log_config.add_logging_args(parser)
@@ -52,18 +56,19 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("select_marker_genes called with arguments: {}".format(args))
 
     stdata = data.SpatialExpressionDataset.read_h5(args.adata)
     deconvolution_result = data.DeconvolutionResult.read_h5(args.deconvolution_result)
 
-    marker_genes = deconvolution.select_marker_genes(
+    marker_genes = bayestme.marker_genes.select_marker_genes(
         deconvolution_result=deconvolution_result,
         n_marker=args.n_marker_genes,
         alpha=args.alpha,
         method=args.marker_gene_method,
     )
 
-    deconvolution.add_marker_gene_results_to_dataset(
+    bayestme.marker_genes.add_marker_gene_results_to_dataset(
         stdata=stdata, marker_genes=marker_genes
     )
 

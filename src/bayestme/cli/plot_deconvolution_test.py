@@ -2,12 +2,11 @@ import os
 import tempfile
 from unittest import mock
 
-import numpy
 import numpy as np
 
 import bayestme.cli.plot_deconvolution
 import bayestme.synthetic_data
-from bayestme import data, deconvolution_test
+from bayestme import data
 
 
 def test_plot_deconvolution():
@@ -32,7 +31,7 @@ def test_plot_deconvolution():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
@@ -52,7 +51,7 @@ def test_plot_deconvolution():
     ]
 
     with mock.patch(
-        "bayestme.deconvolution.plot_deconvolution"
+        "bayestme.plot.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()
@@ -84,7 +83,7 @@ def test_plot_deconvolution_with_cell_type_names():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
@@ -106,7 +105,7 @@ def test_plot_deconvolution_with_cell_type_names():
     ]
 
     with mock.patch(
-        "bayestme.deconvolution.plot_deconvolution"
+        "bayestme.plot.deconvolution.plot_deconvolution"
     ) as plot_deconvolution_mock:
         with mock.patch("sys.argv", command_line_args):
             bayestme.cli.plot_deconvolution.main()

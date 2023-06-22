@@ -18,7 +18,9 @@ process DECONVOLVE {
     input:
         path adata
         val n_components
-        val lambda
+        val spatial_smoothing_parameter
+        val use_spatial_guide
+        val inference_type
 
     output:
         path 'dataset_deconvolved.h5ad', emit: adata_output
@@ -28,23 +30,25 @@ process DECONVOLVE {
     def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
     def n_burn_flag = "--n-burn ${params.deconvolution_n_burn}"
     def n_thin_flag = "--n-thin ${params.deconvolution_n_thin}"
-    def n_gene_flag = "--n-gene ${params.deconvolution_n_gene}"
-    def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
-    def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
+    def inference_type_flag = "--inference-type ${params.inference_type}"
+    def lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
+    def background_noise_flag = params.background_noise ? "--background-noise" : ""
+    def use_spatial_guide_flag = use_spatial_guide ? "--use-spatial-guide" : ""
     def expression_truth_flag = create_expression_truth_flag(params.expression_truth_files)
     """
     deconvolve --adata ${adata} \
         --adata-output dataset_deconvolved.h5ad \
         --output deconvolution_samples.h5 \
-        --lam2 ${lambda} \
+        --spatial-smoothing-parameter ${spatial_smoothing_parameter} \
         --n-components ${n_components} \
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
-        ${n_gene_flag} \
-        ${phenotype_selection_background_noise_flag} \
-        ${phenotype_selection_lda_initialization_flag} \
-        ${expression_truth_flag}
+        ${use_spatial_guide_flag} \
+        ${background_noise_flag} \
+        ${lda_initialization_flag} \
+        ${expression_truth_flag} \
+        ${inference_type_flag}
     """
 }
 
@@ -94,13 +98,15 @@ workflow DECONVOLUTION {
     take:
         adata
         n_components
-        lambda
+        spatial_smoothing_parameter
         n_marker_genes
         marker_gene_alpha_cutoff
         marker_gene_method
+        use_spatial_guide
+        inference_type
 
     main:
-        DECONVOLVE (adata, n_components, lambda)
+        DECONVOLVE (adata, n_components, spatial_smoothing_parameter, use_spatial_guide, inference_type)
 
         SELECT_MARKER_GENES (DECONVOLVE.out.adata_output, DECONVOLVE.out.samples, n_marker_genes, marker_gene_alpha_cutoff, marker_gene_method)
 

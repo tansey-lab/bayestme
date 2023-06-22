@@ -19,7 +19,8 @@ from torch.distributions.multinomial import Multinomial
 from torch.nn import Softmax
 from torch.nn import Softplus
 
-from bayestme import data, utils, plotting
+import bayestme.plot.common
+from bayestme import data, utils
 from bayestme.utils import stable_softmax
 
 logger = logging.getLogger(__name__)
@@ -602,7 +603,7 @@ def plot_bleed_vectors(
         norm,
         hcoord_plotted,
         vcoord_plotted,
-    ) = plotting.plot_colored_spatial_polygon(
+    ) = bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
         coords=locations,
@@ -657,7 +658,7 @@ def plot_before_after_cleanup(
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(fig.get_size_inches()[0] * 2)
 
-    plotting.plot_colored_spatial_polygon(
+    bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax1,
         coords=before_correction.positions,
@@ -668,7 +669,7 @@ def plot_before_after_cleanup(
 
     ax1.set_title("Raw Reads")
     ax1.set_axis_off()
-    plotting.plot_colored_spatial_polygon(
+    bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax2,
         coords=after_correction.positions_tissue,
@@ -727,7 +728,7 @@ def plot_bleeding(
     fig.set_figwidth(fig.get_size_inches()[0] * len(plot_data))
 
     for idx, ax in enumerate(axes):
-        plotting.plot_colored_spatial_polygon(
+        bayestme.plot.common.plot_colored_spatial_polygon(
             fig=fig,
             ax=ax,
             coords=coords[idx],

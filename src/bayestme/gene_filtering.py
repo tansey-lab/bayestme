@@ -40,7 +40,7 @@ def filter_genes_by_spot_threshold(
 ):
     n_spots = dataset.reads.shape[0]
 
-    keep = (dataset.reads > 0).sum(axis=0) < int(n_spots * spot_threshold)
+    keep = (dataset.reads > 0).sum(axis=0) <= int(n_spots * spot_threshold)
 
     input_adata = dataset.adata
     return data.SpatialExpressionDataset(input_adata[:, keep])
@@ -52,7 +52,7 @@ RIBOSOME_GENE_NAME_PATTERN = "[Rr][Pp][SsLl]"
 def filter_ribosome_genes(dataset: data.SpatialExpressionDataset):
     keep = ~np.array(
         [bool(re.match(RIBOSOME_GENE_NAME_PATTERN, g)) for g in dataset.gene_names],
-        dtype=np.bool,
+        dtype=bool,
     )
 
     input_adata = dataset.adata
@@ -60,7 +60,7 @@ def filter_ribosome_genes(dataset: data.SpatialExpressionDataset):
 
 
 def filter_list_of_genes(dataset: data.SpatialExpressionDataset, genes_to_remove):
-    keep = ~np.array([g in genes_to_remove for g in dataset.gene_names], dtype=np.bool)
+    keep = ~np.array([g in genes_to_remove for g in dataset.gene_names], dtype=bool)
 
     input_adata = dataset.adata
     return data.SpatialExpressionDataset(input_adata[:, keep])

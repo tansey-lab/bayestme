@@ -3,8 +3,11 @@ import shutil
 import tempfile
 
 import numpy as np
+import numpy.testing
 
+import bayestme.data
 from bayestme import data, synthetic_data, utils
+from bayestme.synthetic_data import create_toy_deconvolve_result
 
 
 def generate_toy_stdataset() -> data.SpatialExpressionDataset:
@@ -98,9 +101,9 @@ def test_deconvolution_results_properties():
     n_samples = 100
     n_nodes = 25
     n_components = 4
-    n_gene = 100
-    cell_prob_trace = rng.random((n_samples, n_nodes, n_components + 1))
-    cell_num_trace = rng.random((n_samples, n_nodes, n_components + 1))
+    n_gene = 50
+    cell_prob_trace = rng.random((n_samples, n_nodes, n_components))
+    cell_num_trace = rng.random((n_samples, n_nodes, n_components))
     expression_trace = rng.random((n_samples, n_components, n_gene))
     beta_trace = rng.random((n_samples, n_components))
     reads_trace = rng.random((n_samples, n_nodes, n_gene, n_components))
@@ -117,7 +120,7 @@ def test_deconvolution_results_properties():
     )
 
     assert dataset.omega.shape == (n_components, n_gene)
-    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 100
+    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 50
 
     assert dataset.omega_difference.shape == (n_components, n_gene)
     assert np.all(dataset.omega_difference <= 1.0)
@@ -126,6 +129,8 @@ def test_deconvolution_results_properties():
     assert np.all(dataset.relative_expression <= 1.0) and np.all(
         dataset.relative_expression >= -1.0
     )
+
+    assert dataset.nb_probs.shape == (n_samples, n_nodes, n_gene)
 
 
 def test_create_anndata_object():
@@ -225,3 +230,100 @@ def test_properties_work_with_obs_names():
     np.testing.assert_array_equal(dataset.raw_counts, bleed_counts)
     np.testing.assert_array_equal(dataset.positions, locations)
     np.testing.assert_array_equal(dataset.tissue_mask, tissue_mask)
+
+
+def test_add_deconvolution_results_to_dataset():
+    n_components = 3
+    n_genes = 100
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12, n_cols=12, n_genes=n_genes
+    )
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+    )
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene,
+    )
+
+    bayestme.data.add_deconvolution_results_to_dataset(
+        stdata=dataset, result=deconvolve_results
+    )
+
+    assert dataset.cell_type_probabilities is not None
+    assert dataset.cell_type_counts is not None
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_probabilities,
+        deconvolve_results.cell_prob_trace.mean(axis=0),
+    )
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_counts,
+        deconvolve_results.cell_num_trace.mean(axis=0),
+    )
+
+    assert dataset.n_cell_types == n_components
+
+
+def test_add_deconvolution_results_to_dataset_with_obs_names():
+    n_components = 3
+    n_genes = 100
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12, n_cols=12, n_genes=n_genes
+    )
+    barcodes = np.array([f"barcode{i}" for i in range(12 * 12)])
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+        barcodes=barcodes,
+    )
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene,
+    )
+
+    bayestme.data.add_deconvolution_results_to_dataset(
+        stdata=dataset, result=deconvolve_results
+    )
+
+    assert dataset.cell_type_probabilities is not None
+    assert dataset.cell_type_counts is not None
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_probabilities,
+        deconvolve_results.cell_prob_trace.mean(axis=0),
+    )
+
+    numpy.testing.assert_equal(
+        dataset.cell_type_counts,
+        deconvolve_results.cell_num_trace.mean(axis=0),
+    )
+
+    assert dataset.n_cell_types == n_components

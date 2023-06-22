@@ -21,7 +21,8 @@ from scipy.stats import nbinom
 from scipy.stats import pearsonr
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from bayestme import utils, data, plotting, fast_multivariate_normal
+from bayestme import utils, data, fast_multivariate_normal
+from bayestme.plot import common
 from bayestme.utils import ilogit, stable_softmax
 
 logger = logging.getLogger(__name__)
@@ -314,6 +315,10 @@ class SpatialDifferentialExpression:
                 # Posterior mu term
                 mu_part = b_j
 
+                # All the spots were filtered out, so nothing to sample
+                if Precision.size == 0:
+                    continue
+
                 # Sample the spatial pattern
                 self.W[
                     k, j, cell_type_filter[k]
@@ -430,7 +435,7 @@ class SpatialDifferentialExpression:
             n_posterior_sample = 0
 
         if n_posterior_sample > 0:
-            cell_type_filter = (cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min).T
+            cell_type_filter = (cell_num_trace.mean(axis=0) > ncell_min).T
             rate = np.array(
                 [
                     beta_trace[i][:, None] * expression_trace[i]
@@ -438,12 +443,12 @@ class SpatialDifferentialExpression:
                 ]
             )
             reads = reads_trace.mean(axis=0).astype(int)
-            lambdas = cell_num_trace.mean(axis=0)[:, 1:, None] * rate.mean(axis=0)[None]
+            lambdas = cell_num_trace.mean(axis=0)[:, :, None] * rate.mean(axis=0)[None]
         else:
-            cell_type_filter = (cell_num_trace[:, 1:] > ncell_min).T
+            cell_type_filter = (cell_num_trace.mean(axis=0)[:, :] > ncell_min).T
             rate = beta_trace[:, None] * expression_trace
             reads = reads_trace.astype(int)
-            lambdas = cell_num_trace[:, 1:, None] * rate[None]
+            lambdas = cell_num_trace[:, :, None] * rate[None]
 
         with logging_redirect_tqdm():
             for step in tqdm.trange(
@@ -461,7 +466,7 @@ class SpatialDifferentialExpression:
                     else:
                         Y_igk = reads_trace[step - n_burn]
                         lambdas = (
-                            cell_num_trace[step - n_burn, :, 1:, None]
+                            cell_num_trace[step - n_burn, :, :, None]
                             * rate[step - n_burn, None]
                         )
                         n_obs_vector = np.transpose(lambdas, [0, 2, 1])
@@ -663,11 +668,19 @@ def select_significant_spatial_programs(
     """
     for k in range(sde_result.n_components):
         cell_number_mask = (
-            decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > tissue_threshold
+            decon_result.cell_num_trace[:, :, k].mean(axis=0) > tissue_threshold
         )
-        n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k + 1].mean(
-            axis=0
-        )[cell_number_mask]
+        if cell_number_mask.sum() == 0:
+            logger.info(
+                "Excluding component {} from plotting, zero spots met tissue threshold {}".format(
+                    k, tissue_threshold
+                )
+            )
+            continue
+
+        n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k].mean(axis=0)[
+            cell_number_mask
+        ]
         pos_filter = stdata.positions_tissue[cell_number_mask, :].astype(int)
         edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
 
@@ -803,7 +816,7 @@ def plot_spatial_pattern(
     colormap,
     plot_threshold: int = 2,
 ):
-    plot_mask = decon_result.cell_num_trace[:, :, k + 1].mean(axis=0) > plot_threshold
+    plot_mask = decon_result.cell_num_trace[:, :, k].mean(axis=0) > plot_threshold
     loadings = sde_result.v_samples[:, gene_ids, k].mean(axis=0).flatten()
     rank = abs(loadings).argsort()[::-1]
     loadings = loadings[rank]
@@ -818,7 +831,7 @@ def plot_spatial_pattern(
     vmax = max(1e-4, w_plot[plot_mask].max())
     norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
-    plotting.plot_colored_spatial_polygon(
+    common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax,
         coords=stdata.positions_tissue,
@@ -934,7 +947,7 @@ def plot_spatial_pattern_and_all_constituent_genes(
 
         gene_fig, gene_ax = plt.subplots()
 
-        plotting.plot_colored_spatial_polygon(
+        common.plot_colored_spatial_polygon(
             fig=gene_fig,
             ax=gene_ax,
             coords=stdata.positions_tissue,
@@ -964,12 +977,18 @@ def plot_significant_spatial_patterns(
     sde_result: data.SpatialDifferentialExpressionResult,
     output_dir,
     output_format: str = "pdf",
+    tissue_threshold: int = 5,
+    moran_i_score_threshold: float = 0.9,
+    gene_spatial_pattern_proportion_threshold: float = 0.95,
     cell_type_names: Optional[List[str]] = None,
 ):
     significant_programs = select_significant_spatial_programs(
         stdata=stdata,
         decon_result=decon_result,
         sde_result=sde_result,
+        tissue_threshold=tissue_threshold,
+        moran_i_score_threshold=moran_i_score_threshold,
+        gene_spatial_pattern_proportion_threshold=gene_spatial_pattern_proportion_threshold,
     )
 
     program_ids = defaultdict(lambda: 0)

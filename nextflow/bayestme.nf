@@ -106,7 +106,7 @@ def create_lambda_values_flag(lambda_values) {
     } else {
         var lambda_values_flag = ""
         for (lambda_value in lambda_values) {
-            lambda_values_flag += "--lambda-values ${lambda_value} "
+            lambda_values_flag += "--spatial-smoothing-values ${lambda_value} "
         }
 
         return lambda_values_flag
@@ -130,12 +130,11 @@ process phenotype_selection {
     def n_samples_flag = "--n-samples ${params.phenotype_selection_n_samples}"
     def n_burn_flag = "--n-burn ${params.phenotype_selection_n_burn}"
     def n_thin_flag = "--n-thin ${params.phenotype_selection_n_thin}"
-    def n_gene_flag = "--n-gene ${params.phenotype_selection_n_gene}"
     def n_components_min_flag = "--n-components-min ${params.phenotype_selection_n_components_min}"
-    def phenotype_selection_lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
-    def phenotype_selection_max_ncell_flag = "--max-ncell ${params.phenotype_selection_max_ncell}"
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
     def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
     def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
+    def inference_type_flag = "--inference-type ${params.inference_type}"
     """
     phenotype_selection --adata ${adata} \
         --output-dir . \
@@ -145,12 +144,11 @@ process phenotype_selection {
         ${n_samples_flag} \
         ${n_burn_flag} \
         ${n_thin_flag} \
-        ${n_gene_flag} \
         ${n_components_min_flag} \
-        ${phenotype_selection_lambda_values_flag} \
-        ${phenotype_selection_max_ncell_flag} \
+        ${phenotype_selection_spatial_smoothing_values_flag} \
         ${phenotype_selection_background_noise_flag} \
-        ${phenotype_selection_lda_initialization_flag}
+        ${phenotype_selection_lda_initialization_flag} \
+        ${inference_type_flag}
     """
 }
 
@@ -167,10 +165,10 @@ process spatial_expression {
 
     script:
     def n_spatial_patterns_flag = "--n-spatial-patterns ${params.spatial_expression_n_spatial_patterns}"
-    def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
-    def n_burn_flag = "--n-burn ${params.deconvolution_n_burn}"
-    def n_thin_flag = "--n-thin ${params.deconvolution_n_thin}"
-    def n_gene_flag = "--n-gene ${params.deconvolution_n_gene}"
+    def n_samples_flag = "--n-samples ${params.spatial_expression_n_samples}"
+    def n_burn_flag = "--n-burn ${params.spatial_expression_n_burn}"
+    def n_thin_flag = "--n-thin ${params.spatial_expression_n_thin}"
+    def n_gene_flag = "--n-gene ${params.spatial_expression_n_genes}"
     def simple_flag = params.use_simple_spatial_expression_model ? "--simple" : ""
     def alpha0_flag = "--alpha0 ${params.spatial_expression_alpha0}"
     def prior_var_flag = "--prior-var ${params.spatial_expression_prior_var}"
@@ -222,12 +220,16 @@ process plot_spatial_expression {
         --deconvolution-result ${deconvolution_samples} \
         --sde-result ${sde_samples} \
         ${cell_type_names_flag} \
+        --moran-i-score-threshold ${params.significant_spatial_pattern_moran_i_score_threshold} \
+        --tissue-threshold ${params.significant_spatial_pattern_tissue_threshold} \
+        --gene-spatial-pattern-proportion-threshold ${params.significant_spatial_pattern_gene_spatial_pattern_proportion_threshold} \
         --output-dir .
     """
 }
 
 process read_phenotype_selection_results {
     label 'small_mem'
+    publishDir "${params.outdir}/phenotype_selection_plots"
 
     input:
         path phenotype_selection_result
@@ -237,12 +239,12 @@ process read_phenotype_selection_results {
         path "*.pdf", emit: plots
 
     script:
-    def lambda_values_flag = create_lambda_values_flag(params.phenotype_selection_lambda_values)
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
     """
     process_phenotype_selection_results \
         --plot-output . \
         --phenotype-selection-outputs ${phenotype_selection_result}* \
-        ${lambda_values_flag} \
+        ${phenotype_selection_spatial_smoothing_values_flag} \
         --output-lambda lambda \
         --output-n-components n_components
 
@@ -271,11 +273,11 @@ workflow BAYESTME {
         bleeding_correction.out.adata_output,
         bleeding_correction.out.bleed_correction_output)
 
-    if (params.lambda == null && params.n_components == null) {
-        log.info "No values supplied for lambda and n_components, will run phenotype selection."
-        log.info "${params.phenotype_selection_lambda_values}"
+    if (params.spatial_smoothing_parameter == null && params.n_components == null) {
+        log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
+        log.info "${params.phenotype_selection_spatial_smoothing_values}"
         var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-            params.phenotype_selection_lambda_values,
+            params.phenotype_selection_spatial_smoothing_values,
             params.phenotype_selection_n_components_min,
             params.phenotype_selection_n_components_max,
             params.phenotype_selection_n_fold)
@@ -288,18 +290,20 @@ workflow BAYESTME {
 
         read_phenotype_selection_results( phenotype_selection.out.result.collect() )
     } else {
-        log.info "Got values ${params.lambda} and ${params.n_components} for lambda and n_components, will skip phenotype selection."
+        log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
     }
 
     def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
-    def lambda = params.lambda == null ? read_phenotype_selection_results.out.lambda : params.lambda
+    def lambda = params.spatial_smoothing_parameter == null ? read_phenotype_selection_results.out.lambda : params.spatial_smoothing_parameter
 
     DECONVOLUTION (bleeding_correction.out.adata_output,
         n_components,
         lambda,
         params.n_marker_genes,
         params.marker_gene_alpha_cutoff,
-        params.marker_gene_method
+        params.marker_gene_method,
+        params.deconvolution_use_spatial_guide,
+        params.inference_type
     )
 
     spatial_expression( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )

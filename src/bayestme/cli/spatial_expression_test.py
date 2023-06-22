@@ -45,7 +45,7 @@ def test_spatial_expression():
         "2",
         "--n-burn",
         "100",
-        "--lam2",
+        "--spatial-smoothing-parameter",
         "1000",
         "--simple",
     ]
@@ -112,6 +112,8 @@ def test_spatial_expression_save_state_on_error():
         input_path,
         "--output",
         output,
+        "--seed",
+        "1",
         "--n-spatial-patterns",
         "10",
         "--n-samples",
@@ -120,7 +122,7 @@ def test_spatial_expression_save_state_on_error():
         "2",
         "--n-burn",
         "100",
-        "--lam2",
+        "--spatial-smoothing-parameter",
         "1000",
         "--simple",
     ]

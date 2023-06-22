@@ -15,9 +15,9 @@ from bayestme import spatial_expression, utils, data
 def generate_fake_deconvolve_results(
     n_samples, n_tissue_spots, n_components, n_genes
 ) -> data.DeconvolutionResult:
-    cell_prob_trace = np.random.random((n_samples, n_tissue_spots, n_components + 1))
+    cell_prob_trace = np.random.random((n_samples, n_tissue_spots, n_components))
     cell_num_trace = np.random.poisson(
-        lam=10, size=(n_samples, n_tissue_spots, n_components + 1)
+        lam=10, size=(n_samples, n_tissue_spots, n_components)
     ).astype(np.float64)
     expression_trace = np.random.random((n_samples, n_components, n_genes))
     beta_trace = np.random.random((n_samples, n_components)) * 100.0
@@ -264,7 +264,7 @@ def test_spatial_detection_seed_checkpointing():
 
     ncell_min = 5
     cell_type_filter = (
-        deconvolution_results.cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min
+        deconvolution_results.cell_num_trace[:, :, :].mean(axis=0) > ncell_min
     ).T
     rate = np.array(
         [
@@ -275,7 +275,7 @@ def test_spatial_detection_seed_checkpointing():
     )
     reads = deconvolution_results.reads_trace.mean(axis=0).astype(int)
     lambdas = (
-        deconvolution_results.cell_num_trace.mean(axis=0)[:, 1:, None]
+        deconvolution_results.cell_num_trace.mean(axis=0)[:, :, None]
         * rate.mean(axis=0)[None]
     )
     Y_igk = reads
@@ -378,9 +378,7 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
     sde_2.initialize()
 
     ncell_min = 5
-    cell_type_filter = (
-        deconvolution_results.cell_num_trace[:, :, 1:].mean(axis=0) > ncell_min
-    ).T
+    cell_type_filter = (deconvolution_results.cell_num_trace.mean(axis=0) > ncell_min).T
     rate = np.array(
         [
             deconvolution_results.beta_trace[i][:, None]
@@ -390,7 +388,7 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
     )
     reads = deconvolution_results.reads_trace.mean(axis=0).astype(int)
     lambdas = (
-        deconvolution_results.cell_num_trace.mean(axis=0)[:, 1:, None]
+        deconvolution_results.cell_num_trace.mean(axis=0)[:, :, None]
         * rate.mean(axis=0)[None]
     )
     Y_igk = reads

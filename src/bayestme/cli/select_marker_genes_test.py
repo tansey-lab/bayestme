@@ -6,8 +6,9 @@ from unittest import mock
 import numpy as np
 
 import bayestme
+import bayestme.data
+import bayestme.synthetic_data
 from bayestme import data
-from bayestme import deconvolution_test, deconvolution
 from bayestme.cli import select_marker_genes
 
 
@@ -33,11 +34,11 @@ def test_select_marker_genes():
         layout=data.Layout.SQUARE,
     )
 
-    deconvolve_results = deconvolution_test.create_toy_deconvolve_result(
+    deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
         n_nodes=dataset.n_spot_in, n_components=5, n_samples=100, n_gene=dataset.n_gene
     )
 
-    deconvolution.add_deconvolution_results_to_dataset(
+    bayestme.data.add_deconvolution_results_to_dataset(
         stdata=dataset, result=deconvolve_results
     )
 
@@ -64,7 +65,7 @@ def test_select_marker_genes():
     try:
         with mock.patch("sys.argv", command_line_arguments):
             with mock.patch(
-                "bayestme.deconvolution.select_marker_genes"
+                "bayestme.marker_genes.select_marker_genes"
             ) as select_marker_genes_mock:
                 select_marker_genes_mock.return_value = [
                     np.array([0, 1, 2, 3, 4], dtype=int),

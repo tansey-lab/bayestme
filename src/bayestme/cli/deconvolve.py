@@ -1,17 +1,14 @@
 import argparse
 import logging
 
-import numpy as np
-
-import bayestme.log_config
 import bayestme
-
-try:
-    import bayestme.expression_truth
-except (RuntimeError, ImportError):
-    pass
-
-from bayestme import data, deconvolution
+import bayestme.cli.common
+import bayestme.data
+import bayestme.expression_truth
+import bayestme.log_config
+from bayestme import data
+from bayestme import deconvolution
+from bayestme.common import create_rng
 
 logger = logging.getLogger(__name__)
 
@@ -41,53 +38,7 @@ def get_parser():
         type=str,
         help="Path where DeconvolutionResult will be written h5 format",
     )
-    parser.add_argument("--n-gene", type=int, help="number of genes")
-    parser.add_argument(
-        "--n-components",
-        type=int,
-        help="Number of cell types, expected to be determined from cross validation.",
-        default=None,
-    )
-    parser.add_argument(
-        "--lam2",
-        type=float,
-        help="Smoothness parameter, this tuning parameter expected to be determined"
-        "from cross validation.",
-    )
-    parser.add_argument(
-        "--n-samples",
-        type=int,
-        help="Number of samples from the posterior distribution.",
-        default=100,
-    )
-    parser.add_argument(
-        "--n-burn", type=int, help="Number of burn-in samples", default=1000
-    )
-    parser.add_argument(
-        "--n-thin", type=int, help="Thinning factor for sampling", default=10
-    )
-    parser.add_argument("--random-seed", type=int, help="Random seed", default=0)
-    parser.add_argument(
-        "--background-noise",
-        help="Turn background noise on",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--lda-initialization",
-        help="Turn LDA Initialization on",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "--expression-truth",
-        help="Use expression ground truth from one or matched samples that have been processed "
-        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
-        " for multiple matched samples.",
-        type=str,
-        action="append",
-        default=None,
-    )
+    bayestme.cli.common.add_deconvolution_arguments(parser)
     bayestme.log_config.add_logging_args(parser)
     return parser
 
@@ -95,10 +46,13 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("deconvolution called with arguments: {}".format(args))
 
     dataset: data.SpatialExpressionDataset = data.SpatialExpressionDataset.read_h5(
         args.adata
     )
+
+    rng = create_rng(args.seed)
 
     if args.expression_truth:
         expression_truth_samples = []
@@ -126,26 +80,25 @@ def main():
             "--n-components not explicitly provided, and no expression truth provided."
         )
 
-    rng = np.random.default_rng(seed=args.random_seed)
-
-    results: data.DeconvolutionResult = deconvolution.deconvolve(
-        reads=dataset.reads,
-        edges=dataset.edges,
-        n_gene=args.n_gene,
+    results: data.DeconvolutionResult = deconvolution.sample_from_posterior(
+        data=dataset,
         n_components=n_components,
-        lam2=args.lam2,
+        spatial_smoothing_parameter=args.spatial_smoothing_parameter,
         n_samples=args.n_samples,
-        n_burnin=args.n_burn,
-        n_thin=args.n_thin,
-        bkg=args.background_noise,
-        lda=args.lda_initialization,
+        mcmc_n_burn=args.n_burn,
+        mcmc_n_thin=args.n_thin,
+        n_svi_steps=args.n_svi_steps,
+        background_noise=args.background_noise,
+        lda_initialization=args.lda_initialization,
         expression_truth=expression_truth,
+        inference_type=args.inference_type,
+        use_spatial_guide=args.use_spatial_guide,
         rng=rng,
     )
 
     results.save(args.output)
 
-    deconvolution.add_deconvolution_results_to_dataset(stdata=dataset, result=results)
+    bayestme.data.add_deconvolution_results_to_dataset(stdata=dataset, result=results)
 
     if args.inplace:
         dataset.save(args.adata)

@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 import pandas
-import torch
 import pyro
+import torch
 from pyro import distributions as dist
 from pyro.infer import MCMC, NUTS
 

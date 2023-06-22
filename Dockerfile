@@ -1,5 +1,9 @@
 FROM python:3.9
 
+RUN apt-get update -y && apt-get install -y openjdk-17-jre-headless
+
+RUN cd /usr/bin && curl -s https://get.nextflow.io | bash
+
 RUN apt-get update -y && apt-get install -y libsuitesparse-dev
 
 RUN --mount=type=cache,target=/.cache/pip pip install --upgrade pip

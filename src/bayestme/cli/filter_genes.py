@@ -50,6 +50,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
+    logger.info("filter_genes called with arguments: {}".format(args))
 
     dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 

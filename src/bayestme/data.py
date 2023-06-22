@@ -12,7 +12,8 @@ import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import csr_matrix
 
-from . import utils
+from bayestme import utils
+from bayestme.common import ArrayType
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ def create_anndata_object(
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
         shape=(adata.n_obs, adata.n_obs),
-        dtype=np.bool,
+        dtype=bool,
     )
     adata.obsp[CONNECTIVITIES_ATTR] = connectivities
 
@@ -98,11 +99,11 @@ class SpatialExpressionDataset:
         self.adata: anndata.AnnData = adata
 
     @property
-    def reads(self) -> np.ndarray:
+    def reads(self) -> ArrayType:
         return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
     @property
-    def positions_tissue(self) -> np.ndarray:
+    def positions_tissue(self) -> ArrayType:
         return self.adata[self.adata.obs[IN_TISSUE_ATTR]].obsm[SPATIAL_ATTR]
 
     @property
@@ -118,23 +119,27 @@ class SpatialExpressionDataset:
         return self.adata.n_vars
 
     @property
-    def raw_counts(self) -> np.ndarray:
+    def raw_counts(self) -> ArrayType:
         return self.adata.X
 
     @property
-    def positions(self) -> np.ndarray:
+    def counts(self) -> ArrayType:
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+
+    @property
+    def positions(self) -> ArrayType:
         return self.adata.obsm[SPATIAL_ATTR]
 
     @property
-    def tissue_mask(self) -> np.array:
+    def tissue_mask(self) -> ArrayType:
         return self.adata.obs[IN_TISSUE_ATTR].to_numpy()
 
     @property
-    def gene_names(self) -> np.array:
+    def gene_names(self) -> ArrayType:
         return self.adata.var_names
 
     @property
-    def edges(self) -> np.ndarray:
+    def edges(self) -> ArrayType:
         return np.array(self.adata.obsp[CONNECTIVITIES_ATTR].nonzero()).T
 
     @property
@@ -147,17 +152,17 @@ class SpatialExpressionDataset:
             return self.adata.uns[N_CELL_TYPES_ATTR]
 
     @property
-    def cell_type_probabilities(self) -> Optional[np.ndarray]:
+    def cell_type_probabilities(self) -> Optional[ArrayType]:
         if CELL_TYPE_PROB_ATTR in self.adata.obsm:
             return self.adata[self.tissue_mask].obsm[CELL_TYPE_PROB_ATTR]
 
     @property
-    def cell_type_counts(self) -> Optional[np.ndarray]:
+    def cell_type_counts(self) -> Optional[ArrayType]:
         if CELL_TYPE_COUNT_ATTR in self.adata.obsm:
             return self.adata[self.tissue_mask].obsm[CELL_TYPE_COUNT_ATTR]
 
     @property
-    def marker_gene_names(self) -> Optional[List[np.ndarray]]:
+    def marker_gene_names(self) -> Optional[List[ArrayType]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
 
@@ -169,7 +174,7 @@ class SpatialExpressionDataset:
         return outputs
 
     @property
-    def marker_gene_indices(self) -> Optional[List[np.ndarray]]:
+    def marker_gene_indices(self) -> Optional[List[ArrayType]]:
         if MARKER_GENE_ATTR not in self.adata.varm:
             return
         outputs = []
@@ -187,7 +192,7 @@ class SpatialExpressionDataset:
         return outputs
 
     @property
-    def omega_difference(self) -> Optional[np.ndarray]:
+    def omega_difference(self) -> Optional[ArrayType]:
         if OMEGA_DIFFERENCE_ATTR not in self.adata.varm:
             return
 
@@ -358,6 +363,14 @@ class SpatialExpressionDataset:
         """
         return cls(anndata.read_h5ad(path))
 
+    def copy(self) -> "SpatialExpressionDataset":
+        """
+        Return a copy of this object
+        :return: A copy of this object
+        """
+        ad = self.adata.copy()
+        return SpatialExpressionDataset(ad)
+
 
 class BleedCorrectionResult:
     """
@@ -434,8 +447,8 @@ class PhenotypeSelectionResult:
         :param expression_trace: <N samples> x <N components> x <N markers> matrix
         :param beta_trace: <N samples> x <N components> matrix
         :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
-        :param log_lh_train_trace: -log likelihood for training set
-        :param log_lh_test_trace: -log likelihood for test set
+        :param log_lh_train_trace: total log likelihood for each sample calculated over the non-held out spots
+        :param log_lh_test_trace: total log likelihood for each sample calculated over the held out spots
         :param n_components: Number of cell types for posterior distribution being sampled in this job
         :param lam: Lambda parameter of posterior distribution for this job
         :param fold_number: Index into the k-fold series
@@ -514,10 +527,10 @@ class DeconvolutionResult:
     ):
         """
 
-        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param cell_prob_trace: <N samples> x <N tissue spots> x <N components> matrix
         :param expression_trace: <N samples> x <N components> x <N markers> matrix
         :param beta_trace: <N samples> x <N components> matrix
-        :param cell_num_trace: <N samples> x <N tissue spots> x <N components + 1> matrix
+        :param cell_num_trace: <N samples> x <N tissue spots> x <N components> matrix
         :param reads_trace: <N samples> x <N tissue spots> x <N markers> x <N components>
         :param lam2: lambda smoothing parameter used for the posterior distribution
         :param n_components: N components value for the posterior distribution
@@ -620,6 +633,14 @@ class DeconvolutionResult:
             )
 
         return expression
+
+    @property
+    def nb_probs(self):
+        rates = (
+            self.cell_prob_trace[..., None]
+            * (self.beta_trace[..., None] * self.expression_trace)[:, None, ...]
+        )
+        return rates.sum(axis=2) / rates.sum(axis=(2, 3))[..., None]
 
     @classmethod
     def read_h5(cls, path):
@@ -862,3 +883,32 @@ class SpatialDifferentialExpressionResult:
                 c_samples=c_samples,
                 w_samples=w_samples,
             )
+
+
+def add_deconvolution_results_to_dataset(
+    stdata: SpatialExpressionDataset, result: DeconvolutionResult
+):
+    """
+    Modify stdata in-place to annotate it with selected marker genes
+
+    :param stdata: data.SpatialExpressionDataset to modify
+    :param result: data.DeconvolutionResult to use
+    """
+    cell_num_matrix = result.cell_num_trace.mean(axis=0)
+    cell_prob_matrix = result.cell_prob_trace.mean(axis=0)
+
+    cell_prob_matrix_full = np.zeros((stdata.n_spot, cell_prob_matrix.shape[1]))
+
+    cell_prob_matrix_full[stdata.tissue_mask] = cell_prob_matrix
+
+    cell_num_matrix_full = np.zeros((stdata.n_spot, cell_num_matrix.shape[1]))
+
+    cell_num_matrix_full[stdata.tissue_mask] = cell_num_matrix
+
+    stdata.adata.obsm[CELL_TYPE_PROB_ATTR] = cell_prob_matrix_full
+    stdata.adata.obsm[CELL_TYPE_COUNT_ATTR] = cell_num_matrix_full
+
+    stdata.adata.uns[N_CELL_TYPES_ATTR] = result.n_components
+    stdata.adata.varm[OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
+    stdata.adata.varm[OMEGA_ATTR] = result.omega.T
+    stdata.adata.varm[RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T

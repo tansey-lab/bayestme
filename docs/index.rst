@@ -15,12 +15,12 @@ Contents
     overview
     data_format
     demo_notebooks
-    command_line_interface
+    nextflow
     example_workflow
-    api
     fine_mapping_workflow
-
-    🚀 Github <https://github.com/tansey-lab/bayestme>
+    command_line_interface
+    api
+    Github <https://github.com/tansey-lab/bayestme>
 
 
 Indices and tables
