@@ -220,6 +220,9 @@ process plot_spatial_expression {
         --deconvolution-result ${deconvolution_samples} \
         --sde-result ${sde_samples} \
         ${cell_type_names_flag} \
+        --moran-i-score-threshold ${params.significant_spatial_pattern_moran_i_score_threshold} \
+        --tissue-threshold ${params.significant_spatial_pattern_tissue_threshold} \
+        --gene-spatial-pattern-proportion-threshold ${params.significant_spatial_pattern_gene_spatial_pattern_proportion_threshold} \
         --output-dir .
     """
 }

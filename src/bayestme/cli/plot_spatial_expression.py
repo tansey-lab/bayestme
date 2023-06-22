@@ -29,6 +29,27 @@ def get_parser():
         help="A comma separated list of cell type names to use for plots."
         'For example --cell-type-names "type 1, type 2, type 3"',
     )
+    parser.add_argument(
+        "--moran-i-score-threshold",
+        default=0.9,
+        type=float,
+        help="Moran I score threshold for selecting significant spatial patterns",
+    )
+    parser.add_argument(
+        "--tissue-threshold",
+        default=5,
+        type=int,
+        help="Only consider spots with greater than this many cells of type k for Moran's I "
+        "calculation and cell correlation calculation",
+    )
+    parser.add_argument(
+        "--gene-spatial-pattern-proportion-threshold",
+        default=0.95,
+        type=float,
+        help="Only consider spatial patterns significant where "
+        "greater than this proportion of spots are labeled with spatial "
+        "pattern for at least one gene.",
+    )
     bayestme.log_config.add_logging_args(parser)
 
     return parser
@@ -53,4 +74,7 @@ def main():
         sde_result=sde_result,
         output_dir=args.output_dir,
         cell_type_names=cell_type_names,
+        moran_i_score_threshold=args.moran_i_score_threshold,
+        tissue_threshold=args.tissue_threshold,
+        gene_spatial_pattern_proportion_threshold=args.gene_spatial_pattern_proportion_threshold,
     )

@@ -40,6 +40,12 @@ nextflow run ../main.nf \
   --deconvolution_n_samples 100 \
   --deconvolution_n_thin 1 \
   --seed 1 \
+  --spatial_expression_n_burn 10 \
+  --spatial_expression_n_samples 100 \
+  --spatial_expression_n_thin 1 \
+  --significant_spatial_pattern_tissue_threshold 1 \
+  --significant_spatial_pattern_moran_i_score_threshold 0.7 \
+  --significant_spatial_pattern_gene_spatial_pattern_proportion_threshold 0.5 \
   --inference-type MCMC \
   -resume
 
@@ -59,6 +65,12 @@ nextflow run ../main.nf \
   --phenotype_selection_n_components_max 4 \
   --phenotype_selection_n_components_min 2 \
   --deconvolution_n_burn 10 \
+  --spatial_expression_n_burn 10 \
+  --spatial_expression_n_samples 100 \
+  --spatial_expression_n_thin 1 \
+  --significant_spatial_pattern_tissue_threshold 1 \
+  --significant_spatial_pattern_moran_i_score_threshold 0.7 \
+  --significant_spatial_pattern_gene_spatial_pattern_proportion_threshold 0.5 \
   --n_marker_genes 3 \
   --marker_gene_alpha_cutoff 1 \
   --outdir ./results \

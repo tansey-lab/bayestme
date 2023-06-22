@@ -315,6 +315,10 @@ class SpatialDifferentialExpression:
                 # Posterior mu term
                 mu_part = b_j
 
+                # All the spots were filtered out, so nothing to sample
+                if Precision.size == 0:
+                    continue
+
                 # Sample the spatial pattern
                 self.W[
                     k, j, cell_type_filter[k]
@@ -462,7 +466,7 @@ class SpatialDifferentialExpression:
                     else:
                         Y_igk = reads_trace[step - n_burn]
                         lambdas = (
-                            cell_num_trace[step - n_burn, :, 1:, None]
+                            cell_num_trace[step - n_burn, :, :, None]
                             * rate[step - n_burn, None]
                         )
                         n_obs_vector = np.transpose(lambdas, [0, 2, 1])
@@ -666,6 +670,14 @@ def select_significant_spatial_programs(
         cell_number_mask = (
             decon_result.cell_num_trace[:, :, k].mean(axis=0) > tissue_threshold
         )
+        if cell_number_mask.sum() == 0:
+            logger.info(
+                "Excluding component {} from plotting, zero spots met tissue threshold {}".format(
+                    k, tissue_threshold
+                )
+            )
+            continue
+
         n_cells_of_type_k_per_spot = decon_result.cell_num_trace[:, :, k].mean(axis=0)[
             cell_number_mask
         ]
@@ -965,12 +977,18 @@ def plot_significant_spatial_patterns(
     sde_result: data.SpatialDifferentialExpressionResult,
     output_dir,
     output_format: str = "pdf",
+    tissue_threshold: int = 5,
+    moran_i_score_threshold: float = 0.9,
+    gene_spatial_pattern_proportion_threshold: float = 0.95,
     cell_type_names: Optional[List[str]] = None,
 ):
     significant_programs = select_significant_spatial_programs(
         stdata=stdata,
         decon_result=decon_result,
         sde_result=sde_result,
+        tissue_threshold=tissue_threshold,
+        moran_i_score_threshold=moran_i_score_threshold,
+        gene_spatial_pattern_proportion_threshold=gene_spatial_pattern_proportion_threshold,
     )
 
     program_ids = defaultdict(lambda: 0)
