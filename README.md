@@ -1,6 +1,6 @@
 # BayesTME: A unified statistical framework for spatial transcriptomics
 
-![tests](https://github.com/tansey-lab/bayestme/actions/workflows/python-unittest.yml/badge.svg)
+![tests](https://github.com/tansey-lab/bayestme/actions/workflows/tests.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/bayestme/badge/?version=latest)](https://bayestme.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/511984802.svg)](https://zenodo.org/badge/latestdoi/511984802)
 
