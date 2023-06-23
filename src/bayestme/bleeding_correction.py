@@ -567,9 +567,9 @@ def get_suggested_initial_local_weight(dataset: data.SpatialExpressionDataset) -
     return math.sqrt(dataset.tissue_mask.sum())
 
 
-def plot_basis_functions(basis_functions, output_dir):
+def plot_basis_functions(basis_functions, output_dir, output_format="pdf"):
     basis_types = ["Out-Tissue", "In-Tissue"]
-    basis_names = ["North", "South", "West", "East"]
+    basis_names = ["North", "South", "West", "East"][::-1]
 
     labels = [(d + t) for t in basis_types for d in basis_names]
 
@@ -580,7 +580,10 @@ def plot_basis_functions(basis_functions, output_dir):
     plt.xlabel("Distance along cardinal direction")
     plt.ylabel("Relative bleed probability")
     plt.legend(loc="upper right")
-    plt.savefig(os.path.join(output_dir, "basis-functions.pdf"), bbox_inches="tight")
+    plt.savefig(
+        os.path.join(output_dir, "basis-functions.{}".format(output_format)),
+        bbox_inches="tight",
+    )
     plt.close()
 
 

@@ -41,10 +41,10 @@ def select_marker_genes(
         if method is MarkerGeneMethod.TIGHT:
             marker_control = deconvolution_result.omega[k] > 1 - alpha
             marker_idx_control = np.argwhere(marker_control).flatten()
-            if marker_idx_control.sum() < n_marker:
+            if marker_idx_control.sum() == 0:
                 raise RuntimeError(
-                    "Less than {} genes satisfy omega > 1 - {}. Only {} genes satify the condition.".format(
-                        n_marker, alpha, marker_idx_control.sum()
+                    "0 genes satisfy omega > 1 - {}. Only {} genes satify the condition.".format(
+                        alpha, marker_idx_control.sum()
                     )
                 )
         elif method is MarkerGeneMethod.FALSE_DISCOVERY_RATE:

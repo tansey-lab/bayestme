@@ -34,7 +34,7 @@ nextflow run ../main.nf \
   --phenotype_selection_n_components_max 4 \
   --phenotype_selection_n_components_min 2 \
   --deconvolution_n_burn 10 \
-  --n_marker_genes 3 \
+  --n_marker_genes 2 \
   --marker_gene_alpha_cutoff 1 \
   --outdir ./results \
   --deconvolution_n_samples 100 \
@@ -65,7 +65,7 @@ nextflow run ../main.nf \
   --phenotype_selection_n_components_max 4 \
   --phenotype_selection_n_components_min 2 \
   --deconvolution_n_burn 10 \
-  --n_marker_genes 3 \
+  --n_marker_genes 2 \
   --marker_gene_alpha_cutoff 1 \
   --outdir ./results \
   --deconvolution_n_samples 100 \
