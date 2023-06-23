@@ -13,9 +13,9 @@ Contents
 
     install
     overview
-    data_format
     demo_notebooks
     nextflow
+    data_format
     example_workflow
     fine_mapping_workflow
     command_line_interface

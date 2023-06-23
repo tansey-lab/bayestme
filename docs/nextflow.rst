@@ -5,11 +5,13 @@ Nextflow
 
 BayesTME provides a nextflow workflow for running the entire pipeline
 
+The only requirements for running the BayesTME nextflow pipeline locally are to install nextflow
+(https://www.nextflow.io/docs/latest/getstarted.html) and docker.
+
 The parameters template is defined in ``nextflow/nextflow.config``.
 
 You can create a yaml file that defines the parameters for your run and execute the pipeline with the following
 command:
-
 
 .. code::
 
