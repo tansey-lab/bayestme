@@ -246,7 +246,9 @@ def generate_demo_dataset():
         ]
     ).T
 
-    locations = np.vstack([np.repeat(np.arange(9), 9), np.tile(np.arange(9), 9)]).T
+    locations = np.vstack([np.tile(np.arange(9), 9), np.repeat(np.arange(9), 9)]).T[
+        ::-1, :
+    ]
 
     return data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,

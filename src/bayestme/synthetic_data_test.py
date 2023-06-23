@@ -1,4 +1,9 @@
 from bayestme import synthetic_data, data
+import bayestme.plot.common
+
+
+def test_generate_demo_dataset():
+    stdata = synthetic_data.generate_demo_dataset()
 
 
 def test_generate_fake_stdataset():
