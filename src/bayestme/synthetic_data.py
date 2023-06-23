@@ -269,6 +269,102 @@ def generate_demo_dataset():
     )
 
 
+def generate_demo_dataset_with_bleeding():
+    """
+    Generate a fake dataset for demonstration of bleeding correction.
+    """
+    slide_tissue = np.array(
+        [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    gene_north_exp = np.array(
+        [
+            [0, 0, 1, 1, 4, 1, 1, 0, 0],
+            [0, 0, 1, 3, 9, 3, 1, 0, 0],
+            [0, 1, 2, 7, 7, 7, 2, 1, 0],
+            [1, 1, 3, 4, 5, 4, 3, 1, 1],
+            [1, 1, 2, 3, 4, 3, 2, 1, 1],
+            [0, 1, 1, 2, 3, 2, 1, 1, 0],
+            [0, 0, 1, 1, 2, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    gene_south_exp = np.array(
+        [
+            [0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 2, 1, 1, 1, 0],
+            [0, 1, 1, 2, 3, 2, 1, 1, 0],
+            [0, 1, 2, 3, 4, 3, 2, 1, 0],
+            [0, 0, 3, 4, 5, 4, 3, 0, 0],
+            [0, 0, 0, 7, 7, 7, 0, 0, 0],
+            [0, 0, 0, 0, 9, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    noise_exp = np.array(
+        [
+            [0, 0, 0, 1, 0, 0, 1, 0, 0],
+            [0, 0, 1, 1, 1, 0, 1, 1, 0],
+            [0, 1, 2, 1, 2, 1, 1, 1, 0],
+            [0, 0, 1, 2, 1, 2, 1, 1, 0],
+            [0, 1, 2, 1, 2, 1, 2, 1, 0],
+            [0, 0, 3, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 2, 2, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    tissue_mask = slide_tissue.flatten() == 1
+
+    raw_counts = np.vstack(
+        [
+            gene_north_exp.flatten(),
+            gene_north_exp.flatten() * 10,
+            gene_south_exp.flatten(),
+            gene_south_exp.flatten() * 10,
+            noise_exp.flatten(),
+            noise_exp.flatten() * 2,
+        ]
+    ).T
+
+    locations = np.vstack([np.tile(np.arange(9), 9), np.repeat(np.arange(9), 9)]).T[
+        ::-1, :
+    ]
+
+    return data.SpatialExpressionDataset.from_arrays(
+        raw_counts=raw_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(
+            [
+                "north_weak",
+                "north_strong",
+                "south_weak",
+                "south_strong",
+                "noise_weak",
+                "noise_strong",
+            ]
+        ),
+        layout=data.Layout.SQUARE,
+        barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+    )
+
+
 def create_deconvolve_dataset(
     n_nodes: int = 12,
     n_components: int = 5,

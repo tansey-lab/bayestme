@@ -3,7 +3,8 @@ import bayestme.plot.common
 
 
 def test_generate_demo_dataset():
-    stdata = synthetic_data.generate_demo_dataset()
+    stdata = synthetic_data.generate_demo_dataset_with_bleeding()
+    bayestme.plot.common.plot_gene_raw_counts(stdata, "north_strong", "/tmp/test.png")
 
 
 def test_generate_fake_stdataset():

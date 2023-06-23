@@ -80,6 +80,7 @@ def plot_colored_spatial_polygon(
     norm=None,
     plotting_coordinates=None,
     normalize=True,
+    border_mask=None,
 ):
     """
     Basic plot of spatial gene expression
@@ -99,6 +100,8 @@ def plot_colored_spatial_polygon(
     """
     if norm is None:
         norm = Normalize(vmin=np.min(values), vmax=np.max(values))
+    if border_mask is None:
+        border_mask = np.ones_like(values, dtype=bool)
 
     ax.set_aspect("equal")
     hcoord, vcoord = get_x_y_arrays_for_layout(coords, layout)
@@ -121,7 +124,7 @@ def plot_colored_spatial_polygon(
         raise NotImplementedError(layout)
 
     # Add colored polygons
-    for x, y, v in zip(hcoord, vcoord, values):
+    for x, y, v, has_border in zip(hcoord, vcoord, values, border_mask):
         polygon = RegularPolygon(
             (x, y),
             numVertices=num_vertices,
@@ -129,7 +132,7 @@ def plot_colored_spatial_polygon(
             orientation=orientation,
             facecolor=colormap(norm(v)) if normalize else colormap(v),
             alpha=1,
-            edgecolor="k",
+            edgecolor="black" if has_border else "white",
             linewidth=0.3,
         )
         ax.add_patch(polygon)
@@ -276,6 +279,7 @@ def plot_gene_raw_counts(
         coords=stdata.positions,
         values=stdata.raw_counts[:, gene_idx],
         layout=stdata.layout,
+        border_mask=stdata.tissue_mask,
     )
 
     fig.savefig(output_file)
