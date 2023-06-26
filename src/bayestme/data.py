@@ -553,7 +553,7 @@ class DeconvolutionResult:
             f["beta_trace"] = self.beta_trace
             f["cell_num_trace"] = self.cell_num_trace
             f["reads_trace"] = self.reads_trace
-            if self.losses:
+            if self.losses is not None:
                 f["losses"] = self.losses
             f.attrs["lam2"] = self.lam2
             f.attrs["n_components"] = self.n_components
