@@ -73,7 +73,7 @@ def main():
         stdata=stdata, marker_genes=marker_genes
     )
 
-    output_dir = os.path.dirname(args.output)
+    output_dir = os.path.dirname(args.adata_output)
 
     bayestme.marker_genes.create_marker_gene_ranking_csvs(
         stdata=stdata, deconvolution_result=deconvolution_result, output_dir=output_dir
