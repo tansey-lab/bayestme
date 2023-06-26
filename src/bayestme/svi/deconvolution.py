@@ -16,6 +16,7 @@ from bayestme import data
 from bayestme.data import SpatialExpressionDataset, DeconvolutionResult
 from bayestme.utils import get_edges
 from bayestme.common import ArrayType
+from matplotlib import pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,7 @@ class BayesTME_VI:
         self.D = construct_edge_adjacency(self.edges)
         self.D = construct_trendfilter(self.D, 0)
         self.sp_reg_coeff = rho
+        self.losses = []
         if expression_truth is not None:
             self.expression_truth = torch.Tensor(expression_truth)
         else:
@@ -221,7 +223,7 @@ class BayesTME_VI:
         pyro.clear_param_store()
         svi = SVI(self.model, guide, self.optimizer, loss=Trace_ELBO())
         for step in tqdm.trange(n_iter):
-            svi.step(self.Obs, self.K, self.G)
+            self.losses.append(svi.step(self.Obs, self.K, self.G))
 
         result = defaultdict(list)
         for _ in tqdm.trange(n_traces):
@@ -266,6 +268,18 @@ class BayesTME_VI:
             lam2=self.sp_reg_coeff,
             n_components=K,
         )
+
+    def plot_loss(self, output_file):
+        """
+        Plot the loss curve
+
+        :param output_file: Where to save the plot
+        """
+        fig, ax = plt.subplots(1)
+        ax.plot(np.arange(len(self.losses)), self.losses)
+        ax.set_xlabel("Step Number")
+        ax.set_ylabel("ELBO")
+        fig.savefig(output_file)
 
 
 def deconvolve(

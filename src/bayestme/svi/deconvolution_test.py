@@ -1,5 +1,6 @@
-import numpy as np
-
+import shutil
+import tempfile
+import os.path
 import numpy as np
 
 import bayestme.expression_truth
@@ -44,6 +45,12 @@ def test_deconvolve_with_no_spatial_guide():
     assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K)
     assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K)
     assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K)
+
+    tempdir = tempfile.mkdtemp()
+    try:
+        svi.plot_loss(os.path.join(tempdir, "test.pdf"))
+    finally:
+        shutil.rmtree(tempdir)
 
 
 def test_deconvolve_with_no_spatial_guide_and_expression_truth():
