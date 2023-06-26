@@ -267,6 +267,7 @@ class BayesTME_VI:
             reads_trace=samples["read_trace"],
             lam2=self.sp_reg_coeff,
             n_components=K,
+            losses=np.array(self.losses),
         )
 
     def plot_loss(self, output_file):
@@ -278,7 +279,7 @@ class BayesTME_VI:
         fig, ax = plt.subplots(1)
         ax.plot(np.arange(len(self.losses)), self.losses)
         ax.set_xlabel("Step Number")
-        ax.set_ylabel("ELBO")
+        ax.set_ylabel("Loss")
         fig.savefig(output_file)
 
 
@@ -306,11 +307,12 @@ def deconvolve(
         except KeyError:
             logger.warning("RNG state init failed, using default")
 
-    return BayesTME_VI(
+    svi = BayesTME_VI(
         stdata=stdata,
         rho=rho,
         expression_truth=expression_truth,
-    ).deconvolution(
+    )
+    return svi.deconvolution(
         n_traces=n_samples,
         n_iter=n_svi_steps,
         K=n_components,
