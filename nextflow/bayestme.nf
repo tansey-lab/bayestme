@@ -1,8 +1,7 @@
 include { DECONVOLUTION } from './deconvolution'
 
-process load_spaceranger {
+process LOAD_SPACERANGER {
     label 'small_mem'
-
 
     input:
         path spaceranger_input_dir
@@ -29,7 +28,7 @@ def create_expression_truth_flag(expression_truth_values) {
     }
 }
 
-process filter_genes {
+process FILTER_GENES {
     label 'small_mem'
     publishDir "${params.outdir}/filter_genes"
 
@@ -54,7 +53,7 @@ process filter_genes {
     """
 }
 
-process bleeding_correction {
+process BLEEDING_CORRECTION {
     label 'big_mem'
     publishDir "${params.outdir}/bleeding_correction"
 
@@ -79,7 +78,7 @@ process bleeding_correction {
     """
 }
 
-process plot_bleeding_correction {
+process PLOT_BLEEDING_CORRECTION {
     label 'small_mem'
     publishDir "${params.outdir}/bleeding_correction_plots"
 
@@ -113,9 +112,8 @@ def create_lambda_values_flag(lambda_values) {
     }
 }
 
-process phenotype_selection {
+process PHENOTYPE_SELECTION {
     label 'big_mem'
-
 
     input:
         val job_index
@@ -152,7 +150,7 @@ process phenotype_selection {
     """
 }
 
-process spatial_expression {
+process SPATIAL_EXPRESSION {
     label 'big_mem'
     publishDir "${params.outdir}/spatial_differential_expression"
 
@@ -201,7 +199,7 @@ def create_cell_type_names_flag(cell_type_names) {
     }
 }
 
-process plot_spatial_expression {
+process PLOT_SPATIAL_EXPRESSION {
     label 'small_mem'
     publishDir "${params.outdir}/spatial_differential_expression_plots"
 
@@ -227,7 +225,7 @@ process plot_spatial_expression {
     """
 }
 
-process read_phenotype_selection_results {
+process READ_PHENOTYPE_SELECTION_RESULTS {
     label 'small_mem'
     publishDir "${params.outdir}/phenotype_selection_plots"
 
@@ -260,18 +258,18 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 
 workflow BAYESTME {
     if (params.input_adata == null) {
-        load_spaceranger(file(params.spaceranger_dir, type: "dir"))
+        LOAD_SPACERANGER(file(params.spaceranger_dir, type: "dir"))
     }
 
-    var adata = params.input_adata == null ? load_spaceranger.out.result : file(params.input_adata)
+    var adata = params.input_adata == null ? LOAD_SPACERANGER.out.result : file(params.input_adata)
 
-    filter_genes(adata)
+    FILTER_GENES(adata)
 
-    bleeding_correction(filter_genes.out.result)
+    BLEEDING_CORRECTION(FILTER_GENES.out.result)
 
-    plot_bleeding_correction(filter_genes.out.result,
-        bleeding_correction.out.adata_output,
-        bleeding_correction.out.bleed_correction_output)
+    PLOT_BLEEDING_CORRECTION(FILTER_GENES.out.result,
+        BLEEDING_CORRECTION.out.adata_output,
+        BLEEDING_CORRECTION.out.bleed_correction_output)
 
     if (params.spatial_smoothing_parameter == null && params.n_components == null) {
         log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
@@ -286,17 +284,17 @@ workflow BAYESTME {
 
         job_indices = Channel.of(0..(n_phenotype_jobs-1))
 
-        phenotype_selection(job_indices, bleeding_correction.out.adata_output)
+        PHENOTYPE_SELECTION(job_indices, BLEEDING_CORRECTION.out.adata_output)
 
-        read_phenotype_selection_results( phenotype_selection.out.result.collect() )
+        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect() )
     } else {
         log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
     }
 
-    def n_components = params.n_components == null ? read_phenotype_selection_results.out.n_components : params.n_components
-    def lambda = params.spatial_smoothing_parameter == null ? read_phenotype_selection_results.out.lambda : params.spatial_smoothing_parameter
+    def n_components = params.n_components == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.n_components : params.n_components
+    def lambda = params.spatial_smoothing_parameter == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.lambda : params.spatial_smoothing_parameter
 
-    DECONVOLUTION (bleeding_correction.out.adata_output,
+    DECONVOLUTION (BLEEDING_CORRECTION.out.adata_output,
         n_components,
         lambda,
         params.n_marker_genes,
@@ -306,7 +304,10 @@ workflow BAYESTME {
         params.inference_type
     )
 
-    spatial_expression( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
-
-    plot_spatial_expression( spatial_expression.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
+    if (params.run_spatial_expression) {
+        SPATIAL_EXPRESSION( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
+        PLOT_SPATIAL_EXPRESSION( SPATIAL_EXPRESSION.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
+    } else {
+        log.info "Skipping spatial expression analysis"
+    }
 }
