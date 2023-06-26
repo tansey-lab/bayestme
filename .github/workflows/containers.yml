@@ -23,3 +23,17 @@ jobs:
           tags: jeffquinnmsk/bayestme:latest
           cache-from: type=registry,ref=jeffquinnmsk/bayestme:latest
           cache-to: type=inline
+  integration:
+    needs:
+      - build-docker
+    name: Run nextflow integration test in docker
+    runs-on: ubuntu-latest
+    container:
+      image: jeffquinnmsk/bayestme:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run integration test
+        run: scripts/test_nextflow_pipeline.sh

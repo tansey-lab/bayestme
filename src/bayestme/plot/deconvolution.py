@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from typing import Optional, List
 
 from matplotlib import cm as cm, pyplot as plt
@@ -164,6 +165,14 @@ def plot_cell_num_scatterpie(
     fig.tight_layout()
     fig.savefig(output_path, bbox_inches="tight")
     plt.close(fig)
+
+
+def plot_loss(deconvolution_results: data.DeconvolutionResult, output_path: str):
+    fig, ax = plt.subplots(1)
+    ax.plot(np.arange(len(deconvolution_results.losses)), deconvolution_results.losses)
+    ax.set_xlabel("Step Number")
+    ax.set_ylabel("Loss")
+    fig.savefig(output_path)
 
 
 def plot_deconvolution(

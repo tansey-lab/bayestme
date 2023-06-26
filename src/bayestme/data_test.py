@@ -60,6 +60,7 @@ def test_serialize_deserialize_deconvolution_results_dataset():
     expression_trace = np.random.random((n_samples, n_components, n_gene))
     beta_trace = np.random.random((n_samples, n_components))
     reads_trace = np.random.random((n_samples, n_nodes, n_gene, n_components))
+    losses = np.random.random((n_samples,))
     lam2 = 1000
 
     dataset = data.DeconvolutionResult(
@@ -70,6 +71,7 @@ def test_serialize_deserialize_deconvolution_results_dataset():
         reads_trace=reads_trace,
         lam2=lam2,
         n_components=n_components,
+        losses=losses,
     )
 
     tmpdir = tempfile.mkdtemp()
@@ -89,7 +91,7 @@ def test_serialize_deserialize_deconvolution_results_dataset():
             new_dataset.expression_trace, dataset.expression_trace
         )
         np.testing.assert_array_equal(new_dataset.beta_trace, dataset.beta_trace)
-
+        np.testing.assert_array_equal(new_dataset.losses, dataset.losses)
         assert new_dataset.lam2 == dataset.lam2
         assert new_dataset.n_components == dataset.n_components
     finally:

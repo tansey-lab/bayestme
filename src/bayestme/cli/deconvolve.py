@@ -1,11 +1,13 @@
 import argparse
 import logging
+import os
 
 import bayestme
 import bayestme.cli.common
 import bayestme.data
 import bayestme.expression_truth
 import bayestme.log_config
+import bayestme.plot.deconvolution
 from bayestme import data
 from bayestme import deconvolution
 from bayestme.common import create_rng
@@ -97,6 +99,11 @@ def main():
     )
 
     results.save(args.output)
+
+    if results.losses is not None:
+        bayestme.plot.deconvolution.plot_loss(
+            results.losses, os.path.join(os.path.dirname(args.output), "loss.pdf")
+        )
 
     bayestme.data.add_deconvolution_results_to_dataset(stdata=dataset, result=results)
 

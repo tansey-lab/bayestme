@@ -25,6 +25,7 @@ process DECONVOLVE {
     output:
         path 'dataset_deconvolved.h5ad', emit: adata_output
         path 'deconvolution_samples.h5', emit: samples
+        path 'loss.pdf', emit: loss_plot
 
     script:
     def n_samples_flag = "--n-samples ${params.deconvolution_n_samples}"
