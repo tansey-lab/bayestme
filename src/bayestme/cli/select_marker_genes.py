@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 import bayestme.log_config
 import bayestme.marker_genes
@@ -70,6 +71,21 @@ def main():
 
     bayestme.marker_genes.add_marker_gene_results_to_dataset(
         stdata=stdata, marker_genes=marker_genes
+    )
+
+    output_dir = os.path.dirname(args.output)
+
+    bayestme.marker_genes.create_marker_gene_ranking_csvs(
+        stdata=stdata, deconvolution_result=deconvolution_result, output_dir=output_dir
+    )
+
+    bayestme.marker_genes.create_top_gene_lists(
+        stdata=stdata,
+        deconvolution_result=deconvolution_result,
+        n_marker_genes=args.n_marker_genes,
+        alpha=args.alpha,
+        marker_gene_method=args.marker_gene_method,
+        output_path=os.path.join(output_dir, "marker_genes.csv"),
     )
 
     if args.inplace:

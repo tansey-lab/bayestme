@@ -66,6 +66,7 @@ process SELECT_MARKER_GENES {
 
     output:
         path 'dataset_deconvolved_marker_genes.h5ad', emit: result
+        path '*.csv', emit: csvs
 
     script:
     """
