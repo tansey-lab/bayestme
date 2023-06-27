@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from typing import Optional
 
+import random
 import numpy as np
 import pyro
 import pyro.distributions as dist
@@ -297,13 +298,9 @@ def deconvolve(
         try:
             seed_sequence = np.random.SeedSequence(rng.__getstate__()["state"]["state"])
             states = seed_sequence.generate_state(3)
-            pyro.util.set_rng_state(
-                {
-                    "pyro": states[0],
-                    "torch": states[1],
-                    "numpy": states[2],
-                }
-            )
+            np.random.seed(states[0])
+            torch.manual_seed(states[1])
+            random.seed(states[2])
         except KeyError:
             logger.warning("RNG state init failed, using default")
 

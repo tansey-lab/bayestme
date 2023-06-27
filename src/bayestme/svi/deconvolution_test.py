@@ -29,12 +29,19 @@ def test_deconvolve_with_no_spatial_guide():
         layout=data.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
-
-    svi = deconvolution.BayesTME_VI(stdata=stdata)
     K = 3
     n_traces = 7
-    result = svi.deconvolution(
-        K=K, n_iter=10, n_traces=n_traces, use_spatial_guide=False
+
+    rng = np.random.default_rng(42)
+
+    result = bayestme.svi.deconvolution.deconvolve(
+        stdata=stdata,
+        n_components=K,
+        rho=0.5,
+        n_svi_steps=10,
+        n_samples=n_traces,
+        use_spatial_guide=False,
+        rng=rng,
     )
 
     assert result.beta_trace.shape == (
@@ -45,12 +52,6 @@ def test_deconvolve_with_no_spatial_guide():
     assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K)
     assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K)
     assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K)
-
-    tempdir = tempfile.mkdtemp()
-    try:
-        svi.plot_loss(os.path.join(tempdir, "test.pdf"))
-    finally:
-        shutil.rmtree(tempdir)
 
 
 def test_deconvolve_with_no_spatial_guide_and_expression_truth():
@@ -77,11 +78,20 @@ def test_deconvolve_with_no_spatial_guide_and_expression_truth():
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
-    svi = deconvolution.BayesTME_VI(stdata=stdata, expression_truth=expression_truth)
-
+    K = 3
     n_traces = 7
-    result = svi.deconvolution(
-        K=K, n_iter=10, n_traces=n_traces, use_spatial_guide=False
+
+    rng = np.random.default_rng(42)
+
+    result = bayestme.svi.deconvolution.deconvolve(
+        stdata=stdata,
+        n_components=K,
+        rho=0.5,
+        n_svi_steps=10,
+        n_samples=n_traces,
+        use_spatial_guide=False,
+        expression_truth=expression_truth,
+        rng=rng,
     )
 
     assert result.beta_trace.shape == (
@@ -115,11 +125,20 @@ def test_deconvolve_with_spatial_guide():
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
-    svi = deconvolution.BayesTME_VI(stdata=stdata)
     K = 3
     n_traces = 7
-    result = svi.deconvolution(
-        K=K, n_iter=10, n_traces=n_traces, use_spatial_guide=True
+
+    rng = np.random.default_rng(42)
+
+    result = bayestme.svi.deconvolution.deconvolve(
+        stdata=stdata,
+        n_components=K,
+        rho=0.5,
+        n_svi_steps=10,
+        n_samples=n_traces,
+        use_spatial_guide=True,
+        expression_truth=None,
+        rng=rng,
     )
 
     assert result.beta_trace.shape == (
@@ -156,11 +175,19 @@ def test_deconvolve_with_spatial_guide_and_expression_truth():
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
-    svi = deconvolution.BayesTME_VI(stdata=stdata, expression_truth=expression_truth)
-
     n_traces = 7
-    result = svi.deconvolution(
-        K=K, n_iter=10, n_traces=n_traces, use_spatial_guide=True
+
+    rng = np.random.default_rng(42)
+
+    result = bayestme.svi.deconvolution.deconvolve(
+        stdata=stdata,
+        n_components=K,
+        rho=0.5,
+        n_svi_steps=10,
+        n_samples=n_traces,
+        use_spatial_guide=True,
+        expression_truth=expression_truth,
+        rng=rng,
     )
 
     assert result.beta_trace.shape == (
