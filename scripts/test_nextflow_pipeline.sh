@@ -39,7 +39,7 @@ nextflow run ../main.nf \
   --outdir ./results \
   --deconvolution_n_samples 100 \
   --deconvolution_n_thin 1 \
-  --seed 1 \
+  --seed 42 \
   --spatial_expression_n_burn 10 \
   --spatial_expression_n_samples 100 \
   --spatial_expression_n_thin 1 \
@@ -70,7 +70,7 @@ nextflow run ../main.nf \
   --outdir ./results \
   --deconvolution_n_samples 100 \
   --deconvolution_n_thin 1 \
-  --seed 1 \
+  --seed 42 \
   --spatial_expression_n_burn 10 \
   --spatial_expression_n_samples 100 \
   --spatial_expression_n_thin 1 \

@@ -171,6 +171,7 @@ process SPATIAL_EXPRESSION {
     def alpha0_flag = "--alpha0 ${params.spatial_expression_alpha0}"
     def prior_var_flag = "--prior-var ${params.spatial_expression_prior_var}"
     def n_cell_min_flag = "--n-cell-min ${params.spatial_expression_n_cell_min}"
+    def seed_flag = "--seed ${params.seed}"
     """
     spatial_expression --adata ${adata} \
         --output sde_samples.h5 \
