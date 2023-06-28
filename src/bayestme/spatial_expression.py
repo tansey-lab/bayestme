@@ -374,6 +374,8 @@ class SpatialDifferentialExpression:
                     np.clip(n_obs[None, :, g, k], 1e-6, None),
                     1 - thetas,
                 )
+
+                logprobs = np.clip(logprobs, -1e40, 0)
                 logprobs = logprobs.sum(axis=1)
                 logprior = np.log(self.Gamma[k])
                 p = stable_softmax(logprobs + logprior)
@@ -381,7 +383,6 @@ class SpatialDifferentialExpression:
 
     def sample_pattern_probs(self):
         # Conjugate Dirichlet update
-        # print(H.shape, alpha.shape, H.max())
         for k, H_k in enumerate(self.H.T):
             self.Gamma[k] = self.rng.dirichlet(
                 np.array([(H_k == s).sum() for s in range(self.alpha.shape[0])])
@@ -445,7 +446,7 @@ class SpatialDifferentialExpression:
             reads = reads_trace.mean(axis=0).astype(int)
             lambdas = cell_num_trace.mean(axis=0)[:, :, None] * rate.mean(axis=0)[None]
         else:
-            cell_type_filter = (cell_num_trace.mean(axis=0)[:, :] > ncell_min).T
+            cell_type_filter = (cell_num_trace[:, :] > ncell_min).T
             rate = beta_trace[:, None] * expression_trace
             reads = reads_trace.astype(int)
             lambdas = cell_num_trace[:, :, None] * rate[None]
