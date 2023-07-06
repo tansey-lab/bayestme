@@ -31,8 +31,7 @@ nextflow run ../main.nf \
   --phenotype_selection_n_fold 2 \
   --phenotype_selection_n_burn 10 \
   --phenotype_selection_n_thin 1 \
-  --phenotype_selection_n_components_max 4 \
-  --phenotype_selection_n_components_min 2 \
+  --n_components 2 \
   --deconvolution_n_burn 10 \
   --n_marker_genes 2 \
   --marker_gene_alpha_cutoff 1 \
@@ -46,7 +45,7 @@ nextflow run ../main.nf \
   --significant_spatial_pattern_tissue_threshold 1 \
   --significant_spatial_pattern_moran_i_score_threshold 0.7 \
   --significant_spatial_pattern_gene_spatial_pattern_proportion_threshold 0.5 \
-  --inference-type MCMC \
+  --inference_type MCMC \
   -resume
 
 cd ..

@@ -118,6 +118,9 @@ process PHENOTYPE_SELECTION {
     input:
         val job_index
         path adata
+        val phenotype_selection_spatial_smoothing_values
+        val n_components_min
+        val n_components_max
 
     output:
         path 'fold_*.h5ad', emit: result
@@ -128,8 +131,9 @@ process PHENOTYPE_SELECTION {
     def n_samples_flag = "--n-samples ${params.phenotype_selection_n_samples}"
     def n_burn_flag = "--n-burn ${params.phenotype_selection_n_burn}"
     def n_thin_flag = "--n-thin ${params.phenotype_selection_n_thin}"
-    def n_components_min_flag = "--n-components-min ${params.phenotype_selection_n_components_min}"
-    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
+    def n_components_min_flag = "--n-components-min ${n_components_min}"
+    def n_components_max_flag = "--n-components-max ${n_components_max}"
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(phenotype_selection_spatial_smoothing_values)
     def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
     def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
     def inference_type_flag = "--inference-type ${params.inference_type}"
@@ -143,6 +147,7 @@ process PHENOTYPE_SELECTION {
         ${n_burn_flag} \
         ${n_thin_flag} \
         ${n_components_min_flag} \
+        ${n_components_max_flag} \
         ${phenotype_selection_spatial_smoothing_values_flag} \
         ${phenotype_selection_background_noise_flag} \
         ${phenotype_selection_lda_initialization_flag} \
@@ -232,13 +237,14 @@ process READ_PHENOTYPE_SELECTION_RESULTS {
 
     input:
         path phenotype_selection_result
+        val phenotype_selection_spatial_smoothing_values
     output:
         env LAMBDA, emit: lambda
         env N_COMPONENTS, emit: n_components
         path "*.pdf", emit: plots
 
     script:
-    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(params.phenotype_selection_spatial_smoothing_values)
+    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(phenotype_selection_spatial_smoothing_values)
     """
     process_phenotype_selection_results \
         --plot-output . \
@@ -254,13 +260,28 @@ process READ_PHENOTYPE_SELECTION_RESULTS {
 
 def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_components, n_folds) {
     log.info "${lambdas}"
-    return lambdas.size() * (max_n_components - min_n_components) * n_folds
+    return lambdas.size() * ((max_n_components + 1) - min_n_components) * n_folds
 }
 
 workflow BAYESTME {
     if (params.input_adata == null) {
         LOAD_SPACERANGER(file(params.spaceranger_dir, type: "dir"))
     }
+
+    var phenotype_selection_spatial_smoothing_values = null
+
+    if (params.inference_type == "SVI" && params.phenotype_selection_spatial_smoothing_values == null) {
+        log.info "params.inference_type: ${params.inference_type}"
+        phenotype_selection_spatial_smoothing_values = [0.5, 1, 2, 3, 5]
+    } else if (params.inference_type == "MCMC" && params.phenotype_selection_spatial_smoothing_values == null) {
+        log.info "params.inference_type: ${params.inference_type}"
+        phenotype_selection_spatial_smoothing_values = [1, 10, 100, 1000, 10000]
+    } else {
+        log.info "params.inference_type: ${params.inference_type}"
+        phenotype_selection_spatial_smoothing_values = params.phenotype_selection_spatial_smoothing_values
+    }
+
+    log.info "phenotype_selection_spatial_smoothing_values: ${phenotype_selection_spatial_smoothing_values}"
 
     var adata = params.input_adata == null ? LOAD_SPACERANGER.out.result : file(params.input_adata)
 
@@ -275,8 +296,9 @@ workflow BAYESTME {
     if (params.spatial_smoothing_parameter == null && params.n_components == null) {
         log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
         log.info "${params.phenotype_selection_spatial_smoothing_values}"
+
         var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-            params.phenotype_selection_spatial_smoothing_values,
+            phenotype_selection_spatial_smoothing_values,
             params.phenotype_selection_n_components_min,
             params.phenotype_selection_n_components_max,
             params.phenotype_selection_n_fold)
@@ -285,9 +307,33 @@ workflow BAYESTME {
 
         job_indices = Channel.of(0..(n_phenotype_jobs-1))
 
-        PHENOTYPE_SELECTION(job_indices, BLEEDING_CORRECTION.out.adata_output)
+        PHENOTYPE_SELECTION(
+            job_indices,
+            BLEEDING_CORRECTION.out.adata_output,
+            phenotype_selection_spatial_smoothing_values,
+            params.phenotype_selection_n_components_min,
+            params.phenotype_selection_n_components_max)
+        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
+    } else if (params.spatial_smoothing_parameter == null && params.n_components != null) {
+        log.info "No value supplied for spatial_smoothing_parameter, will run phenotype selection."
+        log.info "${params.phenotype_selection_spatial_smoothing_values}"
+        var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
+            phenotype_selection_spatial_smoothing_values,
+            params.n_components,
+            params.n_components,
+            params.phenotype_selection_n_fold)
 
-        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect() )
+        log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
+
+        job_indices = Channel.of(0..(n_phenotype_jobs-1))
+
+        PHENOTYPE_SELECTION(
+            job_indices,
+            BLEEDING_CORRECTION.out.adata_output,
+            phenotype_selection_spatial_smoothing_values,
+            params.n_components,
+            params.n_components)
+        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
     } else {
         log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
     }
