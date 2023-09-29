@@ -1,7 +1,10 @@
 include { DECONVOLUTION } from './deconvolution'
 
 process LOAD_SPACERANGER {
-    label 'small_mem'
+    label 'process_single'
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path spaceranger_input_dir
@@ -29,7 +32,11 @@ def create_expression_truth_flag(expression_truth_values) {
 }
 
 process FILTER_GENES {
-    label 'small_mem'
+    label 'process_single'
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
+
     publishDir "${params.outdir}/filter_genes"
 
     input:
@@ -54,7 +61,12 @@ process FILTER_GENES {
 }
 
 process BLEEDING_CORRECTION {
-    label 'big_mem'
+    label 'process_high_memory'
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
+
     publishDir "${params.outdir}/bleeding_correction"
 
     input:
@@ -79,7 +91,13 @@ process BLEEDING_CORRECTION {
 }
 
 process PLOT_BLEEDING_CORRECTION {
-    label 'small_mem'
+    label 'process_single'
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
+
+
     publishDir "${params.outdir}/bleeding_correction_plots"
 
     input:
@@ -113,7 +131,12 @@ def create_lambda_values_flag(lambda_values) {
 }
 
 process PHENOTYPE_SELECTION {
-    label 'big_mem'
+    label 'process_high_memory'
+    label 'process_long'
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         val job_index
@@ -156,8 +179,13 @@ process PHENOTYPE_SELECTION {
 }
 
 process SPATIAL_EXPRESSION {
-    label 'big_mem'
+    label 'process_high_memory'
+    label 'process_long'
+
     publishDir "${params.outdir}/spatial_differential_expression"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path adata
@@ -206,8 +234,12 @@ def create_cell_type_names_flag(cell_type_names) {
 }
 
 process PLOT_SPATIAL_EXPRESSION {
-    label 'small_mem'
+    label 'process_single'
+
     publishDir "${params.outdir}/spatial_differential_expression_plots"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path sde_samples
@@ -232,8 +264,12 @@ process PLOT_SPATIAL_EXPRESSION {
 }
 
 process READ_PHENOTYPE_SELECTION_RESULTS {
-    label 'small_mem'
+    label 'process_single'
+
     publishDir "${params.outdir}/phenotype_selection_plots"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path phenotype_selection_result

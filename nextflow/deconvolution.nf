@@ -12,8 +12,13 @@ def create_expression_truth_flag(expression_truth_values) {
 }
 
 process DECONVOLVE {
-    label 'big_mem'
+    label 'process_high_memory'
+    label 'process_long'
+
     publishDir "${params.outdir}/deconvolution"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path adata
@@ -54,8 +59,11 @@ process DECONVOLVE {
 }
 
 process SELECT_MARKER_GENES {
-    label 'small_mem'
+    label 'process_single'
     publishDir "${params.outdir}/marker_gene_selection"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://jeffquinnmsk/bayestme:latest':
+        'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path adata
@@ -80,7 +88,8 @@ process SELECT_MARKER_GENES {
 }
 
 process PLOT_DECONVOLUTION {
-    label 'small_mem'
+    label 'process_single'
+
     publishDir "${params.outdir}/deconvolution_plots"
 
     input:
