@@ -301,7 +301,7 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 
 workflow BAYESTME {
     take:
-        spaceranger_dir
+        input
 
     main:
         log.info "spaceranger_dir: ${spaceranger_dir}"
