@@ -264,97 +264,104 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 }
 
 workflow BAYESTME {
-    if (params.input_adata == null) {
-        LOAD_SPACERANGER(file(params.spaceranger_dir, type: "dir"))
-    }
+    take:
+        spaceranger_dir
 
-    var phenotype_selection_spatial_smoothing_values = null
+    main:
+        log.info "spaceranger_dir: ${spaceranger_dir}"
 
-    if (params.inference_type == "SVI" && params.phenotype_selection_spatial_smoothing_values == null) {
-        log.info "params.inference_type: ${params.inference_type}"
-        phenotype_selection_spatial_smoothing_values = [0.5, 1, 2, 3, 5]
-    } else if (params.inference_type == "MCMC" && params.phenotype_selection_spatial_smoothing_values == null) {
-        log.info "params.inference_type: ${params.inference_type}"
-        phenotype_selection_spatial_smoothing_values = [1, 10, 100, 1000, 10000]
-    } else {
-        log.info "params.inference_type: ${params.inference_type}"
-        phenotype_selection_spatial_smoothing_values = params.phenotype_selection_spatial_smoothing_values
-    }
+        LOAD_SPACERANGER(spaceranger_dir)
 
-    log.info "phenotype_selection_spatial_smoothing_values: ${phenotype_selection_spatial_smoothing_values}"
+        var phenotype_selection_spatial_smoothing_values = null
 
-    var adata = params.input_adata == null ? LOAD_SPACERANGER.out.result : file(params.input_adata)
+        if (params.inference_type == "SVI" && (params.phenotype_selection_spatial_smoothing_values == null ||
+                params.phenotype_selection_spatial_smoothing_values.length == 0)) {
+            log.info "params.inference_type: ${params.inference_type}"
+            phenotype_selection_spatial_smoothing_values = [0.5, 1, 2, 3, 5]
+        } else if (params.inference_type == "MCMC" && (params.phenotype_selection_spatial_smoothing_values == null ||
+                params.phenotype_selection_spatial_smoothing_values.length == 0)) {
+            log.info "params.inference_type: ${params.inference_type}"
+            phenotype_selection_spatial_smoothing_values = [1, 10, 100, 1000, 10000]
+        } else {
+            log.info "params.inference_type: ${params.inference_type}"
+            phenotype_selection_spatial_smoothing_values = params.phenotype_selection_spatial_smoothing_values
+        }
 
-    FILTER_GENES(adata)
+        log.info "phenotype_selection_spatial_smoothing_values: ${phenotype_selection_spatial_smoothing_values}"
 
-    BLEEDING_CORRECTION(FILTER_GENES.out.result)
+        var adata = params.input_adata == null ? LOAD_SPACERANGER.out.result : file(params.input_adata)
 
-    PLOT_BLEEDING_CORRECTION(FILTER_GENES.out.result,
-        BLEEDING_CORRECTION.out.adata_output,
-        BLEEDING_CORRECTION.out.bleed_correction_output)
+        FILTER_GENES(adata)
 
-    if (params.spatial_smoothing_parameter == null && params.n_components == null) {
-        log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
-        log.info "${params.phenotype_selection_spatial_smoothing_values}"
+        BLEEDING_CORRECTION(FILTER_GENES.out.result)
 
-        var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-            phenotype_selection_spatial_smoothing_values,
-            params.phenotype_selection_n_components_min,
-            params.phenotype_selection_n_components_max,
-            params.phenotype_selection_n_fold)
-
-        log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
-
-        job_indices = Channel.of(0..(n_phenotype_jobs-1))
-
-        PHENOTYPE_SELECTION(
-            job_indices,
+        PLOT_BLEEDING_CORRECTION(FILTER_GENES.out.result,
             BLEEDING_CORRECTION.out.adata_output,
-            phenotype_selection_spatial_smoothing_values,
-            params.phenotype_selection_n_components_min,
-            params.phenotype_selection_n_components_max)
-        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
-    } else if (params.spatial_smoothing_parameter == null && params.n_components != null) {
-        log.info "No value supplied for spatial_smoothing_parameter, will run phenotype selection."
-        log.info "${params.phenotype_selection_spatial_smoothing_values}"
-        var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-            phenotype_selection_spatial_smoothing_values,
-            params.n_components,
-            params.n_components,
-            params.phenotype_selection_n_fold)
+            BLEEDING_CORRECTION.out.bleed_correction_output)
 
-        log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
+        if (params.spatial_smoothing_parameter == null && params.n_components == null) {
+            log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
+            log.info "${params.phenotype_selection_spatial_smoothing_values}"
 
-        job_indices = Channel.of(0..(n_phenotype_jobs-1))
+            var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
+                phenotype_selection_spatial_smoothing_values,
+                params.phenotype_selection_n_components_min,
+                params.phenotype_selection_n_components_max,
+                params.phenotype_selection_n_fold)
 
-        PHENOTYPE_SELECTION(
-            job_indices,
-            BLEEDING_CORRECTION.out.adata_output,
-            phenotype_selection_spatial_smoothing_values,
-            params.n_components,
-            params.n_components)
-        READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
-    } else {
-        log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
-    }
+            log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
 
-    def n_components = params.n_components == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.n_components : params.n_components
-    def lambda = params.spatial_smoothing_parameter == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.lambda : params.spatial_smoothing_parameter
+            job_indices = Channel.of(0..(n_phenotype_jobs-1))
 
-    DECONVOLUTION (BLEEDING_CORRECTION.out.adata_output,
-        n_components,
-        lambda,
-        params.n_marker_genes,
-        params.marker_gene_alpha_cutoff,
-        params.marker_gene_method,
-        params.deconvolution_use_spatial_guide,
-        params.inference_type
-    )
+            PHENOTYPE_SELECTION(
+                job_indices,
+                BLEEDING_CORRECTION.out.adata_output,
+                phenotype_selection_spatial_smoothing_values,
+                params.phenotype_selection_n_components_min,
+                params.phenotype_selection_n_components_max)
+            READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
+        } else if (params.spatial_smoothing_parameter == null && params.n_components != null) {
+            log.info "No value supplied for spatial_smoothing_parameter, will run phenotype selection."
+            log.info "${params.phenotype_selection_spatial_smoothing_values}"
+            var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
+                phenotype_selection_spatial_smoothing_values,
+                params.n_components,
+                params.n_components,
+                params.phenotype_selection_n_fold)
 
-    if (params.run_spatial_expression) {
-        SPATIAL_EXPRESSION( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
-        PLOT_SPATIAL_EXPRESSION( SPATIAL_EXPRESSION.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
-    } else {
-        log.info "Skipping spatial expression analysis"
-    }
+            log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
+
+            job_indices = Channel.of(0..(n_phenotype_jobs-1))
+
+            PHENOTYPE_SELECTION(
+                job_indices,
+                BLEEDING_CORRECTION.out.adata_output,
+                phenotype_selection_spatial_smoothing_values,
+                params.n_components,
+                params.n_components)
+            READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
+        } else {
+            log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
+        }
+
+        def n_components = params.n_components == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.n_components : params.n_components
+        def lambda = params.spatial_smoothing_parameter == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.lambda : params.spatial_smoothing_parameter
+
+        DECONVOLUTION (BLEEDING_CORRECTION.out.adata_output,
+            n_components,
+            lambda,
+            params.n_marker_genes,
+            params.marker_gene_alpha_cutoff,
+            params.marker_gene_method,
+            params.deconvolution_use_spatial_guide,
+            params.inference_type
+        )
+        var final_output = null
+
+        if (params.run_spatial_expression) {
+            SPATIAL_EXPRESSION( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
+            PLOT_SPATIAL_EXPRESSION( SPATIAL_EXPRESSION.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
+        }
+    emit:
+        DECONVOLUTION.out.adata
 }
