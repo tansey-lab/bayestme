@@ -127,69 +127,6 @@ process PLOT_BLEEDING_CORRECTION {
     """
 }
 
-def create_lambda_values_flag(lambda_values) {
-    if (lambda_values == null) {
-        return ""
-    } else {
-        var lambda_values_flag = ""
-        for (lambda_value in lambda_values) {
-            lambda_values_flag += "--spatial-smoothing-values ${lambda_value} "
-        }
-
-        return lambda_values_flag
-    }
-}
-
-process PHENOTYPE_SELECTION {
-    label 'process_high_memory'
-    label 'process_long'
-
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest':
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
-    publishDir "${params.outdir}/${sample_name}/phenotype_selection"
-
-    input:
-        val job_index
-        path adata
-        val phenotype_selection_spatial_smoothing_values
-        val n_components_min
-        val n_components_max
-        val sample_name
-
-    output:
-        path 'fold_*.h5ad', emit: result
-
-    script:
-    def n_fold_flag = "--n-fold ${params.bayestme_phenotype_selection_n_fold}"
-    def n_splits_flag = "--n-splits ${params.bayestme_phenotype_selection_n_splits}"
-    def n_samples_flag = "--n-samples ${params.bayestme_phenotype_selection_n_samples}"
-    def n_burn_flag = "--n-burn ${params.bayestme_phenotype_selection_n_burn}"
-    def n_thin_flag = "--n-thin ${params.bayestme_phenotype_selection_n_thin}"
-    def n_components_min_flag = "--n-components-min ${n_components_min}"
-    def n_components_max_flag = "--n-components-max ${n_components_max}"
-    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(phenotype_selection_spatial_smoothing_values)
-    def phenotype_selection_background_noise_flag = params.bayestme_background_noise ? "--background-noise" : ""
-    def phenotype_selection_lda_initialization_flag = params.bayestme_lda_initialization ? "--lda-initialization" : ""
-    def inference_type_flag = "--inference-type ${params.bayestme_inference_type}"
-    """
-    phenotype_selection --adata ${adata} \
-        --output-dir . \
-        --job-index ${job_index} \
-        ${n_fold_flag} \
-        ${n_splits_flag} \
-        ${n_samples_flag} \
-        ${n_burn_flag} \
-        ${n_thin_flag} \
-        ${n_components_min_flag} \
-        ${n_components_max_flag} \
-        ${phenotype_selection_spatial_smoothing_values_flag} \
-        ${phenotype_selection_background_noise_flag} \
-        ${phenotype_selection_lda_initialization_flag} \
-        ${inference_type_flag}
-    """
-}
-
 process SPATIAL_EXPRESSION {
     label 'process_high_memory'
     label 'process_long'
@@ -277,42 +214,6 @@ process PLOT_SPATIAL_EXPRESSION {
     """
 }
 
-process READ_PHENOTYPE_SELECTION_RESULTS {
-    label 'process_single'
-
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest':
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
-    publishDir "${params.outdir}/${sample_name}/plots/phenotype_selection"
-
-    input:
-        path phenotype_selection_result
-        val phenotype_selection_spatial_smoothing_values
-        val sample_name
-    output:
-        env LAMBDA, emit: lambda
-        env N_COMPONENTS, emit: n_components
-        path "*.pdf", emit: plots
-
-    script:
-    def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(phenotype_selection_spatial_smoothing_values)
-    """
-    process_phenotype_selection_results \
-        --plot-output . \
-        --phenotype-selection-outputs ${phenotype_selection_result}* \
-        ${phenotype_selection_spatial_smoothing_values_flag} \
-        --output-lambda lambda \
-        --output-n-components n_components
-
-    LAMBDA=`cat lambda`
-    N_COMPONENTS=`cat n_components`
-    """
-}
-
-def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_components, n_folds) {
-    log.info "${lambdas}"
-    return lambdas.size() * ((max_n_components + 1) - min_n_components) * n_folds
-}
 
 workflow BAYESTME {
     take:

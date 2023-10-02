@@ -1,16 +1,3 @@
-def create_expression_truth_flag(expression_truth_values) {
-    if (expression_truth_values == null || expression_truth_values.length == 0) {
-        return ""
-    } else {
-        var expression_truth_flag = ""
-        for (expression_truth_value in expression_truth_values) {
-            expression_truth_flag += "--expression-truth ${expression_truth_value} "
-        }
-
-        return expression_truth_flag
-    }
-}
-
 process DECONVOLVE {
     label 'process_high_memory'
     label 'process_long'
@@ -41,7 +28,6 @@ process DECONVOLVE {
     def lda_initialization_flag = params.bayestme_lda_initialization ? "--lda-initialization" : ""
     def background_noise_flag = params.bayestme_background_noise ? "--background-noise" : ""
     def use_spatial_guide_flag = use_spatial_guide ? "--use-spatial-guide" : ""
-    def expression_truth_flag = create_expression_truth_flag(params.bayestme_expression_truth_files)
     """
     deconvolve --adata ${adata} \
         --adata-output dataset_deconvolved.h5ad \
@@ -54,7 +40,6 @@ process DECONVOLVE {
         ${use_spatial_guide_flag} \
         ${background_noise_flag} \
         ${lda_initialization_flag} \
-        ${expression_truth_flag} \
         ${inference_type_flag}
     """
 }
