@@ -16,11 +16,10 @@ process FILTER_GENES {
     def n_top_by_standard_deviation_flag = params.bayestme_n_top_by_standard_deviation == null ? "": "--n-top-by-standard-deviation ${params.bayestme_n_top_by_standard_deviation}"
     def spot_threshold_flag = params.bayestme_spot_threshold == null ? "" : "--spot-threshold ${params.bayestme_spot_threshold}"
     """
-    mkdir -p "${sample_name}"
     filter_genes --adata ${dataset} \
         ${filter_ribosomal_genes_flag} \
         ${n_top_by_standard_deviation_flag} \
         ${spot_threshold_flag} \
-        --output "${sample_name}/dataset_filtered.h5ad"
+        --output dataset_filtered.h5ad
     """
 }
