@@ -1,22 +1,31 @@
 include { DECONVOLUTION } from './deconvolution'
 
-process LOAD_SPACERANGER {
+process LOAD_INPUT {
     label 'process_single'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
+    publishDir params.outdir
 
     input:
-        path spaceranger_input_dir
+        path input
 
     output:
-        path 'dataset.h5ad', emit: result
+        path '*.h5ad', emit: result
+        val sample_name, emit: sample_name
 
     script:
-    """
-    load_spaceranger --input ${spaceranger_input_dir} --output dataset.h5ad
-    """
+        sample_name = input.getSimpleName()
+        if (input.endsWith('.h5ad') && file(input).isFile())
+            """
+            cp ${input} ${input.getSimpleName()}.h5ad
+            """
+        else if (file(input).isDirectory())
+            """
+            load_spaceranger --input ${input} --output ${input.getSimpleName()}.h5ad
+            """
 }
+
 
 def create_expression_truth_flag(expression_truth_values) {
     if (expression_truth_values == null || expression_truth_values.length == 0) {
@@ -36,27 +45,28 @@ process FILTER_GENES {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
-
-    publishDir "${params.outdir}/filter_genes"
+    publishDir "${params.outdir}/${sample_name}"
 
     input:
         path dataset
+        val sample_name
 
     output:
         path 'dataset_filtered.h5ad', emit: result
 
     script:
-    def filter_ribosomal_genes_flag = params.filter_ribosomal_genes == null ? "" : "--filter-ribosomal-genes"
-    def n_top_by_standard_deviation_flag = params.n_top_by_standard_deviation == null ? "": "--n-top-by-standard-deviation ${params.n_top_by_standard_deviation}"
-    def spot_threshold_flag = params.spot_threshold == null ? "" : "--spot-threshold ${params.spot_threshold}"
-    def expression_truth_flag = create_expression_truth_flag(params.expression_truth_files)
+    def filter_ribosomal_genes_flag = params.bayestme_filter_ribosomal_genes == null ? "" : "--filter-ribosomal-genes"
+    def n_top_by_standard_deviation_flag = params.bayestme_n_top_by_standard_deviation == null ? "": "--n-top-by-standard-deviation ${params.bayestme_n_top_by_standard_deviation}"
+    def spot_threshold_flag = params.bayestme_spot_threshold == null ? "" : "--spot-threshold ${params.bayestme_spot_threshold}"
+    def expression_truth_flag = create_expression_truth_flag(params.bayestme_expression_truth_files)
     """
+    mkdir -p "${sample_name}"
     filter_genes --adata ${dataset} \
         ${filter_ribosomal_genes_flag} \
         ${n_top_by_standard_deviation_flag} \
         ${spot_threshold_flag} \
         ${expression_truth_flag} \
-        --output dataset_filtered.h5ad
+        --output "${sample_name}/dataset_filtered.h5ad"
     """
 }
 
@@ -66,20 +76,20 @@ process BLEEDING_CORRECTION {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
-
-    publishDir "${params.outdir}/bleeding_correction"
+    publishDir "${params.bayestme_outdir}/${sample_name}"
 
     input:
         path dataset
+        val sample_name
 
     output:
-        path 'dataset_filtered_corrected.h5ad', emit: adata_output
-        path 'bleed_correction_results.h5', emit: bleed_correction_output
+        path "${sample_name}/dataset_filtered_corrected.h5ad", emit: adata_output
+        path "${sample_name}/bleed_correction_results.h5", emit: bleed_correction_output
 
     script:
-    def n_top_flag = params.bleed_correction_n_top_genes == null ? "" : "--n-top ${params.bleed_correction_n_top_genes}"
-    def bleed_correction_n_em_steps_flag = params.bleed_correction_n_em_steps == null ? "" : "--max-steps ${params.bleed_correction_n_em_steps}"
-    def bleed_correction_local_weight_flag = params.bleed_correction_local_weight == null ? "" : "--local-weight ${params.bleed_correction_local_weight}"
+    def n_top_flag = params.bayestme_bleed_correction_n_top_genes == null ? "" : "--n-top ${params.bayestme_bleed_correction_n_top_genes}"
+    def bleed_correction_n_em_steps_flag = params.bayestme_bleed_correction_n_em_steps == null ? "" : "--max-steps ${params.bayestme_bleed_correction_n_em_steps}"
+    def bleed_correction_local_weight_flag = params.bayestme_bleed_correction_local_weight == null ? "" : "--local-weight ${params.bayestme_bleed_correction_local_weight}"
     """
     bleeding_correction --adata ${dataset} \
         ${n_top_flag} \
@@ -96,20 +106,20 @@ process PLOT_BLEEDING_CORRECTION {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
-
-
-    publishDir "${params.outdir}/bleeding_correction_plots"
+    publishDir "${params.outdir}/${sample_name}/plots/bleeding_correction"
 
     input:
         path filtered_anndata
         path bleed_corrected_anndata
         path bleed_correction_results
+        val sample_name
 
     output:
-        path '*.pdf', emit: result
+        path "${sample_name}/plots/bleeding_correction/*.pdf", emit: result
 
     script:
     """
+    mkdir -p "${sample_name}/plots/bleeding_correction"
     plot_bleeding_correction --raw-adata ${filtered_anndata} \
         --corrected-adata ${bleed_corrected_anndata} \
         --bleed-correction-results ${bleed_correction_results} \
@@ -137,6 +147,7 @@ process PHENOTYPE_SELECTION {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
+    publishDir "${params.outdir}/${sample_name}/phenotype_selection"
 
     input:
         val job_index
@@ -144,22 +155,23 @@ process PHENOTYPE_SELECTION {
         val phenotype_selection_spatial_smoothing_values
         val n_components_min
         val n_components_max
+        val sample_name
 
     output:
         path 'fold_*.h5ad', emit: result
 
     script:
-    def n_fold_flag = "--n-fold ${params.phenotype_selection_n_fold}"
-    def n_splits_flag = "--n-splits ${params.phenotype_selection_n_splits}"
-    def n_samples_flag = "--n-samples ${params.phenotype_selection_n_samples}"
-    def n_burn_flag = "--n-burn ${params.phenotype_selection_n_burn}"
-    def n_thin_flag = "--n-thin ${params.phenotype_selection_n_thin}"
+    def n_fold_flag = "--n-fold ${params.bayestme_phenotype_selection_n_fold}"
+    def n_splits_flag = "--n-splits ${params.bayestme_phenotype_selection_n_splits}"
+    def n_samples_flag = "--n-samples ${params.bayestme_phenotype_selection_n_samples}"
+    def n_burn_flag = "--n-burn ${params.bayestme_phenotype_selection_n_burn}"
+    def n_thin_flag = "--n-thin ${params.bayestme_phenotype_selection_n_thin}"
     def n_components_min_flag = "--n-components-min ${n_components_min}"
     def n_components_max_flag = "--n-components-max ${n_components_max}"
     def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(phenotype_selection_spatial_smoothing_values)
-    def phenotype_selection_background_noise_flag = params.background_noise ? "--background-noise" : ""
-    def phenotype_selection_lda_initialization_flag = params.lda_initialization ? "--lda-initialization" : ""
-    def inference_type_flag = "--inference-type ${params.inference_type}"
+    def phenotype_selection_background_noise_flag = params.bayestme_background_noise ? "--background-noise" : ""
+    def phenotype_selection_lda_initialization_flag = params.bayestme_lda_initialization ? "--lda-initialization" : ""
+    def inference_type_flag = "--inference-type ${params.bayestme_inference_type}"
     """
     phenotype_selection --adata ${adata} \
         --output-dir . \
@@ -182,29 +194,30 @@ process SPATIAL_EXPRESSION {
     label 'process_high_memory'
     label 'process_long'
 
-    publishDir "${params.outdir}/spatial_differential_expression"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
+    publishDir "${params.outdir}/${sample_name}"
 
     input:
         path adata
         path deconvolution_samples
+        val sample_name
 
     output:
         path 'sde_samples.h5', emit: samples
 
     script:
-    def n_spatial_patterns_flag = "--n-spatial-patterns ${params.spatial_expression_n_spatial_patterns}"
-    def n_samples_flag = "--n-samples ${params.spatial_expression_n_samples}"
-    def n_burn_flag = "--n-burn ${params.spatial_expression_n_burn}"
-    def n_thin_flag = "--n-thin ${params.spatial_expression_n_thin}"
-    def n_gene_flag = "--n-gene ${params.spatial_expression_n_genes}"
-    def simple_flag = params.use_simple_spatial_expression_model ? "--simple" : ""
-    def alpha0_flag = "--alpha0 ${params.spatial_expression_alpha0}"
-    def prior_var_flag = "--prior-var ${params.spatial_expression_prior_var}"
-    def n_cell_min_flag = "--n-cell-min ${params.spatial_expression_n_cell_min}"
-    def seed_flag = "--seed ${params.seed}"
+    def n_spatial_patterns_flag = "--n-spatial-patterns ${params.bayestme_spatial_expression_n_spatial_patterns}"
+    def n_samples_flag = "--n-samples ${params.bayestme_spatial_expression_n_samples}"
+    def n_burn_flag = "--n-burn ${params.bayestme_spatial_expression_n_burn}"
+    def n_thin_flag = "--n-thin ${params.bayestme_spatial_expression_n_thin}"
+    def n_gene_flag = "--n-gene ${params.bayestme_spatial_expression_n_genes}"
+    def simple_flag = params.bayestme_use_simple_spatial_expression_model ? "--simple" : ""
+    def alpha0_flag = "--alpha0 ${params.bayestme_spatial_expression_alpha0}"
+    def prior_var_flag = "--prior-var ${params.bayestme_spatial_expression_prior_var}"
+    def n_cell_min_flag = "--n-cell-min ${params.bayestme_spatial_expression_n_cell_min}"
+    def seed_flag = "--seed ${params.bayestme_seed}"
     """
     spatial_expression --adata ${adata} \
         --output sde_samples.h5 \
@@ -236,29 +249,30 @@ def create_cell_type_names_flag(cell_type_names) {
 process PLOT_SPATIAL_EXPRESSION {
     label 'process_single'
 
-    publishDir "${params.outdir}/spatial_differential_expression_plots"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
+    publishDir "${params.outdir}/${sample_name}/plots/spatial_expression"
 
     input:
         path sde_samples
         path deconvolution_samples
         path adata
+        val sample_name
 
     output:
         path '*.pdf', emit: result, optional: true
 
     script:
-    def cell_type_names_flag = create_cell_type_names_flag(params.cell_type_names)
+    def cell_type_names_flag = create_cell_type_names_flag(params.bayestme_cell_type_names)
     """
     plot_spatial_expression --adata ${adata} \
         --deconvolution-result ${deconvolution_samples} \
         --sde-result ${sde_samples} \
         ${cell_type_names_flag} \
-        --moran-i-score-threshold ${params.significant_spatial_pattern_moran_i_score_threshold} \
-        --tissue-threshold ${params.significant_spatial_pattern_tissue_threshold} \
-        --gene-spatial-pattern-proportion-threshold ${params.significant_spatial_pattern_gene_spatial_pattern_proportion_threshold} \
+        --moran-i-score-threshold ${params.bayestme_significant_spatial_pattern_moran_i_score_threshold} \
+        --tissue-threshold ${params.bayestme_significant_spatial_pattern_tissue_threshold} \
+        --gene-spatial-pattern-proportion-threshold ${params.bayestme_significant_spatial_pattern_gene_spatial_pattern_proportion_threshold} \
         --output-dir .
     """
 }
@@ -266,14 +280,15 @@ process PLOT_SPATIAL_EXPRESSION {
 process READ_PHENOTYPE_SELECTION_RESULTS {
     label 'process_single'
 
-    publishDir "${params.outdir}/phenotype_selection_plots"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest':
         'docker.io/jeffquinnmsk/bayestme:latest' }"
+    publishDir "${params.outdir}/${sample_name}/plots/phenotype_selection"
 
     input:
         path phenotype_selection_result
         val phenotype_selection_spatial_smoothing_values
+        val sample_name
     output:
         env LAMBDA, emit: lambda
         env N_COMPONENTS, emit: n_components
@@ -302,102 +317,45 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 workflow BAYESTME {
     take:
         input
+        n_components
 
     main:
-        log.info "spaceranger_dir: ${spaceranger_dir}"
+        LOAD_INPUT( input )
 
-        LOAD_SPACERANGER(spaceranger_dir)
+        FILTER_GENES( LOAD_INPUT.out.result, LOAD_INPUT.out.sample_name )
 
-        var phenotype_selection_spatial_smoothing_values = null
-
-        if (params.inference_type == "SVI" && (params.phenotype_selection_spatial_smoothing_values == null ||
-                params.phenotype_selection_spatial_smoothing_values.length == 0)) {
-            log.info "params.inference_type: ${params.inference_type}"
-            phenotype_selection_spatial_smoothing_values = [0.5, 1, 2, 3, 5]
-        } else if (params.inference_type == "MCMC" && (params.phenotype_selection_spatial_smoothing_values == null ||
-                params.phenotype_selection_spatial_smoothing_values.length == 0)) {
-            log.info "params.inference_type: ${params.inference_type}"
-            phenotype_selection_spatial_smoothing_values = [1, 10, 100, 1000, 10000]
-        } else {
-            log.info "params.inference_type: ${params.inference_type}"
-            phenotype_selection_spatial_smoothing_values = params.phenotype_selection_spatial_smoothing_values
-        }
-
-        log.info "phenotype_selection_spatial_smoothing_values: ${phenotype_selection_spatial_smoothing_values}"
-
-        var adata = params.input_adata == null ? LOAD_SPACERANGER.out.result : file(params.input_adata)
-
-        FILTER_GENES(adata)
-
-        BLEEDING_CORRECTION(FILTER_GENES.out.result)
+        BLEEDING_CORRECTION( FILTER_GENES.out.result, LOAD_INPUT.out.sample_name )
 
         PLOT_BLEEDING_CORRECTION(FILTER_GENES.out.result,
             BLEEDING_CORRECTION.out.adata_output,
-            BLEEDING_CORRECTION.out.bleed_correction_output)
+            BLEEDING_CORRECTION.out.bleed_correction_output,
+            LOAD_INPUT.out.sample_name )
 
-        if (params.spatial_smoothing_parameter == null && params.n_components == null) {
-            log.info "No values supplied for spatial_smoothing_parameter and n_components, will run phenotype selection."
-            log.info "${params.phenotype_selection_spatial_smoothing_values}"
-
-            var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-                phenotype_selection_spatial_smoothing_values,
-                params.phenotype_selection_n_components_min,
-                params.phenotype_selection_n_components_max,
-                params.phenotype_selection_n_fold)
-
-            log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
-
-            job_indices = Channel.of(0..(n_phenotype_jobs-1))
-
-            PHENOTYPE_SELECTION(
-                job_indices,
-                BLEEDING_CORRECTION.out.adata_output,
-                phenotype_selection_spatial_smoothing_values,
-                params.phenotype_selection_n_components_min,
-                params.phenotype_selection_n_components_max)
-            READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
-        } else if (params.spatial_smoothing_parameter == null && params.n_components != null) {
-            log.info "No value supplied for spatial_smoothing_parameter, will run phenotype selection."
-            log.info "${params.phenotype_selection_spatial_smoothing_values}"
-            var n_phenotype_jobs = calculate_n_phenotype_selection_jobs(
-                phenotype_selection_spatial_smoothing_values,
-                params.n_components,
-                params.n_components,
-                params.phenotype_selection_n_fold)
-
-            log.info "Will need to run ${n_phenotype_jobs} jobs for phenotype selection."
-
-            job_indices = Channel.of(0..(n_phenotype_jobs-1))
-
-            PHENOTYPE_SELECTION(
-                job_indices,
-                BLEEDING_CORRECTION.out.adata_output,
-                phenotype_selection_spatial_smoothing_values,
-                params.n_components,
-                params.n_components)
-            READ_PHENOTYPE_SELECTION_RESULTS( PHENOTYPE_SELECTION.out.result.collect(), phenotype_selection_spatial_smoothing_values )
-        } else {
-            log.info "Got values ${params.spatial_smoothing_parameter} and ${params.n_components} for spatial_smoothing_parameter and n_components, will skip phenotype selection."
-        }
-
-        def n_components = params.n_components == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.n_components : params.n_components
-        def lambda = params.spatial_smoothing_parameter == null ? READ_PHENOTYPE_SELECTION_RESULTS.out.lambda : params.spatial_smoothing_parameter
-
-        DECONVOLUTION (BLEEDING_CORRECTION.out.adata_output,
+        DECONVOLUTION (
+            BLEEDING_CORRECTION.out.adata_output,
+            LOAD_INPUT.out.sample_name,
             n_components,
-            lambda,
-            params.n_marker_genes,
-            params.marker_gene_alpha_cutoff,
-            params.marker_gene_method,
-            params.deconvolution_use_spatial_guide,
-            params.inference_type
+            params.bayestme_spatial_smoothing_parameter,
+            params.bayestme_n_marker_genes,
+            params.bayestme_marker_gene_alpha_cutoff,
+            params.bayestme_marker_gene_method,
+            params.bayestme_deconvolution_use_spatial_guide,
+            params.bayestme_inference_type
         )
-        var final_output = null
 
-        if (params.run_spatial_expression) {
-            SPATIAL_EXPRESSION( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples )
-            PLOT_SPATIAL_EXPRESSION( SPATIAL_EXPRESSION.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata )
+        if (params.bayestme_run_spatial_expression) {
+            SPATIAL_EXPRESSION( DECONVOLUTION.out.adata, DECONVOLUTION.out.samples, LOAD_INPUT.out.sample_name )
+            PLOT_SPATIAL_EXPRESSION( SPATIAL_EXPRESSION.out.samples, DECONVOLUTION.out.samples, DECONVOLUTION.out.adata, LOAD_INPUT.out.sample_name )
         }
     emit:
-        DECONVOLUTION.out.adata
+        adata = DECONVOLUTION.out.adata
+        sample_name = LOAD_INPUT.out.sample_name
+        deconvolution_samples = DECONVOLUTION.out.samples
+        deconvolution_plots = PLOT_DECONVOLUTION.out.deconvolution_plots
+        bleeding_correction_results = BLEEDING_CORRECTION.out.bleed_correction_output
+        bleeding_correction_plots = PLOT_BLEEDING_CORRECTION.out.result
+        marker_gene_lists = SELECT_MARKER_GENES.out.csvs
+        sde_samples = SPATIAL_EXPRESSION.out.samples, optional: true
+        sde_plots = PLOT_SPATIAL_EXPRESSION.out.result, optional: true
+
 }

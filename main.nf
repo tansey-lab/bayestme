@@ -1,5 +1,8 @@
-include { BAYESTME } from './nextflow/bayestme'
+include { BAYESTME, LOAD_SPACERANGER } from './nextflow/bayestme'
 
 workflow {
-    BAYESTME (params.spaceranger_dir)
+    BAYESTME(
+        params.input,
+        params.n_components
+    )
 }
