@@ -2,18 +2,15 @@ process DECONVOLVE {
     label 'process_high_memory'
     label 'process_long'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest':
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 'docker://jeffquinnmsk/bayestme:latest': 'docker.io/jeffquinnmsk/bayestme:latest' }"
+
     publishDir "${params.outdir}/${sample_name}"
 
     input:
         path adata
-        val n_components
-        val spatial_smoothing_parameter
-        val use_spatial_guide
-        val inference_type
         val sample_name
+        val n_components
+
 
     output:
         path 'dataset_deconvolved.h5ad', emit: adata_output
@@ -47,17 +44,13 @@ process DECONVOLVE {
 process SELECT_MARKER_GENES {
     label 'process_single'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest':
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 'docker://jeffquinnmsk/bayestme:latest': 'docker.io/jeffquinnmsk/bayestme:latest' }"
+
     publishDir "${params.outdir}/${sample_name}"
 
     input:
         path adata
         path deconvolution_samples
-        val n_marker_genes
-        val marker_gene_alpha_cutoff
-        val marker_gene_method
         val sample_name
 
     output:
@@ -68,16 +61,17 @@ process SELECT_MARKER_GENES {
     """
     select_marker_genes --adata ${adata} \
         --adata-output dataset_deconvolved_marker_genes.h5ad \
-        --deconvolution-result ${deconvolution_samples} \
-        --n-marker-genes ${n_marker_genes} \
-        --alpha ${marker_gene_alpha_cutoff} \
-        --marker-gene-method ${marker_gene_method}
+        --deconvolution-result ${params.bayestme_deconvolution_samples} \
+        --n-marker-genes ${params.bayestme_n_marker_genes} \
+        --alpha ${params.bayestme_marker_gene_alpha_cutoff} \
+        --marker-gene-method ${params.bayestme_marker_gene_method}
     """
 }
 
 process PLOT_DECONVOLUTION {
     label 'process_single'
     publishDir "${params.outdir}/${sample_name}/plots/deconvolution"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 'docker://jeffquinnmsk/bayestme:latest': 'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
         path adata
@@ -95,38 +89,27 @@ process PLOT_DECONVOLUTION {
 
 workflow DECONVOLUTION {
     take:
-        adata
-        sample_name
-        n_components
-        spatial_smoothing_parameter
-        n_marker_genes
-        marker_gene_alpha_cutoff
-        marker_gene_method
-        use_spatial_guide
-        inference_type
+    adata
+    sample_name
+    n_components
 
     main:
-        DECONVOLVE (adata,
-            n_components,
-            spatial_smoothing_parameter,
-            use_spatial_guide,
-            inference_type,
-            sample_name)
+    DECONVOLVE (adata,
+            sample_name,
+            n_components)
 
-        SELECT_MARKER_GENES (
+    SELECT_MARKER_GENES (
             DECONVOLVE.out.adata_output,
             DECONVOLVE.out.samples,
-            n_marker_genes,
-            marker_gene_alpha_cutoff,
-            marker_gene_method,
             sample_name)
 
-        PLOT_DECONVOLUTION (
+    PLOT_DECONVOLUTION (
             SELECT_MARKER_GENES.out.result,
             sample_name)
 
     emit:
-        plots = PLOT_DECONVOLUTION.out.deconvolution_plots
-        adata = SELECT_MARKER_GENES.out.result
-        samples = DECONVOLVE.out.samples
+    plots = PLOT_DECONVOLUTION.out.deconvolution_plots
+    adata = SELECT_MARKER_GENES.out.result
+    samples = DECONVOLVE.out.samples
+    marker_genes = SELECT_MARKER_GENES.out.csvs
 }
