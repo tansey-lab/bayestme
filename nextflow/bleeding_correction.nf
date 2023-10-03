@@ -45,7 +45,6 @@ process PLOT_BLEEDING_CORRECTION {
 
     script:
     """
-    mkdir -p "${sample_name}/plots/bleeding_correction"
     plot_bleeding_correction --raw-adata ${filtered_anndata} \
         --corrected-adata ${bleed_corrected_anndata} \
         --bleed-correction-results ${bleed_correction_results} \
