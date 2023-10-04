@@ -13,6 +13,13 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#deconvolve
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+  - select_marker_genes:
+      description:
+        Perform marker gene selection
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#select-marker-genes
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#select-marker-genes
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
   - plot_deconvolution:
       description: |
         Create various plots for the deconvolution results.
@@ -35,24 +42,32 @@ input:
       type: integer
       description: |
         Number of cell types to deconvolve into.
+  - spatial_smoothing_parameter:
+      type: float
+      description: |
+        Spatial smoothing parameter (referred to as lambda in paper)
   - expression_truth:
       type: file
       description: |
-        Reference expression truth data in CSV format
+        Reference expression truth data (optional)
 
 output:
   - adata_deconvolved:
       type: file
       description: anndata file with deconvolution results
-      pattern: "dataset_deconvolved.h5ad"
+      pattern: "dataset_deconvolved_marker_genes.h5ad"
   - deconvolution_samples:
       type: file
       description: Samples from the deconvolution model posterior distribution
       pattern: "deconvolution_samples.h5"
   - plots:
       type: file
-      description: Folder containing plots of bleeding correction results
-      pattern: "plots"
+      description: Deconvolution plots
+      pattern: "plots/*"
+  - marker_gene_lists:
+      type: file
+      description: CSV files of all genes ranked by cell type
+      pattern: "*.csv"
   - versions:
       type: file
       description: File containing software versions

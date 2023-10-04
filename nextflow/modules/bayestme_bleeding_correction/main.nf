@@ -13,7 +13,7 @@ process BAYESTME_BLEEDING_CORRECTION {
     output:
     tuple val(meta), path("dataset_corrected.h5ad")     , emit: adata_corrected
     tuple val(meta), path("bleed_correction_results.h5"), emit: bleed_correction_output
-    tuple val(meta), path("plots", type: "dir")         , emit: plots
+    tuple val(meta), path("plots/*")                    , emit: plots
     path  "versions.yml"                                , emit: versions
 
     when:

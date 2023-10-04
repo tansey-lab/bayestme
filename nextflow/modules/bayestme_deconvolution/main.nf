@@ -10,13 +10,13 @@ process BAYESTME_DECONVOLUTION {
     tuple val(meta), path(adata)
     val n_cell_types
     val spatial_smoothing_parameter
-    val n_marker_genes
+    path expression_truth // optional
 
     output:
     tuple val(meta), path("dataset_deconvolved_marker_genes.h5ad")     , emit: adata_deconvolved
     tuple val(meta), path("deconvolution_samples.h5")                  , emit: deconvolution_samples
-    tuple val(meta), path("plots", type: "dir")                        , emit: plots
-    tuple val(meta), path('*.csv')                                     , emit: csvs
+    tuple val(meta), path("plots/*")                                   , emit: plots
+    tuple val(meta), path('*.csv')                                     , emit: marker_gene_lists
     path  "versions.yml"                                               , emit: versions
 
     when:
@@ -29,7 +29,6 @@ process BAYESTME_DECONVOLUTION {
     def n_components_flag = "--n-components ${n_cell_types}"
     def spatial_smoothing_parameter_flag = "--spatial-smoothing-parameter ${spatial_smoothing_parameter}"
     def expression_truth_flag = expression_truth == null ? "" : "--expression-truth ${task.ext.expression_truth}"
-    def n_marker_genes_flag = "--n-marker-genes ${n_marker_genes}"
     """
     deconvolve --adata ${adata} \
         --adata-output dataset_deconvolved.h5ad \

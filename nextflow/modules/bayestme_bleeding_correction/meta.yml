@@ -1,5 +1,5 @@
 name: bayestme_bleeding_correction
-description: Correct bleeding for 10x Visium data in an anndata object
+description: Correct bleeding for gene counts in an anndata object
 keywords:
   - spatial_transcriptomics
   - spatial

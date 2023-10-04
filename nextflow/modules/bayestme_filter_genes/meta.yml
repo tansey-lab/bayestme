@@ -38,7 +38,8 @@ input:
   - expression_truth:
       type: file
       description: |
-        Filter out genes not found in all expression truth datasets.
+        Reference expression data. If passed the set intersection between the genes in this dataset and in
+        the spatial dataset will be taken. (optional)
 
 output:
   - adata_filtered:
