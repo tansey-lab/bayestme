@@ -1,7 +1,7 @@
 process BAYESTME_DECONVOLUTION {
     tag "$meta.id"
     label 'process_high_memory'
-    label 'process_single'
+    label 'process_long'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest' :
         'docker.io/jeffquinnmsk/bayestme:latest' }"

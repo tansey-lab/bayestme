@@ -1,7 +1,6 @@
 process BAYESTME_FILTER_GENES {
     tag "$meta.id"
     label 'process_single'
-    label 'process_low'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker://jeffquinnmsk/bayestme:latest' :
         'docker.io/jeffquinnmsk/bayestme:latest' }"
