@@ -5,7 +5,7 @@ keywords:
   - spatial
   - visium
 tools:
-  - bayestme_filter_genes:
+  - filter_genes:
       description: |
         This is a command line utility in the BayesTME package that filters out genes from
         an anndata object based on several criteria.
@@ -22,8 +22,8 @@ input:
   - adata:
       type: file
       description: |
-        List of input FastQ files of size 1 and 2 for single-end and paired-end data,
-        respectively.
+        Anndata archive file (.h5ad) as documented at
+        https://bayestme.readthedocs.io/en/latest/data_format.html#input-format
   - filter_ribosomal_genes:
       type: boolean
       description: |

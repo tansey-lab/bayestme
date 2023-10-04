@@ -1,0 +1,61 @@
+name: bayestme_bleeding_correction
+description: Correct bleeding for 10x Visium data in an anndata object
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - bleeding_correction:
+      description: |
+        This is a command line utility in the BayesTME package that applies bleeding correction.
+        The resulting anndata object will have the raw counts replaced with corrected gene counts.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#bleeding-correction
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#bleeding-correction
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+  - plot_bleeding_correction:
+      description: |
+        Create various plots for the bleeding correction results.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-bleeding-correction
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-bleeding-correction
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - adata:
+      type: file
+      description: |
+        Anndata archive file (.h5ad) as documented at
+        https://bayestme.readthedocs.io/en/latest/data_format.html#input-format
+  - n_top:
+      type: integer
+      description: |
+        Use N top genes by standard deviation to calculate the bleeding functions.
+        No genes will be filtered out, so all genes included in the input dataset
+        will be included in the output dataset. This parameter just controls
+        how many genes are considered by the algorithm, since its redundant to look
+        at all the genes when they theoretically all follow the same bleed patterns.
+
+output:
+  - adata_corrected:
+      type: file
+      description: anndata file with bleed-corrected gene counts
+      pattern: "dataset_corrected.h5ad"
+  - bleed_correction_output:
+      type: file
+      description: Bleeding correction model in h5 format
+      pattern: "bleed_correction_results.h5"
+  - plots:
+      type: file
+      description: Folder containing plots of bleeding correction results
+      pattern: "plots"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"
