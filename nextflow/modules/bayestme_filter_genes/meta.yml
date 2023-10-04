@@ -1,0 +1,53 @@
+name: bayestme_filter_genes
+description: Filter genes from an anndata object based on several criteria
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - bayestme_filter_genes:
+      description: |
+        This is a command line utility in the BayesTME package that filters out genes from
+        an anndata object based on several criteria.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#filter-genes
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#filter-genes
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - adata:
+      type: file
+      description: |
+        List of input FastQ files of size 1 and 2 for single-end and paired-end data,
+        respectively.
+  - filter_ribosomal_genes:
+      type: boolean
+      description: |
+        If true, filter ribosomal genes (based on gene name regex)
+      pattern: "true or false"
+  - n_top_by_standard_deviation:
+      type: integer
+      description: Use the top N genes with the highest spatial variance.
+  - spot_threshold:
+      type: float
+      description: Filter genes appearing in greater than the provided threshold of tissue spots.
+  - expression_truth:
+      type: file
+      description: |
+        Filter out genes not found in all expression truth datasets.
+
+output:
+  - adata_filtered:
+      type: file
+      description: anndata file with all genes that did not meet the filtering criteria removed
+      pattern: "dataset_filtered.h5ad"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"
