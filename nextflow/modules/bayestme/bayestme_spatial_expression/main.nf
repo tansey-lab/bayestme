@@ -11,7 +11,7 @@ process BAYESTME_SPATIAL_EXPRESSION {
 
     output:
     tuple val(meta), path("sde_samples.h5")                            , emit: sde_samples
-    tuple val(meta), path("plots/*")                                   , emit: plots
+    tuple val(meta), path("plots/*")                                   , emit: plots, optional: true
     path  "versions.yml"                                               , emit: versions
 
     when:

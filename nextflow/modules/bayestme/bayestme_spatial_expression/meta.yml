@@ -1,4 +1,4 @@
-name: bayestme_spatial_differential_expression
+name: bayestme_spatial_expression
 description: Detect spatial differential expression patterns
 keywords:
   - spatial_transcriptomics
@@ -42,8 +42,9 @@ output:
       pattern: "sde_samples.h5"
   - plots:
       type: file
-      description: Spatial differential expression plots
+      description: Spatial differential expression plots, will not be emitted if no significant results.
       pattern: "plots/*"
+      optional: true
   - versions:
       type: file
       description: File containing software versions
