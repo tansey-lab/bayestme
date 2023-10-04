@@ -1,4 +1,4 @@
-process BLEEDING_CORRECTION {
+process BAYESTME_BLEEDING_CORRECTION {
     tag "$meta.id"
     label 'process_high_memory'
     label 'process_single'
