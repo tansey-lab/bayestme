@@ -1,0 +1,8 @@
+- name: bayestme_bleeding_correction test_bayestme_bleeding_correction
+  command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction -entry test_bayestme_bleeding_correction -c ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction/nextflow.config -c ./nextflow/tests/config/nextflow.config
+  tags:
+    - bayestme_bleeding_correction
+  files:
+    - path: output/bleed_correction_results.h5
+    - path: output/dataset_corrected.h5ad
+    - path: output/plots/basis-functions.pdf

@@ -1,16 +1,12 @@
 #!/usr/bin/env nextflow
-
 nextflow.enable.dsl = 2
 
-include { BAYESTME_BLEEDING_CORRECTION } from '../../../../modules/bayestme/bayestme_bleeding_correction/main.nf'
+include { BAYESTME_BLEEDING_CORRECTION } from '../../../../modules/bayestme/bayestme_bleeding_correction/main'
 
-workflow test_abacas {
-
+workflow test_bayestme_bleeding_correction {
     input = [ [ id:'test', single_end:false ], // meta map
-              file(params.test_data['sarscov2']['illumina']['scaffolds_fasta'], checkIfExists: true)
+              file(params.test_data['bayestme']['filtered_dataset'], checkIfExists: true),
+              10
             ]
-
-    fasta = file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true)
-
-    ABACAS ( input, fasta )
+    BAYESTME_BLEEDING_CORRECTION ( input )
 }
