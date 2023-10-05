@@ -7,8 +7,7 @@ process BAYESTME_BLEEDING_CORRECTION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata)
-    val n_top_genes
+    tuple val(meta), path(adata), val(n_top_genes)
 
     output:
     tuple val(meta), path("dataset_corrected.h5ad")     , emit: adata_corrected

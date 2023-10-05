@@ -1,4 +1,5 @@
 include { BAYESTME_PHENOTYPE_SELECTION } from '../../../modules/bayestme/bayestme_phenotype_selection/main'
+include { BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS } from '../../../modules/bayestme/bayestme_read_phenotype_selection_results/main'
 
 def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_components, n_folds) {
     log.info "${lambdas}"
@@ -46,9 +47,37 @@ def create_tuples(meta,
     output = []
     // iterate through job_indices
     for (job_index in job_indices) {
-        output.add(tuple(meta, adata, job_index))
+        output.add(
+            tuple(meta,
+                  adata,
+                  job_index
+                  min_n_cell_types,
+                  max_n_cell_types,
+                  min_lambda,
+                  max_lambda
+                  n_folds])
+        )
     }
 
+    return output
+}
+
+def get_job_size(meta,
+        adata,
+        min_lambda,
+        max_lambda,
+        min_n_cell_types,
+        max_n_cell_types,
+        n_folds) {
+
+    job_indices = create_job_index_sequence(
+            min_lambda,
+            max_lambda,
+            min_n_cell_types,
+            max_n_cell_types,
+            n_folds)
+
+    return job_indices.size()
 }
 
 workflow BAYESTME_CROSS_VALIDATION {
@@ -59,28 +88,22 @@ workflow BAYESTME_CROSS_VALIDATION {
                     //            val(min_lambda), val(max_lambda), val(n_folds) ]
 
     main:
-    // channel: [ val(meta), path(adata), val(job_index) ]
-    ch_job_indices = ch_adata.flatMap { create_tuples(it[0], it[1], it[2], it[3], it[4], it[5], it[6])) }
-
+    ch_job_data = ch_adata.flatMap { create_tuples(it[0], it[1], it[2], it[3], it[4], it[5], it[6]) }
+    job_sizes = ch_adata.map { tuple(it[0].id, get_job_size(it[0], it[1], it[2], it[3], it[4], it[5], it[6])) }
 
     ch_versions = Channel.empty()
 
-    lambdas = create_lambda_values_flag(min_lambda, max_lambda)
-
     BAYESTME_PHENOTYPE_SELECTION(
-        ch_bam,
-        ch_fasta,
-        ch_fai
+        ch_job_data
     )
-    ch_versions = ch_versions.mix(BAYESTME_PHENOTYPE_SELECTION.out.versions.first())
+
+    grouped_results = BAYESTME_PHENOTYPE_SELECTION.out.result.groupTuple()
+
+    BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS( grouped_results )
 
     emit:
-    aberrations_bed = WISECONDORX_PREDICT.out.aberrations_bed   // channel: [ val(meta), path(bed) ]
-    bins_bed        = WISECONDORX_PREDICT.out.bins_bed          // channel: [ val(meta), path(bed) ]
-    segments_bed    = WISECONDORX_PREDICT.out.segments_bed      // channel: [ val(meta), path(bed) ]
-    chr_statistics  = WISECONDORX_PREDICT.out.chr_statistics    // channel: [ val(meta), path(txt) ]
-    chr_plots       = WISECONDORX_PREDICT.out.chr_plots         // channel: [ val(meta), [ path(png), path(png), ... ] ]
-    genome_plot     = WISECONDORX_PREDICT.out.genome_plot       // channel: [ val(meta), path(png) ]
-
-    versions        = ch_versions                               // channel: path(versions.yml)
+    cv_lambda       = BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS.out.lambda
+    cv_n_cell_types = BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS.out.n_components
+    cv_plots        = BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS.out.plots
+    versions        = BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS.out.versions
 }

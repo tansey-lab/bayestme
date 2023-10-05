@@ -13,6 +13,7 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#deconvolve
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+      args_id: "$args"
   - select_marker_genes:
       description:
         Perform marker gene selection
@@ -20,6 +21,7 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#select-marker-genes
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+      args_id: "$args2"
   - plot_deconvolution:
       description: |
         Create various plots for the deconvolution results.
@@ -27,6 +29,7 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-deconvolution
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+      args_id: "$args3"
 input:
   - meta:
       type: map

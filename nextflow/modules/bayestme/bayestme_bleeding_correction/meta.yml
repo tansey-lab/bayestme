@@ -13,6 +13,7 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#bleeding-correction
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+      args_id: "$args"
   - plot_bleeding_correction:
       description: |
         Create various plots for the bleeding correction results.
@@ -20,6 +21,7 @@ tools:
       documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-bleeding-correction
       doi: 10.1016/j.cels.2023.06.003
       licence: []
+      args_id: "$args2"
 input:
   - meta:
       type: map

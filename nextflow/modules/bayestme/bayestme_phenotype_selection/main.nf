@@ -24,15 +24,10 @@ process BAYESTME_PHENOTYPE_SELECTION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata)
-    val job_index
-    val max_n_cell_types
-    val min_n_cell_types
-    val max_lambda
-    val min_lambda
+    tuple val(meta), path(adata), val(job_index), val(max_n_cell_types), val(min_n_cell_types), val(max_lambda), val(min_lambda), val(n_folds)
 
     output:
-    path 'fold_*.h5ad'   , emit: result
+    tuple val(meta), path("fold_*.h5ad"), emit: result
     path  "versions.yml" , emit: versions
 
     when:
@@ -43,6 +38,7 @@ process BAYESTME_PHENOTYPE_SELECTION {
     def n_components_min_flag = "--n-components-min ${min_n_cell_types}"
     def n_components_max_flag = "--n-components-max ${max_n_cell_types}"
     def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(min_lambda, max_lambda)
+    def n_folds_flag = "--n-folds ${n_folds}"
     """
     phenotype_selection \
         --adata ${adata} \
@@ -50,7 +46,13 @@ process BAYESTME_PHENOTYPE_SELECTION {
         --job-index ${job_index} \
         ${n_components_min_flag} \
         ${n_components_max_flag} \
+        ${n_folds_flag} \
         ${phenotype_selection_spatial_smoothing_values_flag} \
         ${args}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bayestme: \$( python -c 'import bayestme;print(bayestme.__version__)' )
+    END_VERSIONS
     """
 }

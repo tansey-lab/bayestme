@@ -1,4 +1,5 @@
 process BAYESTME_SPATIAL_EXPRESSION {
+    tag "$meta.id"
     label 'process_high_memory'
     label 'process_long'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -6,8 +7,7 @@ process BAYESTME_SPATIAL_EXPRESSION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata)
-    tuple val(meta), path(deconvolution_samples)
+    tuple val(meta), path(adata), path(deconvolution_samples)
 
     output:
     tuple val(meta), path("sde_samples.h5")                            , emit: sde_samples
