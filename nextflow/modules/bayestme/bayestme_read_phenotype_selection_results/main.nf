@@ -32,7 +32,7 @@ process BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bayestme: \$( python -c 'import bayestme;print(bayestme.__version__)' )
+        bayestme: \$( python -c 'from importlib.metadata import version;print(version("bayestme"))' )
     END_VERSIONS
     """
 }
