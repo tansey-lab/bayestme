@@ -1,5 +1,5 @@
-- name: bayestme_bleeding_correction test_bayestme_bleeding_correction
-  command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction -entry test_bayestme_bleeding_correction -c ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction/nextflow.config -c ./nextflow/tests/config/nextflow.config
+- name: bayestme_bleeding_correction
+  command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction -entry bayestme_bleeding_correction -c ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_bleeding_correction
   files:

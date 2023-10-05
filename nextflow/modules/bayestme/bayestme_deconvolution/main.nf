@@ -7,7 +7,8 @@ process BAYESTME_DECONVOLUTION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata), val(n_cell_types), val(spatial_smoothing_parameter), path(expression_truth)
+    tuple val(meta), path(adata), val(n_cell_types), val(spatial_smoothing_parameter)
+    path(expression_truth) // optional
 
     output:
     tuple val(meta), path("dataset_deconvolved_marker_genes.h5ad")     , emit: adata_deconvolved
@@ -25,7 +26,7 @@ process BAYESTME_DECONVOLUTION {
     def args3 = task.ext.args3 ?: ""
     def n_components_flag = "--n-components ${n_cell_types}"
     def spatial_smoothing_parameter_flag = "--spatial-smoothing-parameter ${spatial_smoothing_parameter}"
-    def expression_truth_flag = expression_truth == null ? "" : "--expression-truth ${task.ext.expression_truth}"
+    def expression_truth_flag = expression_truth ? "--expression-truth ${task.ext.expression_truth}" : ""
     """
     deconvolve --adata ${adata} \
         --adata-output dataset_deconvolved.h5ad \
@@ -37,18 +38,17 @@ process BAYESTME_DECONVOLUTION {
 
     select_marker_genes --adata dataset_deconvolved.h5ad \
         --adata-output dataset_deconvolved_marker_genes.h5ad \
-        --deconvolution-result ${params.bayestme_deconvolution_samples} \
-        ${n_marker_genes_flag} \
+        --deconvolution-result deconvolution_samples.h5 \
         ${args2}
 
     mkdir plots
     plot_deconvolution --adata dataset_deconvolved_marker_genes.h5ad \
-        --output-dir . \
+        --output-dir plots \
         ${args3}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bayestme: \$( python -c 'import bayestme;print(bayestme.__version__)' )
+        bayestme: \$( python -c 'from importlib.metadata import version;print(version("bayestme"))' )
     END_VERSIONS
     """
 }

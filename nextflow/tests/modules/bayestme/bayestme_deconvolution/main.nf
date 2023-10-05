@@ -1,12 +1,13 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
-include { BAYESTME_BLEEDING_CORRECTION } from '../../../../modules/bayestme/bayestme_bleeding_correction/main'
+include { BAYESTME_DECONVOLUTION } from '../../../../modules/bayestme/bayestme_deconvolution/main'
 
-workflow bayestme_bleeding_correction {
+workflow bayestme_deconvolution {
     input = [ [ id:'test', single_end:false ], // meta map
               file(params.test_data['bayestme']['filtered_dataset'], checkIfExists: true),
-              10
+              5,
+              1.0
             ]
-    BAYESTME_BLEEDING_CORRECTION ( input )
+    BAYESTME_DECONVOLUTION ( input, [] )
 }
