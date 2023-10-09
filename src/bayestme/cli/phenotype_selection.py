@@ -101,6 +101,8 @@ def main():
     if args.job_index is not None:
         all_jobs = [all_jobs[args.job_index]]
 
+    logger.info("Running {} jobs".format(len(all_jobs)))
+
     for job_index, (
         spatial_smoothing_param,
         n_components_for_job,

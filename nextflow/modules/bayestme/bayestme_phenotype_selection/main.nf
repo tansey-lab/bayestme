@@ -1,10 +1,10 @@
 def create_lambda_values_flag(min_lambda, max_lambda) {
     // Create list of lambda values from min to max on log scale
     def lambda_values = []
-    def lambda_value = min_lambda
-    while (lambda_value <= max_lambda) {
-        lambda_values.add(lambda_value)
-        lambda_value *= 10
+    def current_lambda = min_lambda
+    while (current_lambda <= max_lambda) {
+        lambda_values.add(current_lambda)
+        current_lambda *= 10
     }
 
     var lambda_values_flag = ""
@@ -38,7 +38,7 @@ process BAYESTME_PHENOTYPE_SELECTION {
     def n_components_min_flag = "--n-components-min ${min_n_cell_types}"
     def n_components_max_flag = "--n-components-max ${max_n_cell_types}"
     def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(min_lambda, max_lambda)
-    def n_folds_flag = "--n-folds ${n_folds}"
+    def n_folds_flag = "--n-fold ${n_folds}"
     """
     phenotype_selection \
         --adata ${adata} \
