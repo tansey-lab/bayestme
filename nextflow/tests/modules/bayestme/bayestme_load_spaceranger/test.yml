@@ -3,4 +3,4 @@
   tags:
     - bayestme_load_spaceranger
   files:
-    - path: output/dataset_filtered.h5ad
+    - path: output/dataset.h5ad
