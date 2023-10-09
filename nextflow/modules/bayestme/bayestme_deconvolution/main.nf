@@ -7,8 +7,7 @@ process BAYESTME_DECONVOLUTION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata), val(n_cell_types), val(spatial_smoothing_parameter)
-    path(expression_truth) // optional
+    tuple val(meta), path(adata), val(n_cell_types), val(spatial_smoothing_parameter), path(expression_truth)
 
     output:
     tuple val(meta), path("dataset_deconvolved_marker_genes.h5ad")     , emit: adata_deconvolved

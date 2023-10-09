@@ -1,0 +1,6 @@
+- name: bayestme_filter_genes
+  command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_filter_genes -entry bayestme_filter_genes -c ./nextflow/tests/modules/bayestme/bayestme_filter_genes/nextflow.config -c ./nextflow/tests/config/nextflow.config
+  tags:
+    - bayestme_filter_genes
+  files:
+    - path: output/dataset_filtered.h5ad

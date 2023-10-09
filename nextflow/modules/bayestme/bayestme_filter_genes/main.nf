@@ -21,11 +21,13 @@ process BAYESTME_FILTER_GENES {
     def filter_ribosomal_genes_flag = filter_ribosomal_genes ? "" : "--filter-ribosomal-genes"
     def n_top_by_standard_deviation_flag = "--n-top-by-standard-deviation ${n_top_by_standard_deviation}"
     def spot_threshold_flag = "--spot-threshold ${spot_threshold}"
+    def expression_truth_flag = expression_truth ? "--expression-truth ${task.ext.expression_truth}" : ""
     """
     filter_genes --adata ${adata} \
         ${filter_ribosomal_genes_flag} \
         ${n_top_by_standard_deviation_flag} \
         ${spot_threshold_flag} \
+        ${expression_truth_flag} \
         --output dataset_filtered.h5ad \
         ${args}
 
