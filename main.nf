@@ -3,7 +3,7 @@ include { BAYESTME_BASIC_VISIUM_ANALYSIS } from './nextflow/subworkflows/bayestm
 workflow {
     BAYESTME_BASIC_VISIUM_ANALYSIS(
         Channel.fromList( [tuple([id: "sample", single_end: false],
-        params.input,
+        file(params.input),
         params.n_components) ])
     )
 }
