@@ -1,7 +1,8 @@
-include { BAYESTME } from './nextflow/bayestme'
+include { BAYESTME_BASIC_VISIUM_ANALYSIS } from './nextflow/subworkflows/bayestme/bayestme_basic_visium_analysis/main'
 
 workflow {
-    BAYESTME(
+    BAYESTME_BASIC_VISIUM_ANALYSIS(
+        [id: "sample", single_end: false],
         params.input,
         params.n_components
     )

@@ -22,17 +22,17 @@ input:
         Structure: [ val(meta), path(spaceranger_dir), val(n_cell_types)  ]
 
 output:
-  - cv_lambda:
+  - adata:
       description: |
-        A channel containing the cross validation selected spatial smoothing parameter
-        Structure: [ val(meta), val(lambda) ]
-  - cv_n_cell_types:
+        A channel containing the anndata object with deconvolution and marker gene information
+        Structure: [ val(meta), val(adata) ]
+  - marker_gene_lists:
       description: |
-        A channel containing the cross validation selected number of cell types
-        Structure: [ val(meta), val(n_cell_types) ]
-  - plots:
+        A channel containing lists of marker genes per cell type
+        Structure: [ val(meta), path(csvs) ]
+  - deconvolution_plots:
       description: |
-        A channel containing the plots
+        A channel containing the deconvolution plots
         Structure: [ val(meta), path(plots) ]
   - versions:
       type: file
