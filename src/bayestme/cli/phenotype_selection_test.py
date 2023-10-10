@@ -39,6 +39,8 @@ def test_phenotype_selection_all_job():
         "--use-spatial-guide",
         "--output-dir",
         tmpdir,
+        "--inference-type",
+        "MCMC",
     ]
 
     with mock.patch(
@@ -141,6 +143,8 @@ def test_phenotype_selection_single_job():
         "--n-components-max",
         "4",
         "--use-spatial-guide",
+        "--inference-type",
+        "MCMC",
         "--output-dir",
         tmpdir,
     ]
