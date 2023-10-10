@@ -3,30 +3,18 @@
 Nextflow
 ========
 
-BayesTME provides a nextflow workflow for running the entire pipeline
+BayesTME provides a nextflow workflow for running a basic analysis on a Visium 10x dataset.
 
 The only requirements for running the BayesTME nextflow pipeline locally are to install nextflow
-(https://www.nextflow.io/docs/latest/getstarted.html) and docker.
-
-The parameters template is defined in ``nextflow/nextflow.config``.
-
-You can create a yaml file that defines the parameters for your run. This yaml file might look like this:
+(https://www.nextflow.io/docs/latest/getstarted.html) and docker (or singularity).
 
 .. code::
 
-    spaceranger_dir: /path/to/spaceranger/outs
-    outdir: /path/to/results
-    seed: 42
-    inference_type: "SVI"
+    nextflow run main.nf -profile docker --input <path to spaceranger output> --n_cell_types 5 --outdir <output dir>
 
 
-Once you have your parameters file ready, you can execute the pipeline with the following
-command:
-
-.. code::
-
-    nextflow run https://github.com/tansey-lab/bayestme -r main -profile local -params-file '<path to params yaml>'
-
-
-The results will be in the ``outdir`` directory specified in the params file, and will include raw
+The results will be in the ``outdir`` directory specified in the params file, and will include
 data and plots.
+
+For more complicated workflows, see `./nextflow/modules` and `./nextflow/subworkflows` for composable components
+that can be reused to author new pipelines.
