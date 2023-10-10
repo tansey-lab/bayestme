@@ -34,7 +34,7 @@ process BAYESTME_PHENOTYPE_SELECTION {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     def n_components_min_flag = "--n-components-min ${min_n_cell_types}"
     def n_components_max_flag = "--n-components-max ${max_n_cell_types}"

@@ -17,7 +17,7 @@ process BAYESTME_FILTER_GENES {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     def filter_ribosomal_genes_flag = filter_ribosomal_genes ? "" : "--filter-ribosomal-genes"
     def n_top_by_standard_deviation_flag = "--n-top-by-standard-deviation ${n_top_by_standard_deviation}"

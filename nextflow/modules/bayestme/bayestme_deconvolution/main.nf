@@ -20,7 +20,7 @@ process BAYESTME_DECONVOLUTION {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     def args2 = task.ext.args2 ?: ""
     def args3 = task.ext.args3 ?: ""
