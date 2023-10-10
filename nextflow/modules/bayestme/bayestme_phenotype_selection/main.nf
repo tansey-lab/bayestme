@@ -24,7 +24,7 @@ process BAYESTME_PHENOTYPE_SELECTION {
         'docker.io/jeffquinnmsk/bayestme:latest' }"
 
     input:
-    tuple val(meta), path(adata), val(job_index), val(max_n_cell_types), val(min_n_cell_types), val(max_lambda), val(min_lambda), val(n_folds)
+    tuple val(meta), path(adata), val(job_index), val(min_n_cell_types), val(max_n_cell_types), val(min_lambda), val(max_lambda), val(n_folds)
 
     output:
     tuple val(meta), path("fold_*.h5ad"), emit: result

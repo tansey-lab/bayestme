@@ -1,0 +1,5 @@
+- name: bayestme_cross_validation
+  command: nextflow run ./nextflow/tests/subworkflows/bayestme/bayestme_cross_validation -queue-size 1 -entry bayestme_cross_validation -c ./nextflow/tests/subworkflows/bayestme/bayestme_cross_validation/nextflow.config -c ./nextflow/tests/config/nextflow.config
+  tags:
+    - bayestme_cross_validation
+  files: []

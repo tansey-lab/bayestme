@@ -7,22 +7,24 @@ def calculate_n_phenotype_selection_jobs(lambdas, min_n_components, max_n_compon
 }
 
 def create_lambda_values(min_lambda, max_lambda) {
+    log.info "min_lambda: ${min_lambda}"
+    log.info "max_lambda: ${max_lambda}"
     // Create list of lambda values from min to max on log scale
     def lambda_values = []
     def lambda_value = min_lambda
     while (lambda_value <= max_lambda) {
         lambda_values.add(lambda_value)
-        lambda_value *= 10
+        lambda_value = lambda_value * 10
     }
 
     return lambda_values
 }
 
 def create_job_index_sequence(
-        min_lambda,
-        max_lambda,
         min_n_cell_types,
         max_n_cell_types,
+        min_lambda,
+        max_lambda,
         n_folds) {
     lambdas = create_lambda_values(min_lambda, max_lambda)
     n_jobs = calculate_n_phenotype_selection_jobs(lambdas, min_n_cell_types, max_n_cell_types, n_folds)
@@ -32,16 +34,16 @@ def create_job_index_sequence(
 
 def create_tuples(meta,
         adata,
-        min_lambda,
-        max_lambda,
         min_n_cell_types,
         max_n_cell_types,
+        min_lambda,
+        max_lambda,
         n_folds) {
     job_indices = create_job_index_sequence(
-            min_lambda,
-            max_lambda,
             min_n_cell_types,
             max_n_cell_types,
+            min_lambda,
+            max_lambda,
             n_folds)
 
     output = []
@@ -50,12 +52,12 @@ def create_tuples(meta,
         output.add(
             tuple(meta,
                   adata,
-                  job_index
+                  job_index,
                   min_n_cell_types,
                   max_n_cell_types,
                   min_lambda,
-                  max_lambda
-                  n_folds])
+                  max_lambda,
+                  n_folds)
         )
     }
 
@@ -64,17 +66,17 @@ def create_tuples(meta,
 
 def get_job_size(meta,
         adata,
-        min_lambda,
-        max_lambda,
         min_n_cell_types,
         max_n_cell_types,
+        min_lambda,
+        max_lambda,
         n_folds) {
 
     job_indices = create_job_index_sequence(
-            min_lambda,
-            max_lambda,
             min_n_cell_types,
             max_n_cell_types,
+            min_lambda,
+            max_lambda,
             n_folds)
 
     return job_indices.size()
@@ -83,9 +85,7 @@ def get_job_size(meta,
 workflow BAYESTME_CROSS_VALIDATION {
 
     take:
-    ch_adata        // channel: [ val(meta), path(adata),
-                    //            val(min_n_cell_types), val(max_n_cell_types),
-                    //            val(min_lambda), val(max_lambda), val(n_folds) ]
+    ch_adata  // channel: [ val(meta), path(adata), val(min_n_cell_types), val(max_n_cell_types), val(min_lambda), val(max_lambda), val(n_folds) ]
 
     main:
     ch_job_data = ch_adata.flatMap { create_tuples(it[0], it[1], it[2], it[3], it[4], it[5], it[6]) }
@@ -97,7 +97,9 @@ workflow BAYESTME_CROSS_VALIDATION {
         ch_job_data
     )
 
-    grouped_results = BAYESTME_PHENOTYPE_SELECTION.out.result.groupTuple()
+    grouped_results = BAYESTME_PHENOTYPE_SELECTION.out.result
+        .groupTuple()
+        .map { k, v -> tuple( groupKey(k, v.size()), v ) }
 
     BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS( grouped_results )
 

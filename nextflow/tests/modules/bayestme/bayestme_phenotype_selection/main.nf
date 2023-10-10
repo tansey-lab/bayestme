@@ -7,10 +7,10 @@ workflow bayestme_phenotype_selection {
     input = [ [ id:'test', single_end:false ], // meta map
               file(params.test_data['bayestme']['filtered_dataset'], checkIfExists: true),
               0,
-              3,
               2,
-              1000,
+              3,
               1,
+              1000,
               2
             ]
     BAYESTME_PHENOTYPE_SELECTION ( input )
