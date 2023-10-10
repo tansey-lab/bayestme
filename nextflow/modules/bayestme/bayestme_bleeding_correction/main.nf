@@ -31,10 +31,10 @@ process BAYESTME_BLEEDING_CORRECTION {
         ${args}
 
     plot_bleeding_correction --raw-adata ${adata} \
-        --corrected-adata dataset_corrected.h5ad \
-        --bleed-correction-results bleed_correction_results.h5 \
+        --corrected-adata ${prefix}/dataset_corrected.h5ad \
+        --bleed-correction-results ${prefix}/bleed_correction_results.h5 \
         ${args2} \
-        --output-dir ./${prefix}/plots
+        --output-dir ${prefix}/plots
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
