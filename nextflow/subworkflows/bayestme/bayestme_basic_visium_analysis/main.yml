@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: bayestme_basic_visium_analysis
+description: |
+  A subworkflow for a basic bleed correction, deconvolution, and marker gene analysis of Visium10x data.
+  This is suitable for most beginner users of BayesTME to start with.
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+
+components:
+  - bayestme/bayestme_load_spaceranger
+  - bayestme/bayestme_filter_genes
+  - bayestme/bayestme_bleeding_correction
+  - bayestme/bayestme_deconvolution
+  - bayestme/bayestme_marker_genes
+
+input:
+  - ch_input:
+      description: |
+        An input channel containing spaceranger results and parameters
+        Structure: [ val(meta), path(spaceranger_dir), val(n_cell_types)  ]
+
+output:
+  - cv_lambda:
+      description: |
+        A channel containing the cross validation selected spatial smoothing parameter
+        Structure: [ val(meta), val(lambda) ]
+  - cv_n_cell_types:
+      description: |
+        A channel containing the cross validation selected number of cell types
+        Structure: [ val(meta), val(n_cell_types) ]
+  - plots:
+      description: |
+        A channel containing the plots
+        Structure: [ val(meta), path(plots) ]
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"
