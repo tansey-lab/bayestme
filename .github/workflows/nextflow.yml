@@ -1,9 +1,7 @@
 name: Nextflow Tests
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+  pull_request: { }
+  push: { branches: main }
 
 # Cancel if a newer run is started
 concurrency:
