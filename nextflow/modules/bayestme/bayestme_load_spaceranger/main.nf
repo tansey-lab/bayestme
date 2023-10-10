@@ -9,17 +9,19 @@ process BAYESTME_LOAD_SPACERANGER {
     tuple val(meta), path(spaceranger_dir)
 
     output:
-    tuple val(meta), path("dataset.h5ad"), emit: adata
+    tuple val(meta), path("${prefix}/dataset.h5ad"), emit: adata
     path  "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     """
+    mkdir "${prefix}"
     load_spaceranger --input ${spaceranger_dir} \
-        --output dataset.h5ad \
+        --output "${prefix}/dataset.h5ad" \
         ${args}
 
     cat <<-END_VERSIONS > versions.yml

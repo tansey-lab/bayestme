@@ -10,28 +10,29 @@ process BAYESTME_SPATIAL_EXPRESSION {
     tuple val(meta), path(adata), path(deconvolution_samples)
 
     output:
-    tuple val(meta), path("sde_samples.h5")                            , emit: sde_samples
-    tuple val(meta), path("plots/*")                                   , emit: plots, optional: true
+    tuple val(meta), path("${prefix}/sde_samples.h5")                  , emit: sde_samples
+    tuple val(meta), path("${prefix}/plots/*")                         , emit: plots, optional: true
     path  "versions.yml"                                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     def args2 = task.ext.args2 ?: ""
     """
+    mkdir -p "${prefix}/plots"
+
     spatial_expression --adata ${adata} \
-        --output sde_samples.h5 \
+        --output ${prefix}/sde_samples.h5 \
         --deconvolve-results ${deconvolution_samples} \
         ${args}
 
-    mkdir plots
-
     plot_spatial_expression \
         --deconvolution-result ${deconvolution_samples} \
-        --sde-samples sde_samples.h5 \
-        --output-dir ./plots \
+        --sde-samples ${prefix}/sde_samples.h5 \
+        --output-dir ${prefix}/plots \
         ${args2}
 
     cat <<-END_VERSIONS > versions.yml

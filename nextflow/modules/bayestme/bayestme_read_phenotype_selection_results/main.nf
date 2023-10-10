@@ -11,17 +11,19 @@ process BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS {
     output:
     tuple val(meta), env(LAMBDA), emit: lambda
     tuple val(meta), env(N_COMPONENTS), emit: n_components
-    tuple val(meta), path("*.pdf"), emit: plots
+    tuple val(meta), path("${prefix}/*.pdf"), emit: plots
     path  "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     """
+    mkdir "${prefix}"
     process_phenotype_selection_results \
-        --plot-output . \
+        --plot-output "${prefix}" \
         --phenotype-selection-outputs ${fold_results} \
         --output-lambda lambda \
         --output-n-components n_components \

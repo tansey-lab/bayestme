@@ -27,22 +27,24 @@ process BAYESTME_PHENOTYPE_SELECTION {
     tuple val(meta), path(adata), val(job_index), val(min_n_cell_types), val(max_n_cell_types), val(min_lambda), val(max_lambda), val(n_folds)
 
     output:
-    tuple val(meta), path("fold_*.h5ad"), emit: result
+    tuple val(meta), path("${prefix}/fold_*.h5ad"), emit: result
     path  "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
     def n_components_min_flag = "--n-components-min ${min_n_cell_types}"
     def n_components_max_flag = "--n-components-max ${max_n_cell_types}"
     def phenotype_selection_spatial_smoothing_values_flag = create_lambda_values_flag(min_lambda, max_lambda)
     def n_folds_flag = "--n-fold ${n_folds}"
     """
+    mkdir "${prefix}"
     phenotype_selection \
         --adata ${adata} \
-        --output-dir . \
+        --output-dir "${prefix}" \
         --job-index ${job_index} \
         ${n_components_min_flag} \
         ${n_components_max_flag} \

@@ -33,14 +33,6 @@ input:
       description: |
         Anndata archive file (.h5ad) as documented at
         https://bayestme.readthedocs.io/en/latest/data_format.html#input-format
-  - n_top:
-      type: integer
-      description: |
-        Use N top genes by standard deviation to calculate the bleeding functions.
-        No genes will be filtered out, so all genes included in the input dataset
-        will be included in the output dataset. This parameter just controls
-        how many genes are considered by the algorithm, since its redundant to look
-        at all the genes when they theoretically all follow the same bleed patterns.
 
 output:
   - adata_corrected:

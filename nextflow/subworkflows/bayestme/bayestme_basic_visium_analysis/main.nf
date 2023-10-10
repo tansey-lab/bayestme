@@ -17,9 +17,7 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
 
     BAYESTME_FILTER_GENES( filter_genes_input )
 
-    bleed_correction_input = BAYESTME_FILTER_GENES.out.adata_filtered.map { tuple(it[0], it[1], 1000) }
-
-    BAYESTME_BLEEDING_CORRECTION( bleed_correction_input )
+    BAYESTME_BLEEDING_CORRECTION( BAYESTME_FILTER_GENES.out.adata_filtered )
 
     deconvolution_input = BAYESTME_BLEEDING_CORRECTION.out.adata_corrected
         .join( ch_input.map { tuple(it[0], it[2]) } )
