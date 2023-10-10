@@ -1,0 +1,38 @@
+name: bayestme_load_spaceranger
+description: Create an anndata object from spaceranger output directory
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - filter_genes:
+      description: |
+        This is a command line utility in the BayesTME package that creates an anndata
+        object from spaceranger output directory.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#load-spaceranger
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#load-spaceranger
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args"
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - spaceranger_dir:
+      type: directory
+      description: |
+        Spaceranger output directory
+
+output:
+  - adata:
+      type: file
+      description: anndata file with gene counts and spatial information
+      pattern: "dataset.h5ad"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"

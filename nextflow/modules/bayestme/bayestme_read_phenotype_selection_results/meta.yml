@@ -1,0 +1,44 @@
+name: bayestme_read_phenotype_selection_results
+description:
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - deconvolve:
+      description: |
+        Read the results of a cross validation run by combining all the fold results and picking the highest
+        log prob parameter combination.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#phenotype-selection
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#phenotype-selection
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args"
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - fold_results:
+      type: file
+      description: |
+        Multiple fold results files stored in h5 format
+
+output:
+  - lambda:
+      type: float
+      description: Most likely spatial smoothing parameter according to cross validation
+  - n_components:
+      type: integer
+      description: Most likely number of cell types according to cross validation
+  - plots:
+      type: file
+      description: Plots of cross validation results
+      pattern: "*.pdf"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"

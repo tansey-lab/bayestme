@@ -37,7 +37,7 @@ def get_parser():
         "as determined by the deconvolution results.",
     )
     parser.add_argument(
-        "--n-spatial-patterns", type=int, help="Number of spatial patterns."
+        "--n-spatial-patterns", type=int, help="Number of spatial patterns.", default=10
     )
     parser.add_argument(
         "--n-samples",

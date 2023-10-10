@@ -1,0 +1,63 @@
+name: bayestme_phenotype_selection
+description: Run KFold cross validation for determination of deconvolution model parameters
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - deconvolve:
+      description: |
+        Run KFold cross validation for determination of deconvolution model parameters
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#phenotype-selection
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#phenotype-selection
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args"
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - adata:
+      type: file
+      description: |
+        Anndata archive file (.h5ad) as documented at
+        https://bayestme.readthedocs.io/en/latest/data_format.html#input-format
+  - job_index:
+      type: integer
+      description: |
+        Job index, identifies which of the sequence of Kfold jobs for these parameters
+        to execute.
+  - max_n_cell_types:
+      type: integer
+      description: |
+        Maximum number of cell types to try
+  - min_n_cell_types:
+      type: integer
+      description: |
+        Minimum number of cell types to try
+  - max_lambda:
+      type: integer
+      description: |
+        Maximum lambda parameter to try
+  - min_lambda:
+      type: integer
+      description: |
+        Minimum lambda parameter to try
+  - n_folds:
+      type: integer
+      description: |
+        Number of folds to use for cross validation
+
+output:
+  - result:
+      type: file
+      description: Result file with log probability for this fold
+      pattern: "fold_*.h5ad"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"

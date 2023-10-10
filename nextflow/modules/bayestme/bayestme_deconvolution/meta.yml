@@ -1,0 +1,79 @@
+name: bayestme_deconvolution
+description: Deconvolve spot cell types from an anndata object
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+tools:
+  - deconvolve:
+      description: |
+        This is a command line utility in the BayesTME package that applies deconvolution.
+        The resulting anndata object will be annotated with cell type information.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#deconvolve
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#deconvolve
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args"
+  - select_marker_genes:
+      description:
+        Perform marker gene selection
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#select-marker-genes
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#select-marker-genes
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args2"
+  - plot_deconvolution:
+      description: |
+        Create various plots for the deconvolution results.
+      homepage: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-deconvolution
+      documentation: https://bayestme.readthedocs.io/en/latest/command_line_interface.html#plot-deconvolution
+      doi: 10.1016/j.cels.2023.06.003
+      licence: []
+      args_id: "$args3"
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - adata:
+      type: file
+      description: |
+        Anndata archive file (.h5ad) as documented at
+        https://bayestme.readthedocs.io/en/latest/data_format.html#input-format
+  - n_cell_types:
+      type: integer
+      description: |
+        Number of cell types to deconvolve into.
+  - spatial_smoothing_parameter:
+      type: float
+      description: |
+        Spatial smoothing parameter (referred to as lambda in paper)
+  - expression_truth:
+      type: file
+      description: |
+        Reference expression truth data (optional)
+
+output:
+  - adata_deconvolved:
+      type: file
+      description: anndata file with deconvolution results
+      pattern: "dataset_deconvolved_marker_genes.h5ad"
+  - deconvolution_samples:
+      type: file
+      description: Samples from the deconvolution model posterior distribution
+      pattern: "deconvolution_samples.h5"
+  - plots:
+      type: file
+      description: Deconvolution plots
+      pattern: "plots/*"
+  - marker_gene_lists:
+      type: file
+      description: CSV files of all genes ranked by cell type
+      pattern: "*.csv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"

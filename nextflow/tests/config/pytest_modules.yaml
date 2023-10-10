@@ -1,0 +1,3 @@
+bayestme_bleeding_correction:
+  - modules/bayestme/bayestme_bleeding_correction/**
+  - tests/modules/bayestme/bayestme_bleeding_correction/**

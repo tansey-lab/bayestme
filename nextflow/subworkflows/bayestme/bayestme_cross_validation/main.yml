@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: bayestme_cross_validation
+description: A subworkflow for performing cross validation for deconvolution model parameters
+keywords:
+  - spatial_transcriptomics
+  - spatial
+  - visium
+
+components:
+  - bayestme/bayestme_phenotype_selection
+  - bayestme/bayestme_read_phenotype_selection_results
+
+input:
+  - ch_adata:
+      description: |
+        An input channel containing BAM/CRAM files and their indices
+        Structure: [ val(meta), path(adata), val(min_n_cell_types), val(max_n_cell_types),
+        val(min_lambda), val(max_lambda), val(n_folds) ]
+
+output:
+  - cv_lambda:
+      description: |
+        A channel containing the cross validation selected spatial smoothing parameter
+        Structure: [ val(meta), val(lambda) ]
+  - cv_n_cell_types:
+      description: |
+        A channel containing the cross validation selected number of cell types
+        Structure: [ val(meta), val(n_cell_types) ]
+  - cv_plots:
+      description: |
+        A channel containing the CV plots
+        Structure: [ val(meta), path(plots) ]
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@jeffquinn-msk"

@@ -11,7 +11,7 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
         "--inference-type",
         type=InferenceType,
         choices=list(InferenceType),
-        default=InferenceType.MCMC,
+        default=InferenceType.SVI,
         help="Method for conducting inference.",
     )
     parser.add_argument(
