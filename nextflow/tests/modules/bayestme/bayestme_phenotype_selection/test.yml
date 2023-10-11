@@ -3,4 +3,4 @@
   tags:
     - bayestme_phenotype_selection
   files:
-    - path: output/fold_0.h5ad
+    - path: output/test/fold_0.h5ad

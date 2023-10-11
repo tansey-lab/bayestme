@@ -31,7 +31,7 @@ process BAYESTME_SPATIAL_EXPRESSION {
 
     plot_spatial_expression \
         --deconvolution-result ${deconvolution_samples} \
-        --sde-samples ${prefix}/sde_samples.h5 \
+        --sde-result ${prefix}/sde_samples.h5 \
         --output-dir ${prefix}/plots \
         ${args2}
 
