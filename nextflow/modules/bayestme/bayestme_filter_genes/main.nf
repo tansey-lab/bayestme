@@ -19,10 +19,21 @@ process BAYESTME_FILTER_GENES {
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
+
+    def need_spot_threshold_flag = args.contains("--spot-threshold")
+    def need_expression_truth_flag = args.contains("--expression-truth")
+    def need_n_top_by_standard_deviation_flag = args.contains("--n-top-by-standard-deviation")
+    def need_filter_ribosomal_genes_flag = args.contains("--filter-ribosomal-genes")
+
     def filter_ribosomal_genes_flag = filter_ribosomal_genes ? "" : "--filter-ribosomal-genes"
     def n_top_by_standard_deviation_flag = "--n-top-by-standard-deviation ${n_top_by_standard_deviation}"
-    def spot_threshold_flag = "--spot-threshold ${spot_threshold}"
+    def spot_threshold_flag = need_spot_threshold_flag ? "--spot-threshold ${spot_threshold}" : ""
     def expression_truth_flag = expression_truth ? "--expression-truth ${task.ext.expression_truth}" : ""
+
+    expression_truth_flag = need_expression_truth_flag ? expression_truth_flag : ""
+    n_top_by_standard_deviation_flag = need_n_top_by_standard_deviation_flag ? n_top_by_standard_deviation_flag : ""
+    filter_ribosomal_genes_flag = need_filter_ribosomal_genes_flag ? filter_ribosomal_genes_flag : ""
+
     """
     mkdir "${prefix}"
     filter_genes --adata ${adata} \
