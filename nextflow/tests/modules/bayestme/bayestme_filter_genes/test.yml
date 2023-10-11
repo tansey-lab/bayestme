@@ -3,4 +3,4 @@
   tags:
     - bayestme_filter_genes
   files:
-    - path: output/dataset_filtered.h5ad
+    - path: output/test/dataset_filtered.h5ad

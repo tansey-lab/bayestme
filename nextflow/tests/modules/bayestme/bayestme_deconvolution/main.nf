@@ -7,7 +7,7 @@ workflow bayestme_deconvolution {
     input = [ [ id:'test', single_end:false ], // meta map
               file(params.test_data['bayestme']['filtered_dataset'], checkIfExists: true),
               5,
-              1.0,
+              100.0,
               []
             ]
     BAYESTME_DECONVOLUTION ( input )

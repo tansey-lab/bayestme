@@ -3,6 +3,6 @@
   tags:
     - bayestme_bleeding_correction
   files:
-    - path: output/bleed_correction_results.h5
-    - path: output/dataset_corrected.h5ad
-    - path: output/plots/basis-functions.pdf
+    - path: output/test/bleed_correction_results.h5
+    - path: output/test/dataset_corrected.h5ad
+    - path: output/test/plots/basis-functions.pdf
