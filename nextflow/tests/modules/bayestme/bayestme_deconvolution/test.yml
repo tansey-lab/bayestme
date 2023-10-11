@@ -3,5 +3,5 @@
   tags:
     - bayestme_deconvolution
   files:
-    - path: output/deconvolution_samples.h5
-    - path: output/dataset_deconvolved_marker_genes.h5ad
+    - path: output/test/deconvolution_samples.h5
+    - path: output/test/dataset_deconvolved_marker_genes.h5ad
