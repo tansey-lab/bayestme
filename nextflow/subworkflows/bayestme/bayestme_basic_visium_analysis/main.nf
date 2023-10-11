@@ -13,7 +13,14 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
 
     BAYESTME_LOAD_SPACERANGER( ch_input.map { tuple(it[0], it[1]) } )
 
-    filter_genes_input = BAYESTME_LOAD_SPACERANGER.out.adata.map { tuple(it[0], it[1], true, 1000, 0.9, []) }
+    filter_genes_input = BAYESTME_LOAD_SPACERANGER.out.adata.map { tuple(
+        it[0],
+        it[1],
+        true,
+        1000,
+        0.9,
+        [])
+    }
 
     BAYESTME_FILTER_GENES( filter_genes_input )
 

@@ -3,4 +3,4 @@
   tags:
     - bayestme_spatial_expression
   files:
-    - path: output/sde_samples.h5
+    - path: output/test/sde_samples.h5
