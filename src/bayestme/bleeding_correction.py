@@ -375,6 +375,9 @@ def fit_spot_rates(Reads, tissue_mask, Weights, x_init=None):
         t_Rates = t_Rates.reshape(n_Rates, Reads.shape[1])
         Mu = (t_Rates[None] * t_Weights[..., None]).sum(dim=1) + t_Beta0[None]
         clipped_mu = torch.clip(Mu, 1e-10, None)
+        # force clipped_mu to be simplex
+        clipped_mu = clipped_mu / clipped_mu.sum(dim=0, keepdim=True)
+
         # Calculate the negative log-likelihood of the data
         L = -torch.stack(
             [
