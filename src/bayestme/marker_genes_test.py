@@ -97,6 +97,47 @@ def test_detect_marker_genes_fdr():
         assert len(marker_gene_set) == n_marker
 
 
+def test_detect_marker_genes_best_available():
+    n_components = 3
+    n_marker = 2
+    n_genes = 100
+    (
+        locations,
+        tissue_mask,
+        true_rates,
+        true_counts,
+        bleed_counts,
+    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
+        n_rows=12, n_cols=12, n_genes=n_genes
+    )
+
+    dataset = data.SpatialExpressionDataset.from_arrays(
+        raw_counts=bleed_counts,
+        tissue_mask=tissue_mask,
+        positions=locations,
+        gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
+        layout=data.Layout.SQUARE,
+    )
+
+    deconvolve_results = create_toy_deconvolve_result(
+        n_nodes=dataset.n_spot_in,
+        n_components=n_components,
+        n_samples=100,
+        n_gene=dataset.n_gene,
+    )
+
+    marker_genes = bayestme.marker_genes.select_marker_genes(
+        deconvolution_result=deconvolve_results,
+        n_marker=n_marker,
+        alpha=0,
+        method=bayestme.marker_genes.MarkerGeneMethod.BEST_AVAILABLE,
+    )
+
+    assert len(marker_genes) == n_components
+    for marker_gene_set in marker_genes:
+        assert len(marker_gene_set) == n_marker
+
+
 def test_plot_marker_genes():
     tempdir = tempfile.mkdtemp()
     dataset = create_deconvolve_dataset(n_components=5)
