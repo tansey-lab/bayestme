@@ -46,7 +46,7 @@ def get_parser():
         "--marker-gene-method",
         type=bayestme.marker_genes.MarkerGeneMethod,
         choices=list(bayestme.marker_genes.MarkerGeneMethod),
-        default=bayestme.marker_genes.MarkerGeneMethod.TIGHT,
+        default=bayestme.marker_genes.MarkerGeneMethod.BEST_AVAILABLE,
         help="Method for choosing marker genes.",
     )
     bayestme.log_config.add_logging_args(parser)

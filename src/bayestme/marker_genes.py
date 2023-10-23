@@ -12,6 +12,7 @@ from bayestme.mcmc.deconvolution import logger
 
 class MarkerGeneMethod(Enum):
     TIGHT = "TIGHT"
+    BEST_AVAILABLE = "BEST_AVAILABLE"
     FALSE_DISCOVERY_RATE = "FALSE_DISCOVERY_RATE"
 
     def __str__(self):
@@ -54,6 +55,8 @@ def select_marker_genes(
             )
             marker_control = np.argwhere(fdr <= alpha).flatten()
             marker_idx_control = sorted_index[marker_control]
+        elif method is MarkerGeneMethod.BEST_AVAILABLE:
+            marker_idx_control = np.arange(deconvolution_result.omega[k].shape[0])
         else:
             raise ValueError(method)
         # sort adjointly by omega_kg (primary) and expression level (secondary)
