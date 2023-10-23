@@ -20,10 +20,10 @@ process BAYESTME_FILTER_GENES {
     prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ""
 
-    def need_spot_threshold_flag = args.contains("--spot-threshold")
-    def need_expression_truth_flag = args.contains("--expression-truth")
-    def need_n_top_by_standard_deviation_flag = args.contains("--n-top-by-standard-deviation")
-    def need_filter_ribosomal_genes_flag = args.contains("--filter-ribosomal-genes")
+    def need_spot_threshold_flag = !args.contains("--spot-threshold")
+    def need_expression_truth_flag = !args.contains("--expression-truth")
+    def need_n_top_by_standard_deviation_flag = !args.contains("--n-top-by-standard-deviation")
+    def need_filter_ribosomal_genes_flag = !args.contains("--filter-ribosomal-genes")
 
     def filter_ribosomal_genes_flag = filter_ribosomal_genes ? "" : "--filter-ribosomal-genes"
     def n_top_by_standard_deviation_flag = "--n-top-by-standard-deviation ${n_top_by_standard_deviation}"
