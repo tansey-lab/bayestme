@@ -24,11 +24,19 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
 
     BAYESTME_FILTER_GENES( filter_genes_input )
 
-    BAYESTME_BLEEDING_CORRECTION( BAYESTME_FILTER_GENES.out.adata_filtered )
+    def deconvolution_input = null
 
-    deconvolution_input = BAYESTME_BLEEDING_CORRECTION.out.adata_corrected
-        .join( ch_input.map { tuple(it[0], it[2]) } )
-        .map { tuple(it[0], it[1], it[2], 1000.0, []) }
+    if (params.bleeding_correction) {
+        BAYESTME_BLEEDING_CORRECTION( BAYESTME_FILTER_GENES.out.adata_filtered )
+
+        deconvolution_input = BAYESTME_BLEEDING_CORRECTION.out.adata_corrected
+            .join( ch_input.map { tuple(it[0], it[2]) } )
+            .map { tuple(it[0], it[1], it[2], 1000.0, []) }
+    } else {
+        deconvolution_input = BAYESTME_FILTER_GENES.out.adata_filtered
+            .join( ch_input.map { tuple(it[0], it[2]) } )
+            .map { tuple(it[0], it[1], it[2], 1000.0, []) }
+    }
 
     BAYESTME_DECONVOLUTION( deconvolution_input )
 
