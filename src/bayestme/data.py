@@ -34,6 +34,7 @@ RELATIVE_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_expression"
 class Layout(Enum):
     HEX = 1
     SQUARE = 2
+    IRREGULAR = 3
 
 
 def is_csv(fn: str):

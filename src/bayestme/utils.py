@@ -1,8 +1,12 @@
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import issparse, csc_matrix, vstack
+from scipy.spatial import KDTree
 from scipy.stats import poisson
+from bayestme.data import Layout
+from sklearn.neighbors import NearestNeighbors
 
 
 def ilogit(x):
@@ -87,7 +91,7 @@ def get_kth_order_discrete_difference_operator(
 def construct_edge_adjacency(neighbors):
     """
     Build the oriented edge-adjacency matrix in "discrete difference operator"
-    form an interable of (v1, v2) tuples representing edges.
+    form, an iterable of (v1, v2) tuples representing edges.
 
     :param neighbors: E x 2 array, where E is the number of edges
     :return: An E x V sparse matrix, where E is the number of edges and V the number of vertices
@@ -264,56 +268,90 @@ def get_posmap(pos):
     return pos_map
 
 
-def get_edges(pos, layout=1) -> np.ndarray:
+def get_edges(positions: np.array, layout: Layout) -> np.array:
     """
     Given a set of positions and plate layout, return adjacency edges.
 
-    :param pos: An N x 2 array of coordinates
+    :param positions: An N x 2 array of coordinates
     :param layout: Plate layout enum
     :return: An <N edges> x 2 array
     """
-    pos = pos.T
-    pos_map = get_posmap(pos)
-    edges = []
-    if layout == 1:
-        # If the current spot is '@' put edges between '@' and 'o's
-        #  * *
-        # * @ o
-        #  o o
-        for i in range(pos_map.shape[0]):
-            for j in range(pos_map.shape[1]):
-                if ~np.isnan(pos_map[i, j]):
-                    if i + 1 < pos_map.shape[0]:
-                        if j > 0 and ~np.isnan(pos_map[i + 1, j - 1]):
-                            edges.append(
-                                np.array([pos_map[i, j], pos_map[i + 1, j - 1]])
-                            )
-                        if j + 1 < pos_map.shape[1] and ~np.isnan(
-                            pos_map[i + 1, j + 1]
-                        ):
-                            edges.append(
-                                np.array([pos_map[i, j], pos_map[i + 1, j + 1]])
-                            )
-                    if j + 2 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 2]):
-                        edges.append(np.array([pos_map[i, j], pos_map[i, j + 2]]))
-    elif layout == 2:
-        # If the current spot is '@' put edges between '@' and 'o's
-        # * * *
-        # * @ o
-        # * o *
-        for i in range(pos_map.shape[0]):
-            for j in range(pos_map.shape[1]):
-                if ~np.isnan(pos_map[i, j]):
-                    if i + 1 < pos_map.shape[0] and ~np.isnan(pos_map[i + 1, j]):
-                        edges.append(np.array([pos_map[i, j], pos_map[i + 1, j]]))
-                    if j + 1 < pos_map.shape[1] and ~np.isnan(pos_map[i, j + 1]):
-                        edges.append(np.array([pos_map[i, j], pos_map[i, j + 1]]))
+    if layout == Layout.SQUARE:
+        return get_regular_grid_edges(positions, degree=4)
+    elif layout == Layout.HEX:
+        return get_regular_grid_edges(positions, degree=6)
+    elif layout == Layout.IRREGULAR:
+        return get_knn_edges(positions, k=5)
     else:
-        raise RuntimeError("Unknown layout")
+        raise ValueError("Layout {} not supported.".format(layout))
 
-    edges = np.array(edges)
-    edges = edges.astype(int)
+
+def get_knn_edges(positions: np.array, k: int) -> np.array:
+    neighbors = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(positions)
+    distances, indices = neighbors.kneighbors(positions)
+
+
+def get_regular_grid_edges(
+    positions: np.array, degree: int, epsilon: float = 1e-1
+) -> np.array:
+    """
+    Given a set of positions which are laid out in a regular grid
+    based on a degree, return adjacency edges.
+
+    For example degree=4 would be a regular square grid,
+    degree=6 would be a regular hex grid, etc.
+
+    Our algorithm is as follows:
+    For each point, find the nearest degree points.
+    If the distance to the nearest point is less than
+    epsilon * min_dist, add an edge between the two points.
+
+    This should control for any points on the border of the grid getting spurious connections.
+
+    :param positions: An N x 2 array of coordinates
+    :param degree: The degree of the grid
+    :param epsilon: The epsilon parameter. Set higher if grid is more irregular.
+    :return: An <N edges> x 2 array of indices into positions
+    """
+
+    tree = KDTree(positions)
+
+    edges = set()
+
+    for origin_index, point in enumerate(positions):
+        dists, indices = tree.query(point, k=degree + 1)
+
+        # remove self edge
+        dists = dists[1:]
+        indices = indices[1:]
+
+        min_dist = dists.min()
+
+        max_dist = min_dist * (1 + epsilon)
+
+        for idx in indices[dists <= max_dist]:
+            if origin_index < idx:
+                edges.add((origin_index, idx))
+            else:
+                edges.add((idx, origin_index))
+    edges = np.array(sorted(list(edges)))
     return edges
+
+
+def plot_points_and_edges(positions, edges, output_path):
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+    # Plot the points
+    ax.scatter(positions[:, 0], positions[:, 1], c="blue", label="Points")
+
+    # Plot the edges
+    for edge in edges:
+        point1 = positions[edge[0], :]
+        point2 = positions[edge[1], :]
+        ax.plot([point1[0], point2[0]], [point1[1], point2[1]], c="red")
+
+    # Show the plot
+    plt.savefig(output_path, dpi=600)
 
 
 def filter_reads_to_top_n_genes(reads, n_gene):
