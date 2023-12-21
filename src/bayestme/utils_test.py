@@ -149,3 +149,12 @@ def test_get_hex_layout_edges():
     )
 
     np.testing.assert_equal(result, expected)
+
+
+def test_get_knn_edges():
+    positions = np.array([[0, 0], [2, 0], [5, 0]])
+    result = utils.get_knn_edges(positions, k=1)
+
+    expected = np.array([[0, 1], [1, 2]])
+
+    np.testing.assert_equal(result, expected)

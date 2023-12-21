@@ -797,6 +797,7 @@ def clean_bleed(
         positions=dataset.positions,
         gene_names=dataset.gene_names,
         layout=dataset.layout,
+        edges=dataset.edges,
         barcodes=dataset.adata.obs.index.to_numpy(),
     )
 

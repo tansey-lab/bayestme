@@ -287,8 +287,22 @@ def get_edges(positions: np.array, layout: Layout) -> np.array:
 
 
 def get_knn_edges(positions: np.array, k: int) -> np.array:
-    neighbors = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(positions)
+    neighbors = NearestNeighbors(n_neighbors=k + 1, algorithm="ball_tree").fit(
+        positions
+    )
     distances, indices = neighbors.kneighbors(positions)
+    edges = set()
+    for origin_index, point in enumerate(positions):
+        # filter self edges
+        neighbors = indices[origin_index][1:]
+        for idx in neighbors:
+            if origin_index < idx:
+                edges.add((origin_index, idx))
+            else:
+                edges.add((idx, origin_index))
+
+    edges = np.array(sorted(list(edges)))
+    return edges
 
 
 def get_regular_grid_edges(
@@ -326,7 +340,6 @@ def get_regular_grid_edges(
         indices = indices[1:]
 
         min_dist = dists.min()
-
         max_dist = min_dist * (1 + epsilon)
 
         for idx in indices[dists <= max_dist]:

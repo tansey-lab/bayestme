@@ -55,6 +55,7 @@ def create_anndata_object(
     tissue_mask: Optional[np.ndarray],
     gene_names: np.ndarray,
     layout: Layout,
+    edges: np.ndarray,
     barcodes: Optional[np.array] = None,
 ):
     """
@@ -65,6 +66,7 @@ def create_anndata_object(
     :param tissue_mask: N length boolean array indicating in-tissue or out of tissue
     :param gene_names: N length string array of gene names
     :param layout: Layout enum
+    :param edges: N x 2 array indicating adjacency between spots
     :param barcodes: List of UMI barcodes
     :return: AnnData object containing all information provided.
     """
@@ -75,7 +77,6 @@ def create_anndata_object(
     adata.var_names = gene_names
     if barcodes is not None:
         adata.obs_names = barcodes
-    edges = utils.get_edges(coordinates[tissue_mask], layout.value)
     connectivities = csr_matrix(
         (np.array([True] * edges.shape[0]), (edges[:, 0], edges[:, 1])),
         shape=(adata.n_obs, adata.n_obs),
@@ -210,6 +211,7 @@ class SpatialExpressionDataset:
         tissue_mask: Optional[np.ndarray],
         gene_names: np.ndarray,
         layout: Layout,
+        edges: np.ndarray,
         barcodes: Optional[np.array] = None,
     ):
         """
@@ -220,6 +222,7 @@ class SpatialExpressionDataset:
         :param tissue_mask: An <N spot> length array of booleans. True if spot is in tissue, False if not.
         :param gene_names: An <M markers> length array of gene names.
         :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
+        :param edges: An <N spots> x 2 matrix of edges between spots.
         :param barcodes: List of UMI barcodes
         in a hex grid layout.
         """
@@ -229,27 +232,10 @@ class SpatialExpressionDataset:
             tissue_mask=tissue_mask,
             gene_names=gene_names,
             layout=layout,
+            edges=edges,
             barcodes=barcodes,
         )
         return cls(adata)
-
-    @classmethod
-    def read_legacy_h5(cls, path):
-        with h5py.File(path, "r") as f:
-            raw_counts = f["raw_counts"][:]
-            positions = f["positions"][:]
-            tissue_mask = f["tissue_mask"][:]
-            gene_names = np.array([x.decode("utf-8") for x in f["gene_names"][:]])
-            layout_name = f.attrs["layout"]
-            layout = Layout[layout_name]
-
-            return cls.from_arrays(
-                raw_counts=raw_counts,
-                positions=positions,
-                tissue_mask=tissue_mask,
-                gene_names=gene_names,
-                layout=layout,
-            )
 
     @classmethod
     def read_spaceranger(cls, data_path, layout=Layout.HEX):
@@ -353,6 +339,7 @@ class SpatialExpressionDataset:
             tissue_mask=tissue_mask,
             gene_names=features,
             layout=layout,
+            edges=utils.get_edges(positions, Layout.SQUARE),
         )
 
     @classmethod

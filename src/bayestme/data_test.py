@@ -154,6 +154,7 @@ def test_create_anndata_object():
         coordinates=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
         tissue_mask=tissue_mask,
     )
 
@@ -163,7 +164,7 @@ def test_create_anndata_object():
     np.testing.assert_array_equal(
         np.sort(np.array(adata.obsp[data.CONNECTIVITIES_ATTR].nonzero()).T, axis=0),
         np.sort(
-            utils.get_edges(locations[tissue_mask], layout=data.Layout.SQUARE.value),
+            utils.get_edges(locations[tissue_mask], layout=data.Layout.SQUARE),
             axis=0,
         ),
     )
@@ -188,6 +189,7 @@ def test_properties_work_without_obs_names():
         coordinates=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
         tissue_mask=tissue_mask,
     )
 
@@ -220,6 +222,7 @@ def test_properties_work_with_obs_names():
         coordinates=locations,
         gene_names=gene_names,
         layout=data.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
         tissue_mask=tissue_mask,
         barcodes=barcodes,
     )
