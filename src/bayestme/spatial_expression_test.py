@@ -646,6 +646,7 @@ def test_plot_spatial_pattern_with_legend():
             ]
         ),
         layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE.value),
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,
@@ -711,6 +712,7 @@ def test_plot_spatial_pattern_and_all_constituent_genes():
             ]
         ),
         layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE.value),
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,

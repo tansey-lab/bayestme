@@ -4,7 +4,7 @@ import tempfile
 from unittest import mock
 
 import numpy as np
-
+import bayestme.utils
 import bayestme.common
 from bayestme import data
 from bayestme.cli import filter_genes
@@ -25,6 +25,7 @@ def test_filter_genes():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     tmpdir = tempfile.mkdtemp()
@@ -73,6 +74,7 @@ def test_filter_expression_truth():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     tmpdir = tempfile.mkdtemp()

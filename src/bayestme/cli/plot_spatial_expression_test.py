@@ -7,6 +7,7 @@ import numpy as np
 import bayestme.cli.plot_spatial_expression
 import bayestme.common
 import bayestme.synthetic_data
+import bayestme.utils
 from bayestme import data, spatial_expression_test
 
 
@@ -32,6 +33,7 @@ def test_plot_spatial_expression():
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
     deconvolution_results = spatial_expression_test.generate_fake_deconvolve_results(
         n_samples=n_samples,
@@ -115,6 +117,7 @@ def test_plot_spatial_expression_with_cell_type_names():
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
     deconvolution_results = spatial_expression_test.generate_fake_deconvolve_results(
         n_samples=n_samples,

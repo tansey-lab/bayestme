@@ -4,6 +4,7 @@ from scipy.stats import multivariate_normal, multivariate_t
 import bayestme.common
 import bayestme.data
 import bayestme.marker_genes
+import bayestme.utils
 from bayestme import data
 
 
@@ -158,8 +159,10 @@ def generate_fake_stdataset(
     if layout is bayestme.common.Layout.HEX:
         locations[:, 1] = locations[:, 1] * 2
         locations[locations[:, 0] % 2 == 1, 1] += 1
+        edges = bayestme.utils.get_edges(locations, bayestme.common.Layout.HEX)
     elif layout is bayestme.common.Layout.SQUARE:
         locations = locations
+        edges = bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE)
     else:
         raise NotImplementedError(layout)
 
@@ -170,6 +173,7 @@ def generate_fake_stdataset(
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
         layout=layout,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=edges,
     )
 
 
@@ -521,6 +525,7 @@ def create_deconvolve_dataset(
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     deconvolve_results = create_toy_deconvolve_result(
