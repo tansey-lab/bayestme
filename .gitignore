@@ -39,3 +39,4 @@ src/bayestme.egg-info
 build
 dist
 .java-version
+venv

@@ -1,10 +1,7 @@
-VE:
-	python3.9 -m venv VE
+venv:
+	python3.11 -m venv venv
 	pip install --upgrade pip
-	pip install -e '.[dev,test]' \
-		--pre \
-		--only-binary scipy,matplotlib,scikit_learn,scikit_image,scikit_sparse \
-		--prefer-binary
+	pip install -e '.[dev,test]'
 
 .PHONY: container
 container:

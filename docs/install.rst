@@ -18,11 +18,8 @@ docker image we maintain on docker hub.
 Option 2: Install Using pip
 ---------------------------
 
-Installing the package directly will require `SuiteSparse <https://github.com/DrTimothyAldenDavis/SuiteSparse>`_
-
 The ``bayestme`` package can be installed directly from github:
 
 .. code::
 
     pip install git+https://github.com/tansey-lab/bayestme
-
