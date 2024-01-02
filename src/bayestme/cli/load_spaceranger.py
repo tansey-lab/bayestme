@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+import bayestme.common
 import bayestme.log_config
 from bayestme import data
 
@@ -27,7 +28,7 @@ def main():
     bayestme.log_config.configure_logging(args)
 
     dataset = data.SpatialExpressionDataset.read_spaceranger(
-        args.input, layout=data.Layout.HEX
+        args.input, layout=bayestme.common.Layout.HEX
     )
 
     dataset.save(args.output)

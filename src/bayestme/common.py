@@ -1,4 +1,5 @@
 import enum
+from enum import Enum
 from typing import Optional
 
 import numpy
@@ -21,3 +22,9 @@ def create_rng(seed: Optional[int]):
         return numpy.random.default_rng(seed.item())
     else:
         return numpy.random.default_rng()
+
+
+class Layout(Enum):
+    HEX = 1
+    SQUARE = 2
+    IRREGULAR = 3

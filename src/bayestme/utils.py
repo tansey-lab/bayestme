@@ -5,7 +5,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.spatial import KDTree
 from scipy.stats import poisson
-from bayestme.data import Layout
+from bayestme.common import Layout
 from sklearn.neighbors import NearestNeighbors
 
 
@@ -279,7 +279,7 @@ def get_edges(positions: np.array, layout: Layout) -> np.array:
     if layout == Layout.SQUARE:
         return get_regular_grid_edges(positions, degree=4)
     elif layout == Layout.HEX:
-        return get_regular_grid_edges(positions, degree=6)
+        return get_regular_grid_edges(positions, degree=6, epsilon=0.3)
     elif layout == Layout.IRREGULAR:
         return get_knn_edges(positions, k=5)
     else:

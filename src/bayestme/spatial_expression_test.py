@@ -8,6 +8,7 @@ import numpy as np
 import numpy.testing
 from numpy import testing
 
+import bayestme.common
 import bayestme.synthetic_data
 from bayestme import spatial_expression, utils, data
 
@@ -478,7 +479,7 @@ def test_morans_i():
 
     positions = positions.astype(int)
 
-    edges = utils.get_edges(positions, layout=data.Layout.SQUARE.value)
+    edges = utils.get_edges(positions, layout=bayestme.common.Layout.SQUARE.value)
 
     clustered_value = spatial_expression.moran_i(edges, clustered_w_pattern)
     dispersed_value = spatial_expression.moran_i(edges, checkerboard_w_pattern)
@@ -644,7 +645,7 @@ def test_plot_spatial_pattern_with_legend():
                 "f34fawefc",
             ]
         ),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,
@@ -709,7 +710,7 @@ def test_plot_spatial_pattern_and_all_constituent_genes():
                 "f34fawefc",
             ]
         ),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,

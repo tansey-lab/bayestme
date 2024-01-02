@@ -9,6 +9,7 @@ from matplotlib.patches import Patch
 from scipy.stats import multinomial
 from sklearn.model_selection import KFold
 
+import bayestme.common
 from bayestme import data
 from bayestme import deconvolution
 from bayestme.common import InferenceType
@@ -38,7 +39,7 @@ def create_folds(
     if n_neighbours is None:
         n_neighbours = get_n_neighbors(stdata)
 
-    if stdata.layout is data.Layout.HEX:
+    if stdata.layout is bayestme.common.Layout.HEX:
         edge_threshold = 5
     else:
         edge_threshold = 3

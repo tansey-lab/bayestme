@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import pytest
 
+import bayestme.common
 import bayestme.synthetic_data
 from bayestme import data, phenotype_selection
 from bayestme.common import InferenceType
@@ -31,7 +32,7 @@ def test_get_phenotype_selection_parameters_for_folds():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     g = phenotype_selection.get_phenotype_selection_parameters_for_folds(
@@ -72,7 +73,7 @@ def test_plot_folds():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     g = phenotype_selection.create_folds(
@@ -109,7 +110,7 @@ def test_run_phenotype_selection_single_fold(inference_type):
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     params = [

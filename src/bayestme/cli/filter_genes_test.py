@@ -5,6 +5,7 @@ from unittest import mock
 
 import numpy as np
 
+import bayestme.common
 from bayestme import data
 from bayestme.cli import filter_genes
 
@@ -23,7 +24,7 @@ def test_filter_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     tmpdir = tempfile.mkdtemp()
@@ -71,7 +72,7 @@ def test_filter_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     tmpdir = tempfile.mkdtemp()

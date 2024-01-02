@@ -5,6 +5,7 @@ import tempfile
 import numpy as np
 import pandas
 
+import bayestme.common
 import bayestme.data
 import bayestme.marker_genes
 import bayestme.synthetic_data
@@ -34,7 +35,7 @@ def test_detect_marker_genes_tight():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -75,7 +76,7 @@ def test_detect_marker_genes_fdr():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -116,7 +117,7 @@ def test_detect_marker_genes_best_available():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -171,7 +172,7 @@ def test_add_marker_gene_results_to_dataset():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
     )
 
@@ -217,7 +218,7 @@ def test_add_marker_gene_results_to_dataset_with_obs_names():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -262,7 +263,7 @@ def test_create_top_gene_lists():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -323,7 +324,7 @@ def test_create_marker_gene_ranking_csvs():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = create_toy_deconvolve_result(

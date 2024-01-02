@@ -3,6 +3,7 @@ import tempfile
 import os.path
 import numpy as np
 
+import bayestme.common
 import bayestme.expression_truth
 import bayestme.synthetic_data
 from bayestme import data
@@ -26,7 +27,7 @@ def test_deconvolve_with_no_spatial_guide():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
     K = 3
@@ -74,7 +75,7 @@ def test_deconvolve_with_no_spatial_guide_and_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
@@ -121,7 +122,7 @@ def test_deconvolve_with_spatial_guide():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
@@ -171,7 +172,7 @@ def test_deconvolve_with_spatial_guide_and_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 

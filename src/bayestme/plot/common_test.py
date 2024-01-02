@@ -4,16 +4,17 @@ import tempfile
 
 from matplotlib import pyplot as plt
 
+import bayestme.common
 import bayestme.plot.common
 from bayestme import synthetic_data, data
 
 
 def test_plot_gene_raw_counts():
     sq_stdata = synthetic_data.generate_fake_stdataset(
-        n_genes=1, layout=data.Layout.SQUARE
+        n_genes=1, layout=bayestme.common.Layout.SQUARE
     )
     hex_stdata = synthetic_data.generate_fake_stdataset(
-        n_genes=1, layout=data.Layout.HEX
+        n_genes=1, layout=bayestme.common.Layout.HEX
     )
 
     fig, (ax1, ax2) = plt.subplots(1, 2)

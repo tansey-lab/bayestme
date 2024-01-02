@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import pandas
 
+import bayestme.common
 from bayestme import gene_filtering, data
 
 
@@ -23,7 +24,7 @@ def test_select_top_genes_by_standard_deviation():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -31,7 +32,7 @@ def test_select_top_genes_by_standard_deviation():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
     )
 
@@ -70,7 +71,7 @@ def test_filter_genes_by_spot_threshold():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -78,7 +79,7 @@ def test_filter_genes_by_spot_threshold():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
     )
 
@@ -112,7 +113,7 @@ def test_filter_ribosome_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -120,7 +121,7 @@ def test_filter_ribosome_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
     )
 
@@ -152,7 +153,7 @@ def test_filter_list_of_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -160,7 +161,7 @@ def test_filter_list_of_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
     )
 
@@ -211,7 +212,7 @@ def test_filter_stdata_to_match_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     filtered_dataset = gene_filtering.filter_stdata_to_match_expression_truth(

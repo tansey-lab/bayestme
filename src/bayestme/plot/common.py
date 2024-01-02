@@ -8,9 +8,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import Normalize
-from matplotlib.patches import RegularPolygon, Wedge, Patch
-
+from matplotlib.patches import RegularPolygon, Wedge, Patch, Polygon
+from scipy.spatial import Voronoi
+from shapely import Polygon, Point
+import bayestme.common
 from bayestme import data
+
+from geopandas import GeoDataFrame
 
 # Extended version of cm.Set1 categorical colormap. See references:
 #
@@ -57,12 +61,12 @@ Glasbey30 = ListedColormap(colors=GLASBEY_30_COLORS, name="Glasbey30", N=30)
 
 
 def get_x_y_arrays_for_layout(
-    coords: np.ndarray, layout: data.Layout
+    coords: np.ndarray, layout: bayestme.common.Layout
 ) -> Tuple[np.array, np.array]:
-    if layout is data.Layout.HEX:
+    if layout is bayestme.common.Layout.HEX:
         hcoord = coords[:, 0]
         vcoord = 2.0 * np.sin(np.radians(60)) * (coords[:, 1]) / 3.0
-    elif layout is data.Layout.SQUARE:
+    elif layout is bayestme.common.Layout.SQUARE:
         hcoord = coords[:, 0]
         vcoord = coords[:, 1]
     else:
@@ -70,12 +74,58 @@ def get_x_y_arrays_for_layout(
     return hcoord, vcoord
 
 
+def mirror_points(points, xlim, ylim):
+    """Mirror points for reflective boundary conditions"""
+    mirrored_points = np.vstack(
+        [
+            points,
+            np.vstack([points[:, 0], ylim - points[:, 1]]).T,  # Top boundary
+            np.vstack([points[:, 0], -points[:, 1]]).T,  # Bottom boundary
+            np.vstack([xlim - points[:, 0], points[:, 1]]).T,  # Right boundary
+            np.vstack([-points[:, 0], points[:, 1]]).T,
+        ]
+    )  # Left boundary
+    return mirrored_points
+
+
+def get_voronoi_cell_shapes(vor):
+    for region_index in vor.point_region:
+        region = vor.regions[region_index]
+        if not -1 in region:  # Bounded regions
+            polygon = Polygon([vor.vertices[i] for i in region])
+            yield polygon
+
+
+def add_voronoi_cell_bodies(points, values):
+    x_min, x_max = points[:, 0].min(), points[:, 0].max()
+    y_min, y_max = points[:, 1].min(), points[:, 1].max()
+
+    points_as_tuples_mirrored = mirror_points(points, x_max - x_min, y_max - y_min)
+
+    gdf = GeoDataFrame()
+    gdf["centroid"] = [Point(*a) for a in points]
+    gdf["value"] = values
+    gdf = gdf.set_geometry("centroid")
+
+    for poly in get_voronoi_cell_shapes(Voronoi(points_as_tuples_mirrored)):
+        selector = gdf.within(poly)
+
+        if selector.sum() == 0:
+            continue
+        elif selector.sum() == 1:
+            value = gdf[selector]["value"]
+        else:
+            raise RuntimeError("Multiple nuclei in one voronoi cell")
+
+    polygon = patches.Polygon(vertices, closed=True, fill=None, edgecolor="r")
+
+
 def plot_colored_spatial_polygon(
     fig: matplotlib.figure.Figure,
     ax: matplotlib.axes.Axes,
     coords: np.ndarray,
     values: np.ndarray,
-    layout: data.Layout,
+    layout: bayestme.common.Layout,
     colormap: cm.ScalarMappable = cm.BuPu,
     norm=None,
     plotting_coordinates=None,
@@ -84,7 +134,6 @@ def plot_colored_spatial_polygon(
 ):
     """
     Basic plot of spatial gene expression
-
 
     :param fig: matplotlib figure artist object to which plot will be written
     :param ax: matplotlib axes artist object to which plot will be written
@@ -112,11 +161,11 @@ def plot_colored_spatial_polygon(
             plotting_coordinates, layout
         )
 
-    if layout is data.Layout.HEX:
+    if layout is bayestme.common.Layout.HEX:
         num_vertices = 6
         packing_radius = 2.0 / 3.0
         orientation = np.radians(30)
-    elif layout is data.Layout.SQUARE:
+    elif layout is bayestme.common.Layout.SQUARE:
         num_vertices = 4
         packing_radius = math.sqrt(2) / 2.0
         orientation = np.radians(45)
@@ -170,7 +219,7 @@ def plot_spatial_pie_charts(
     ax: matplotlib.axes.Axes,
     coords: np.ndarray,
     values: np.ndarray,
-    layout: data.Layout,
+    layout: bayestme.common.Layout,
     colormap: cm.ScalarMappable = Glasbey30,
     plotting_coordinates=None,
     cell_type_names=None,
@@ -200,9 +249,9 @@ def plot_spatial_pie_charts(
             plotting_coordinates, layout
         )
 
-    if layout is data.Layout.HEX:
+    if layout is bayestme.common.Layout.HEX:
         packing_radius = 0.5
-    elif layout is data.Layout.SQUARE:
+    elif layout is bayestme.common.Layout.SQUARE:
         packing_radius = 0.5
     else:
         raise NotImplementedError(layout)

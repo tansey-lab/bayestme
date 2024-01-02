@@ -1,7 +1,6 @@
 import glob
 import logging
 import os
-from enum import Enum
 from typing import Optional, List
 
 import anndata
@@ -13,7 +12,7 @@ import scipy.sparse.csc
 from scipy.sparse import csr_matrix
 
 from bayestme import utils
-from bayestme.common import ArrayType
+from bayestme.common import ArrayType, Layout
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +28,8 @@ MARKER_GENE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_marker"
 OMEGA_DIFFERENCE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega_difference"
 OMEGA_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega"
 RELATIVE_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_expression"
-
-
-class Layout(Enum):
-    HEX = 1
-    SQUARE = 2
-    IRREGULAR = 3
+POSITIONS_X_COLUMN = "array_col"
+POSITIONS_Y_COLUMN = "array_row"
 
 
 def is_csv(fn: str):
@@ -238,7 +233,7 @@ class SpatialExpressionDataset:
         return cls(adata)
 
     @classmethod
-    def read_spaceranger(cls, data_path, layout=Layout.HEX):
+    def read_spaceranger(cls, data_path):
         """
         Load data from spaceranger /outputs folder
 
@@ -246,8 +241,6 @@ class SpatialExpressionDataset:
             1) /raw_feature_bc_matrix for raw count matrix
             2) /filtered_feature_bc_matrix for filtered count matrix
             3) /spatial for position list
-        :param layout: Layout.SQUARE of the spots are in a square grid layout, Layout.HEX if the spots are
-        in a hex grid layout.
         :return: SpatialExpressionDataset
         """
         raw_count_path = os.path.join(data_path, "raw_feature_bc_matrix/matrix.mtx.gz")
@@ -264,11 +257,11 @@ class SpatialExpressionDataset:
         positions_path = [fn for fn in tissue_positions_lists if is_csv_tsv(fn)][0]
 
         if is_tsv(positions_path):
-            positions_list = pd.read_csv(
+            positions_df = pd.read_csv(
                 positions_path, sep="\t", header=None, index_col=0, names=None
             )
         elif is_csv(positions_path):
-            positions_list = pd.read_csv(
+            positions_df = pd.read_csv(
                 positions_path, header=None, index_col=0, names=None
             )
         else:
@@ -283,11 +276,10 @@ class SpatialExpressionDataset:
         n_spots = raw_count.shape[1]
         n_genes = raw_count.shape[0]
         logger.info("detected {} spots, {} genes".format(n_spots, n_genes))
-        pos = np.zeros((n_spots, 3))
-        for i in range(n_spots):
-            pos[i] = np.array(positions_list.loc[barcodes[0][i]][:3])
-        tissue_mask = pos[:, 0] == 1
-        positions = pos[:, 1:]
+        positions = positions_df.loc[barcodes[0]][
+            [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]
+        ].to_numpy()
+        tissue_mask = positions_df[IN_TISSUE_ATTR].to_numpy().astype(bool)
         n_spot_in = tissue_mask.sum()
         logger.info("\t {} spots in tissue sample".format(n_spot_in))
         all_counts = raw_count.sum()
@@ -303,7 +295,8 @@ class SpatialExpressionDataset:
             positions=positions,
             tissue_mask=tissue_mask,
             gene_names=features,
-            layout=layout,
+            layout=Layout.HEX,
+            edges=utils.get_edges(positions[tissue_mask], Layout.HEX),
             barcodes=barcodes[0].to_numpy(),
         )
 

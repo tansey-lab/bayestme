@@ -5,6 +5,7 @@ from unittest import mock
 import numpy as np
 
 import bayestme.cli.plot_deconvolution
+import bayestme.common
 import bayestme.synthetic_data
 from bayestme import data
 
@@ -28,7 +29,7 @@ def test_plot_deconvolution():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(
@@ -80,7 +81,7 @@ def test_plot_deconvolution_with_cell_type_names():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
     )
 
     deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(

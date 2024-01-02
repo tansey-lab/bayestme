@@ -5,6 +5,7 @@ import tempfile
 import numpy as np
 import numpy.testing
 
+import bayestme.common
 import bayestme.data
 from bayestme import data, synthetic_data, utils
 from bayestme.synthetic_data import create_toy_deconvolve_result
@@ -24,7 +25,8 @@ def generate_toy_stdataset() -> data.SpatialExpressionDataset:
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, bayestme.common.Layout.SQUARE),
         barcodes=np.array(["1", "2", "3"]),
     )
 
@@ -153,8 +155,10 @@ def test_create_anndata_object():
         counts=bleed_counts,
         coordinates=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
-        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(
+            locations[tissue_mask], layout=bayestme.common.Layout.SQUARE
+        ),
         tissue_mask=tissue_mask,
     )
 
@@ -164,11 +168,13 @@ def test_create_anndata_object():
     np.testing.assert_array_equal(
         np.sort(np.array(adata.obsp[data.CONNECTIVITIES_ATTR].nonzero()).T, axis=0),
         np.sort(
-            utils.get_edges(locations[tissue_mask], layout=data.Layout.SQUARE),
+            utils.get_edges(
+                locations[tissue_mask], layout=bayestme.common.Layout.SQUARE
+            ),
             axis=0,
         ),
     )
-    assert adata.uns[data.LAYOUT_ATTR] == data.Layout.SQUARE.name
+    assert adata.uns[data.LAYOUT_ATTR] == bayestme.common.Layout.SQUARE.name
 
 
 def test_properties_work_without_obs_names():
@@ -188,8 +194,8 @@ def test_properties_work_without_obs_names():
         counts=bleed_counts,
         coordinates=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
-        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE),
         tissue_mask=tissue_mask,
     )
 
@@ -221,8 +227,8 @@ def test_properties_work_with_obs_names():
         counts=bleed_counts,
         coordinates=locations,
         gene_names=gene_names,
-        layout=data.Layout.SQUARE,
-        edges=utils.get_edges(locations, layout=data.Layout.SQUARE),
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE),
         tissue_mask=tissue_mask,
         barcodes=barcodes,
     )
@@ -255,7 +261,10 @@ def test_add_deconvolution_results_to_dataset():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
     deconvolve_results = create_toy_deconvolve_result(
@@ -303,7 +312,10 @@ def test_add_deconvolution_results_to_dataset_with_obs_names():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
         barcodes=barcodes,
     )
 
