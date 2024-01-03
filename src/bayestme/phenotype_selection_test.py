@@ -114,7 +114,9 @@ def test_run_phenotype_selection_single_fold(inference_type):
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
         layout=bayestme.common.Layout.SQUARE,
-        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
     params = [

@@ -159,10 +159,14 @@ def generate_fake_stdataset(
     if layout is bayestme.common.Layout.HEX:
         locations[:, 1] = locations[:, 1] * 2
         locations[locations[:, 0] % 2 == 1, 1] += 1
-        edges = bayestme.utils.get_edges(locations, bayestme.common.Layout.HEX)
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.HEX
+        )
     elif layout is bayestme.common.Layout.SQUARE:
         locations = locations
-        edges = bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE)
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        )
     else:
         raise NotImplementedError(layout)
 
@@ -271,6 +275,9 @@ def generate_demo_dataset():
         ),
         layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
 
@@ -499,6 +506,9 @@ def generate_demo_dataset_with_bleeding():
         ),
         layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
 

@@ -4,6 +4,7 @@ import bayestme.marker_genes
 import bayestme.synthetic_data
 from bayestme import utils, data
 from bayestme.mcmc import deconvolution
+from bayestme.common import Layout
 
 
 def test_deconvolve():
@@ -17,7 +18,7 @@ def test_deconvolve():
         n_rows=15, n_cols=15, n_genes=5
     )
 
-    edges = utils.get_edges(locations[tissue_mask, :], 2)
+    edges = utils.get_edges(locations[tissue_mask, :], Layout.SQUARE)
 
     n_samples = 3
     lam2 = 1000

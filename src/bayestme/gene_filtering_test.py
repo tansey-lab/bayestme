@@ -3,7 +3,7 @@ import tempfile
 
 import numpy as np
 import pandas
-
+import bayestme.utils
 import bayestme.common
 from bayestme import gene_filtering, data
 
@@ -25,6 +25,7 @@ def test_select_top_genes_by_standard_deviation():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -34,6 +35,7 @@ def test_select_top_genes_by_standard_deviation():
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     for dataset in [dataset_with_obs_names, dataset_without_obs_names]:
@@ -72,6 +74,7 @@ def test_filter_genes_by_spot_threshold():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -81,6 +84,7 @@ def test_filter_genes_by_spot_threshold():
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     for dataset in [dataset_with_obs_names, dataset_without_obs_names]:
@@ -114,6 +118,7 @@ def test_filter_ribosome_genes():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -123,6 +128,7 @@ def test_filter_ribosome_genes():
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     for dataset in [dataset_with_obs_names, dataset_without_obs_names]:
@@ -154,6 +160,7 @@ def test_filter_list_of_genes():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     dataset_with_obs_names = data.SpatialExpressionDataset.from_arrays(
@@ -163,6 +170,7 @@ def test_filter_list_of_genes():
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
         barcodes=barcodes,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     for dataset in [dataset_with_obs_names, dataset_without_obs_names]:
@@ -213,6 +221,7 @@ def test_filter_stdata_to_match_expression_truth():
         positions=locations,
         gene_names=gene_names,
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     filtered_dataset = gene_filtering.filter_stdata_to_match_expression_truth(

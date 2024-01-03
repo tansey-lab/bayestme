@@ -1,7 +1,7 @@
 import anndata
 import numpy as np
 import statsmodels.api as sm
-
+import bayestme.utils
 import bayestme.common
 from bayestme import data
 
@@ -221,6 +221,7 @@ def generate_semi_synthetic(
         tissue_mask=np.ones(tissue_positions.shape[0]).astype(bool),
         gene_names=np.array([f"gene{i}" for i in range(n_genes)]),
         layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(tissue_positions, bayestme.common.Layout.SQUARE),
     )
 
     return stdata, Truth_prior, n_cells, spatial, sampled_cell_reads

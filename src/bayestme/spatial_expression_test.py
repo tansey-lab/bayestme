@@ -333,7 +333,7 @@ def test_spatial_detection_sampler_state_serialization_equivalency():
     n_spatial_patterns = 10
 
     dataset = bayestme.synthetic_data.generate_fake_stdataset(
-        n_rows=12, n_cols=12, n_genes=n_genes
+        n_rows=12, n_cols=12, n_genes=n_genes, layout=bayestme.common.Layout.SQUARE
     )
 
     deconvolution_results = generate_fake_deconvolve_results(
@@ -479,7 +479,7 @@ def test_morans_i():
 
     positions = positions.astype(int)
 
-    edges = utils.get_edges(positions, layout=bayestme.common.Layout.SQUARE.value)
+    edges = utils.get_edges(positions, layout=bayestme.common.Layout.SQUARE)
 
     clustered_value = spatial_expression.moran_i(edges, clustered_w_pattern)
     dispersed_value = spatial_expression.moran_i(edges, checkerboard_w_pattern)
@@ -646,7 +646,7 @@ def test_plot_spatial_pattern_with_legend():
             ]
         ),
         layout=bayestme.common.Layout.SQUARE,
-        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE.value),
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE),
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,
@@ -712,7 +712,7 @@ def test_plot_spatial_pattern_and_all_constituent_genes():
             ]
         ),
         layout=bayestme.common.Layout.SQUARE,
-        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE.value),
+        edges=utils.get_edges(locations, layout=bayestme.common.Layout.SQUARE),
     )
     deconvolution_results = generate_fake_deconvolve_results(
         n_samples=n_samples,
