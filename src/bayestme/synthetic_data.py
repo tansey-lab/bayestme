@@ -167,6 +167,11 @@ def generate_fake_stdataset(
         edges = bayestme.utils.get_edges(
             locations[tissue_mask], bayestme.common.Layout.SQUARE
         )
+    elif layout is bayestme.common.Layout.IRREGULAR:
+        locations = locations
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.IRREGULAR
+        )
     else:
         raise NotImplementedError(layout)
 
