@@ -17,6 +17,7 @@ def sample_from_posterior(
     mcmc_n_burn=1000,
     mcmc_n_thin=5,
     n_svi_steps=10_000,
+    num_cells_per_spot_max=120,
     expression_truth=None,
     inference_type=InferenceType.MCMC,
     background_noise=False,
@@ -38,6 +39,7 @@ def sample_from_posterior(
             lda_initialization=lda_initialization,
             background_noise=background_noise,
             rng=rng,
+            n_max=num_cells_per_spot_max,
         )
     elif inference_type == InferenceType.SVI:
         return bayestme.svi.deconvolution.deconvolve(

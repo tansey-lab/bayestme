@@ -40,6 +40,8 @@ def deconvolve(
     :param n_thin: Proportion of samples to save
     :param background_noise: If true use model with background noise
     :param lda_initialization: If true use LDA initialization
+    :param n_max: Maximum number of cells per spot
+    :param D: Initial guess at number of cells per spot
     :param expression_truth: If provided, use ground truth per cell type relative expression values,
     output from companion scRNA fine mapping.
     :param rng: Numpy random generator to use
@@ -68,6 +70,9 @@ def deconvolve(
             expression_truth = expression_truth[:, top[:n_gene]]
     else:
         raise ValueError("n_gene must be a integer or a list of indices of genes")
+
+    if D > n_max:
+        D = n_max
 
     gfm = model_bkg.GraphFusedMultinomial(
         n_components=n_components,

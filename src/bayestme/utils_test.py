@@ -118,3 +118,43 @@ def test_get_top_gene_names_by_stddev():
     )
 
     np.testing.assert_equal(np.array(["best", "second_best"]), result)
+
+
+def test_get_square_layout_edges():
+    positions = np.array([[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]])
+    result = utils.get_regular_grid_edges(positions, degree=4)
+    expected = np.array([[0, 1], [0, 3], [1, 2], [1, 4], [2, 5], [3, 4], [4, 5]])
+    np.testing.assert_equal(result, expected)
+
+
+def test_get_hex_layout_edges():
+    positions = np.array([[0, 1], [0, 3], [2, 0], [2, 2], [2, 4], [4, 1], [4, 3]])
+    result = utils.get_regular_grid_edges(positions, degree=6, epsilon=0.3)
+
+    expected = np.array(
+        [
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [1, 3],
+            [1, 4],
+            [2, 3],
+            [2, 5],
+            [3, 4],
+            [3, 5],
+            [3, 6],
+            [4, 6],
+            [5, 6],
+        ]
+    )
+
+    np.testing.assert_equal(result, expected)
+
+
+def test_get_knn_edges():
+    positions = np.array([[0, 0], [2, 0], [5, 0]])
+    result = utils.get_knn_edges(positions, k=1)
+
+    expected = np.array([[0, 1], [1, 2]])
+
+    np.testing.assert_equal(result, expected)

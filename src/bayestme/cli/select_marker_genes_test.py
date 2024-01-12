@@ -6,8 +6,10 @@ from unittest import mock
 import numpy as np
 
 import bayestme
+import bayestme.common
 import bayestme.data
 import bayestme.synthetic_data
+import bayestme.utils
 from bayestme import data
 from bayestme.cli import select_marker_genes
 
@@ -31,7 +33,8 @@ def test_select_marker_genes():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     deconvolve_results = bayestme.synthetic_data.create_toy_deconvolve_result(

@@ -683,7 +683,7 @@ def select_significant_spatial_programs(
             cell_number_mask
         ]
         pos_filter = stdata.positions_tissue[cell_number_mask, :].astype(int)
-        edges_filter = utils.get_edges(pos_filter, stdata.layout.value)
+        edges_filter = utils.get_edges(pos_filter, stdata.layout)
 
         for h in range(1, sde_result.n_spatial_patterns + 1):
             gene_proportions_with_pattern_in_k = (

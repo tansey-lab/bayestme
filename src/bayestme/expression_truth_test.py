@@ -4,9 +4,11 @@ import tempfile
 import numpy as np
 import pandas
 
+import bayestme.common
 import bayestme.data
 import bayestme.expression_truth
 import bayestme.synthetic_data
+import bayestme.utils
 from bayestme import expression_truth, data
 
 
@@ -108,7 +110,10 @@ def test_load_phi_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["LINC01409", "LINC01128", "LINC00115"]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
     pandas.DataFrame(example_data).to_csv(os.path.join(tmpdir, "test.csv"), index=True)

@@ -4,8 +4,9 @@ import tempfile
 
 import numpy as np
 
+import bayestme.common
 import bayestme.synthetic_data
-from bayestme import bleeding_correction, data
+from bayestme import bleeding_correction, data, utils
 
 
 def test_calculate_pairwise_coordinate_differences():
@@ -182,7 +183,8 @@ def test_clean_bleed():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["1", "2", "3", "4", "5"]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, bayestme.common.Layout.SQUARE),
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
@@ -191,7 +193,8 @@ def test_clean_bleed():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["1", "2", "3", "4", "5"]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     for dataset in [dataset1, dataset2]:
@@ -208,7 +211,7 @@ def test_clean_bleed():
 def test_plot_bleed_vectors():
     np.random.seed(100)
     dataset = bayestme.synthetic_data.generate_fake_stdataset(
-        12, 12, 2, data.Layout.SQUARE
+        12, 12, 2, bayestme.common.Layout.SQUARE
     )
 
     (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(
@@ -244,7 +247,8 @@ def test_clean_bleed_plots():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["1", "2", "3", "4", "5"]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(
@@ -297,7 +301,8 @@ def test_create_top_n_gene_bleeding_plots():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["1", "2", "3", "4", "5"]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     (cleaned_dataset, bleed_correction_result) = bleeding_correction.clean_bleed(

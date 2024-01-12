@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.stats import multivariate_normal, multivariate_t
 
+import bayestme.common
 import bayestme.data
 import bayestme.marker_genes
+import bayestme.utils
 from bayestme import data
 
 
@@ -133,7 +135,7 @@ def generate_fake_stdataset(
     n_rows: int = 30,
     n_cols: int = 30,
     n_genes: int = 20,
-    layout: data.Layout = data.Layout.SQUARE,
+    layout: bayestme.common.Layout = bayestme.common.Layout.SQUARE,
 ) -> data.SpatialExpressionDataset:
     """
     Create a fake dataset for use in testing or demonstration.
@@ -154,11 +156,22 @@ def generate_fake_stdataset(
         n_rows=n_rows, n_cols=n_cols, n_genes=n_genes
     )
 
-    if layout is data.Layout.HEX:
+    if layout is bayestme.common.Layout.HEX:
         locations[:, 1] = locations[:, 1] * 2
         locations[locations[:, 0] % 2 == 1, 1] += 1
-    elif layout is data.Layout.SQUARE:
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.HEX
+        )
+    elif layout is bayestme.common.Layout.SQUARE:
         locations = locations
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        )
+    elif layout is bayestme.common.Layout.IRREGULAR:
+        locations = locations
+        edges = bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.IRREGULAR
+        )
     else:
         raise NotImplementedError(layout)
 
@@ -169,6 +182,7 @@ def generate_fake_stdataset(
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
         layout=layout,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=edges,
     )
 
 
@@ -264,8 +278,11 @@ def generate_demo_dataset():
                 "noise_strong",
             ]
         ),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
 
@@ -388,7 +405,7 @@ def generate_demo_stp_dataset():
                 "noise_strong",
             ]
         ),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
     )
 
@@ -492,8 +509,11 @@ def generate_demo_dataset_with_bleeding():
                 "noise_strong",
             ]
         ),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
 
@@ -519,7 +539,8 @@ def create_deconvolve_dataset(
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     deconvolve_results = create_toy_deconvolve_result(

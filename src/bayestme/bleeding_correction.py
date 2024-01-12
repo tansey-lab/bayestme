@@ -257,16 +257,10 @@ def fit_basis_functions(
     t_reverse = torch.LongTensor(np.arange(basis_shape[1])[::-1].copy())
 
     if x_init is None:
-        x_init = np.full(
-            basis_shape, BASIS_FUNCTION_INITIALIZATION_VALUE
-        )  # TODO why -3 ??
-        # x_init = (np.median(Reads, axis=0), )
-        # x_init = np.concatenate([x_init[0], x_init[1].reshape(-1)])
-        # print(x_init)
+        x_init = np.full(basis_shape, BASIS_FUNCTION_INITIALIZATION_VALUE)
 
     def loss(t_Betas):
         t_Betas = sp(t_Betas)
-        # t_Beta0, t_Betas = Betas[:Reads.shape[1]], Betas[Reads.shape[1]:]
         t_Betas = t_Betas.reshape(basis_shape)
 
         # Exponentiate and sum each basis element from N down to the current entry j for each j
@@ -293,8 +287,6 @@ def fit_basis_functions(
         # Rate for each spot is bleed prob * spot rate plus the global read prob
         t_Mu = (t_Rates[None] * t_Weights[..., None]).sum(dim=1) + t_Beta0[None]
 
-        # print(t_Basis.data.numpy()[:,:15])
-
         # Calculate the negative log-likelihood of the data
         L = -torch.stack(
             [
@@ -308,10 +300,8 @@ def fit_basis_functions(
             # Apply a fused lasso penalty to enforce piecewise linear curves
             L += lam * (t_Betas[:, 1:] - t_Betas[:, :-1]).abs().mean()
 
-        # print('Before L2:', L)
         # Add a tiny bit of ridge penalty
         L += 1e-1 * (t_Basis**2).sum()
-        # print('After L2:', L)
 
         return L
 
@@ -797,6 +787,7 @@ def clean_bleed(
         positions=dataset.positions,
         gene_names=dataset.gene_names,
         layout=dataset.layout,
+        edges=dataset.edges,
         barcodes=dataset.adata.obs.index.to_numpy(),
     )
 

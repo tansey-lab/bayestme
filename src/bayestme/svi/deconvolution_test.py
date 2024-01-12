@@ -3,8 +3,10 @@ import tempfile
 import os.path
 import numpy as np
 
+import bayestme.common
 import bayestme.expression_truth
 import bayestme.synthetic_data
+import bayestme.utils
 from bayestme import data
 from bayestme.svi import deconvolution
 
@@ -26,8 +28,9 @@ def test_deconvolve_with_no_spatial_guide():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
     K = 3
     n_traces = 7
@@ -74,8 +77,9 @@ def test_deconvolve_with_no_spatial_guide_and_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     K = 3
@@ -121,8 +125,9 @@ def test_deconvolve_with_spatial_guide():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     K = 3
@@ -171,8 +176,9 @@ def test_deconvolve_with_spatial_guide_and_expression_truth():
         tissue_mask=tissue_mask,
         positions=locations,
         gene_names=np.array(["{}".format(x) for x in range(n_genes)]),
-        layout=data.Layout.SQUARE,
+        layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
     )
 
     n_traces = 7

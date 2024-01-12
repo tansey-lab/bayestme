@@ -8,9 +8,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import Normalize
-from matplotlib.patches import RegularPolygon, Wedge, Patch
+from matplotlib.patches import RegularPolygon, Wedge, Patch, Polygon
+from scipy.spatial import Voronoi
 
+import shapely
+from matplotlib import patches
+
+import bayestme.common
+from bayestme.common import Layout
 from bayestme import data
+
+from geopandas import GeoDataFrame
 
 # Extended version of cm.Set1 categorical colormap. See references:
 #
@@ -57,12 +65,15 @@ Glasbey30 = ListedColormap(colors=GLASBEY_30_COLORS, name="Glasbey30", N=30)
 
 
 def get_x_y_arrays_for_layout(
-    coords: np.ndarray, layout: data.Layout
+    coords: np.ndarray, layout: bayestme.common.Layout
 ) -> Tuple[np.array, np.array]:
-    if layout is data.Layout.HEX:
+    if layout is Layout.HEX:
         hcoord = coords[:, 0]
         vcoord = 2.0 * np.sin(np.radians(60)) * (coords[:, 1]) / 3.0
-    elif layout is data.Layout.SQUARE:
+    elif layout is Layout.SQUARE:
+        hcoord = coords[:, 0]
+        vcoord = coords[:, 1]
+    elif layout is Layout.IRREGULAR:
         hcoord = coords[:, 0]
         vcoord = coords[:, 1]
     else:
@@ -70,12 +81,108 @@ def get_x_y_arrays_for_layout(
     return hcoord, vcoord
 
 
+def mirror_points(points, xlim, ylim):
+    """Mirror points for reflective boundary conditions"""
+    mirrored_points = np.vstack(
+        [
+            points,
+            np.vstack([points[:, 0], ylim - points[:, 1]]).T,  # Top boundary
+            np.vstack([points[:, 0], -points[:, 1]]).T,  # Bottom boundary
+            np.vstack([xlim - points[:, 0], points[:, 1]]).T,  # Right boundary
+            np.vstack([-points[:, 0], points[:, 1]]).T,
+        ]
+    )  # Left boundary
+    return mirrored_points
+
+
+def get_voronoi_poly_and_vertices(vor):
+    for region_index in vor.point_region:
+        region = vor.regions[region_index]
+        if not -1 in region:  # Bounded regions
+            polygon = shapely.Polygon([vor.vertices[i] for i in region])
+            yield polygon, [vor.vertices[i] for i in region]
+
+
+def get_mirrored_voronoi_poly_and_vertices(points):
+    x_min, x_max = points[:, 0].min(), points[:, 0].max()
+    y_min, y_max = points[:, 1].min(), points[:, 1].max()
+    points_as_tuples_mirrored = mirror_points(points, x_max - x_min, y_max - y_min)
+    for poly, vertices in get_voronoi_poly_and_vertices(
+        Voronoi(points_as_tuples_mirrored)
+    ):
+        yield poly, vertices
+
+
+def add_voronoi_cell_bodies(ax, points, values, colormap, norm=None):
+    gdf = GeoDataFrame()
+    gdf["centroid"] = [shapely.Point(*a) for a in points]
+    gdf["value"] = values
+    gdf = gdf.set_geometry("centroid")
+
+    for poly, vertices in get_mirrored_voronoi_poly_and_vertices(points):
+        selector = gdf.within(poly)
+
+        if selector.sum() == 0:
+            continue
+        elif selector.sum() == 1:
+            value = gdf[selector]["value"]
+            patch = patches.Polygon(
+                np.array(vertices),
+                facecolor=colormap(norm(value)) if norm else colormap(value),
+                alpha=1,
+                edgecolor="black",
+                linewidth=0.3,
+            )
+            ax.add_patch(patch)
+        else:
+            raise RuntimeError("Multiple nuclei in one voronoi cell")
+
+
+def add_voronoi_bounded_scatterpies(ax, points, values, colormap):
+    gdf = GeoDataFrame()
+    gdf["centroid"] = [shapely.Point(*a) for a in points]
+
+    n_cell_types = values.shape[1]
+
+    for i in range(n_cell_types):
+        gdf[f"cell_type_{i}"] = values[:, i]
+
+    gdf = gdf.set_geometry("centroid")
+
+    for poly, vertices in get_mirrored_voronoi_poly_and_vertices(points):
+        selector = gdf.within(poly)
+
+        if selector.sum() == 0:
+            continue
+        elif selector.sum() == 1:
+            values = []
+            for i in range(n_cell_types):
+                values.append(gdf[selector][f"cell_type_{i}"].to_numpy().item())
+            centroid = poly.centroid
+            radius = radius_of_largest_circle_centered_inside_polygon(poly)
+
+            for idx, (theta1, theta2) in enumerate(
+                get_wedge_dimensions_from_value_array(np.array(values))
+            ):
+                wedge = Wedge(
+                    center=(centroid.x, centroid.y),
+                    r=radius,
+                    theta1=theta1,
+                    theta2=theta2,
+                    facecolor=colormap(idx),
+                    alpha=1,
+                )
+                ax.add_patch(wedge)
+        else:
+            raise RuntimeError("Multiple nuclei in one voronoi cell")
+
+
 def plot_colored_spatial_polygon(
     fig: matplotlib.figure.Figure,
     ax: matplotlib.axes.Axes,
     coords: np.ndarray,
     values: np.ndarray,
-    layout: data.Layout,
+    layout: bayestme.common.Layout,
     colormap: cm.ScalarMappable = cm.BuPu,
     norm=None,
     plotting_coordinates=None,
@@ -84,7 +191,6 @@ def plot_colored_spatial_polygon(
 ):
     """
     Basic plot of spatial gene expression
-
 
     :param fig: matplotlib figure artist object to which plot will be written
     :param ax: matplotlib axes artist object to which plot will be written
@@ -112,30 +218,33 @@ def plot_colored_spatial_polygon(
             plotting_coordinates, layout
         )
 
-    if layout is data.Layout.HEX:
-        num_vertices = 6
-        packing_radius = 2.0 / 3.0
-        orientation = np.radians(30)
-    elif layout is data.Layout.SQUARE:
-        num_vertices = 4
-        packing_radius = math.sqrt(2) / 2.0
-        orientation = np.radians(45)
-    else:
-        raise NotImplementedError(layout)
+    if layout in [Layout.HEX, Layout.SQUARE]:
+        if layout is Layout.HEX:
+            num_vertices = 6
+            packing_radius = 2.0 / 3.0
+            orientation = np.radians(30)
+        elif layout is Layout.SQUARE:
+            num_vertices = 4
+            packing_radius = math.sqrt(2) / 2.0
+            orientation = np.radians(45)
+        else:
+            raise NotImplementedError(layout)
 
-    # Add colored polygons
-    for x, y, v, has_border in zip(hcoord, vcoord, values, border_mask):
-        polygon = RegularPolygon(
-            (x, y),
-            numVertices=num_vertices,
-            radius=packing_radius,
-            orientation=orientation,
-            facecolor=colormap(norm(v)) if normalize else colormap(v),
-            alpha=1,
-            edgecolor="black" if has_border else "white",
-            linewidth=0.3,
-        )
-        ax.add_patch(polygon)
+        # Add colored polygons
+        for x, y, v, has_border in zip(hcoord, vcoord, values, border_mask):
+            polygon = RegularPolygon(
+                (x, y),
+                numVertices=num_vertices,
+                radius=packing_radius,
+                orientation=orientation,
+                facecolor=colormap(norm(v)) if normalize else colormap(v),
+                alpha=1,
+                edgecolor="black" if has_border else "white",
+                linewidth=0.3,
+            )
+            ax.add_patch(polygon)
+    elif layout is Layout.IRREGULAR:
+        add_voronoi_cell_bodies(ax, coords, values, colormap, norm=norm)
 
     # By scatter-plotting an invisible point on to all of our patches
     # we ensure the plotting domain is
@@ -165,12 +274,37 @@ def get_wedge_dimensions_from_value_array(value_array: np.array):
     return list(zip(theta1_values, theta2_values))
 
 
+def radius_of_largest_circle_centered_inside_polygon(polygon: shapely.Polygon):
+    # Calculate the centroid of the polygon
+    centroid = polygon.centroid
+
+    # Initialize the minimum distance to a large number
+    min_distance = float("inf")
+
+    # Iterate through each edge of the polygon
+    for i in range(len(polygon.exterior.coords) - 1):
+        p1 = shapely.Point(polygon.exterior.coords[i])
+        p2 = shapely.Point(polygon.exterior.coords[i + 1])
+
+        # Create a line from two consecutive points (an edge)
+        line = shapely.LineString([p1, p2])
+
+        # Calculate the perpendicular distance from the centroid to the line
+        distance = line.distance(centroid)
+
+        # Update the minimum distance
+        min_distance = min(min_distance, distance)
+
+    # The radius of the largest inscribed circle is the minimum distance
+    return min_distance
+
+
 def plot_spatial_pie_charts(
     fig: matplotlib.figure.Figure,
     ax: matplotlib.axes.Axes,
     coords: np.ndarray,
     values: np.ndarray,
-    layout: data.Layout,
+    layout: bayestme.common.Layout,
     colormap: cm.ScalarMappable = Glasbey30,
     plotting_coordinates=None,
     cell_type_names=None,
@@ -200,27 +334,27 @@ def plot_spatial_pie_charts(
             plotting_coordinates, layout
         )
 
-    if layout is data.Layout.HEX:
+    if layout in [Layout.HEX, Layout.SQUARE]:
         packing_radius = 0.5
-    elif layout is data.Layout.SQUARE:
-        packing_radius = 0.5
+
+        # Add colored polygons
+        for x, y, vs in zip(hcoord, vcoord, values):
+            for idx, (theta1, theta2) in enumerate(
+                get_wedge_dimensions_from_value_array(vs)
+            ):
+                wedge = Wedge(
+                    center=(x, y),
+                    r=packing_radius,
+                    theta1=theta1,
+                    theta2=theta2,
+                    facecolor=colormap(idx),
+                    alpha=1,
+                )
+                ax.add_patch(wedge)
+    elif layout is Layout.IRREGULAR:
+        add_voronoi_bounded_scatterpies(ax, coords, values, colormap)
     else:
         raise NotImplementedError(layout)
-
-    # Add colored polygons
-    for x, y, vs in zip(hcoord, vcoord, values):
-        for idx, (theta1, theta2) in enumerate(
-            get_wedge_dimensions_from_value_array(vs)
-        ):
-            wedge = Wedge(
-                center=(x, y),
-                r=packing_radius,
-                theta1=theta1,
-                theta2=theta2,
-                facecolor=colormap(idx),
-                alpha=1,
-            )
-            ax.add_patch(wedge)
 
     # By scatter-plotting an invisible point on to all of our patches
     # we ensure the plotting domain is
