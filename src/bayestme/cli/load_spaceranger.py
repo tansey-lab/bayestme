@@ -27,8 +27,6 @@ def main():
     args = get_parser().parse_args()
     bayestme.log_config.configure_logging(args)
 
-    dataset = data.SpatialExpressionDataset.read_spaceranger(
-        args.input, layout=bayestme.common.Layout.HEX
-    )
+    dataset = data.SpatialExpressionDataset.read_spaceranger(args.input)
 
     dataset.save(args.output)

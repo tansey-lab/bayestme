@@ -258,11 +258,11 @@ class SpatialExpressionDataset:
 
         if is_tsv(positions_path):
             positions_df = pd.read_csv(
-                positions_path, sep="\t", header=None, index_col=0, names=None
+                positions_path, sep="\t", header=0, index_col=0, names=None
             )
         elif is_csv(positions_path):
             positions_df = pd.read_csv(
-                positions_path, header=None, index_col=0, names=None
+                positions_path, header=0, index_col=0, names=None
             )
         else:
             raise RuntimeError("No positions list found in spaceranger directory")
