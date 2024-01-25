@@ -44,7 +44,8 @@ dependencies = [
         "tqdm>=4.64.0,<5",
         "shapely>=1.8.0,<2.1",
         "sksparse-minimal>=0.2",
-        "geopandas>=0.14.1,<1"
+        "geopandas>=0.14.1,<1",
+        "spatialdata-io>=0.0.9,<1"
 ]
 
 [project.optional-dependencies]
