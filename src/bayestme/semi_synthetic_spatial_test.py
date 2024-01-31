@@ -23,4 +23,4 @@ def test_semi_synthetic_spatial():
         ad, "cluster", pos_ss, n_genes=n_genes, canvas_size=(36, 36), n_spatial_gene=5
     )
 
-    assert stdata.reads.shape == (pos_ss.shape[0], n_genes)
+    assert stdata.counts.shape == (pos_ss.shape[0], n_genes)

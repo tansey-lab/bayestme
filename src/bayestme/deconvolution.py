@@ -27,7 +27,7 @@ def sample_from_posterior(
 ) -> data.DeconvolutionResult:
     if inference_type == InferenceType.MCMC:
         return bayestme.mcmc.deconvolution.deconvolve(
-            reads=data.reads,
+            reads=data.counts,
             edges=data.edges,
             n_samples=n_samples,
             n_burnin=mcmc_n_burn,

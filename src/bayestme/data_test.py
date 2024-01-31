@@ -201,7 +201,7 @@ def test_properties_work_without_obs_names():
 
     dataset = data.SpatialExpressionDataset(adata)
 
-    np.testing.assert_array_equal(dataset.reads, bleed_counts[tissue_mask])
+    np.testing.assert_array_equal(dataset.counts, bleed_counts[tissue_mask])
     np.testing.assert_array_equal(dataset.positions_tissue, locations[tissue_mask])
     np.testing.assert_array_equal(dataset.n_spot_in, tissue_mask.sum())
     np.testing.assert_array_equal(dataset.raw_counts, bleed_counts)
@@ -235,7 +235,7 @@ def test_properties_work_with_obs_names():
 
     dataset = data.SpatialExpressionDataset(adata)
 
-    np.testing.assert_array_equal(dataset.reads, bleed_counts[tissue_mask])
+    np.testing.assert_array_equal(dataset.counts, bleed_counts[tissue_mask])
     np.testing.assert_array_equal(dataset.positions_tissue, locations[tissue_mask])
     np.testing.assert_array_equal(dataset.n_spot_in, tissue_mask.sum())
     np.testing.assert_array_equal(dataset.raw_counts, bleed_counts)

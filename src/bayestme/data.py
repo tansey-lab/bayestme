@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
+from scipy.sparse import issparse
 import spatialdata_io
 from scipy.sparse import csr_matrix
 
@@ -97,10 +98,6 @@ class SpatialExpressionDataset:
         self.adata: anndata.AnnData = adata
 
     @property
-    def reads(self) -> ArrayType:
-        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
-
-    @property
     def positions_tissue(self) -> ArrayType:
         return self.adata[self.adata.obs[IN_TISSUE_ATTR]].obsm[SPATIAL_ATTR]
 
@@ -118,11 +115,21 @@ class SpatialExpressionDataset:
 
     @property
     def raw_counts(self) -> ArrayType:
-        return self.adata.X
+        X = self.adata.X
+
+        if issparse(X):
+            return X.todense()
+        else:
+            return X
 
     @property
     def counts(self) -> ArrayType:
-        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+        X = self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
+
+        if issparse(X):
+            return X.todense()
+        else:
+            return X
 
     @property
     def positions(self) -> ArrayType:

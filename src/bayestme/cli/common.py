@@ -24,6 +24,7 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
         "--spatial-smoothing-parameter",
         type=float,
         help="Spatial smoothing parameter (referred to as lambda in paper)",
+        required=True,
     )
     parser.add_argument(
         "--n-samples",
