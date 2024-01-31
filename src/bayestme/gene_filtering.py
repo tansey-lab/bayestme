@@ -19,7 +19,7 @@ def select_top_genes_by_standard_deviation(
     dataset: data.SpatialExpressionDataset, n_gene: int
 ) -> data.SpatialExpressionDataset:
     # order genes by the standard deviation across spots
-    ordering = utils.get_stddev_ordering(dataset.reads)
+    ordering = utils.get_stddev_ordering(dataset.counts)
 
     n_top_genes = min(n_gene, dataset.n_gene)
 
@@ -38,9 +38,9 @@ def select_top_genes_by_standard_deviation(
 def filter_genes_by_spot_threshold(
     dataset: data.SpatialExpressionDataset, spot_threshold: float
 ):
-    n_spots = dataset.reads.shape[0]
+    n_spots = dataset.counts.shape[0]
 
-    keep = (dataset.reads > 0).sum(axis=0) <= int(n_spots * spot_threshold)
+    keep = (dataset.counts > 0).sum(axis=0) <= int(n_spots * spot_threshold)
 
     input_adata = dataset.adata
     return data.SpatialExpressionDataset(input_adata[:, keep])

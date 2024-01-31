@@ -669,7 +669,7 @@ def plot_before_after_cleanup(
         fig=fig,
         ax=ax2,
         coords=after_correction.positions_tissue,
-        values=after_correction.reads[:, gene_idx_after],
+        values=after_correction.counts[:, gene_idx_after],
         layout=after_correction.layout,
         colormap=cmap,
         plotting_coordinates=after_correction.positions,
@@ -698,19 +698,19 @@ def plot_bleeding(
 
     # calculate bleeding ratio
     all_counts = before_correction.raw_counts.sum()
-    tissue_counts = after_correction.reads.sum()
+    tissue_counts = after_correction.counts.sum()
     bleed_ratio = 1 - tissue_counts / all_counts
     logger.info("\t {:.3f}% bleeds out".format(bleed_ratio * 100))
 
     # plot
     plot_intissue = np.ones_like(raw_count) * np.nan
-    plot_intissue[before_correction.tissue_mask] = after_correction.reads[:, gene_idx]
+    plot_intissue[before_correction.tissue_mask] = after_correction.counts[:, gene_idx]
     plot_outside = raw_count.copy().astype(float)
     plot_outside[before_correction.tissue_mask] = np.nan
 
     plot_data = [
-        before_correction.reads[:, gene_idx],
-        after_correction.reads[:, gene_idx],
+        before_correction.counts[:, gene_idx],
+        after_correction.counts[:, gene_idx],
         before_correction.raw_counts[:, gene_idx][~before_correction.tissue_mask],
     ]
     coords = [
@@ -810,7 +810,7 @@ def create_top_n_gene_bleeding_plots(
     n_genes: int = 10,
 ):
     top_gene_names = utils.get_top_gene_names_by_stddev(
-        reads=corrected_dataset.reads,
+        reads=corrected_dataset.counts,
         gene_names=corrected_dataset.gene_names,
         n_genes=n_genes,
     )
