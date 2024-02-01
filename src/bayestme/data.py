@@ -10,7 +10,7 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import issparse
-import spatialdata_io
+from spatialdata_io.readers._utils._read_10x_h5 import _read_10x_h5
 from scipy.sparse import csr_matrix
 
 from bayestme import utils
@@ -32,6 +32,14 @@ OMEGA_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega"
 RELATIVE_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_expression"
 POSITIONS_X_COLUMN = "array_col"
 POSITIONS_Y_COLUMN = "array_row"
+VISIUM_SPATIAL_COLUMNS = [
+    "barcode",
+    "in_tissue",
+    POSITIONS_Y_COLUMN,
+    POSITIONS_X_COLUMN,
+    "pxl_row_in_fullres",
+    "pxl_col_in_fullres",
+]
 
 
 def is_csv(fn: str):
@@ -251,18 +259,60 @@ class SpatialExpressionDataset:
             3) /spatial for position list
         :return: SpatialExpressionDataset
         """
-        sd = spatialdata_io.visium(data_path, dataset_id="visium")
-        ad = sd.table
+        raw_h5_path = os.path.join(data_path, "raw_feature_bc_matrix.h5")
 
-        tissue_mask = ad.obs.in_tissue.astype(bool).values
+        if not os.path.exists(raw_h5_path) or not os.path.isfile(raw_h5_path):
+            raise RuntimeError("Expected raw count matrix at {}".format(raw_h5_path))
+
+        tissue_positions_v1_path = os.path.join(
+            data_path, "spatial/tissue_positions_list.csv"
+        )
+        tissue_positions_v2_path = os.path.join(
+            data_path, "spatial/tissue_positions.csv"
+        )
+
+        if os.path.exists(tissue_positions_v1_path) and os.path.isfile(
+            tissue_positions_v1_path
+        ):
+            logger.info(
+                f"Reading V1 tissue positions list at {tissue_positions_v1_path}"
+            )
+            positions_df = pd.read_csv(
+                tissue_positions_v1_path, names=VISIUM_SPATIAL_COLUMNS
+            )
+        elif os.path.exists(tissue_positions_v2_path) and os.path.isfile(
+            tissue_positions_v2_path
+        ):
+            logger.info(
+                f"Reading V2 tissue positions list at {tissue_positions_v2_path}"
+            )
+            positions_df = pd.read_csv(tissue_positions_v2_path)
+        else:
+            raise RuntimeError("No positions list found in spaceranger directory")
+
+        if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
+            raise RuntimeError("Tissue positions list has unexpected columns")
+
+        ad = _read_10x_h5(raw_h5_path)
+
+        positions_df = positions_df.set_index("barcode")
+
+        tissue_mask = positions_df.loc[ad.obs_names, IN_TISSUE_ATTR].values
+        positions = positions_df.loc[
+            ad.obs_names, [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]
+        ].values
+        gene_names = ad.var_names.values
+        barcodes = ad.obs_names.values
+        raw_count = ad.X
+
         return cls.from_arrays(
-            raw_counts=ad.X,
-            positions=ad.obs[["array_row", "array_col"]].values,
+            raw_counts=raw_count,
+            positions=positions,
             tissue_mask=tissue_mask,
-            gene_names=ad.var_names.values,
+            gene_names=gene_names,
             layout=Layout.HEX,
-            edges=utils.get_edges(ad.obsm["spatial"][tissue_mask], Layout.HEX),
-            barcodes=ad.obs_names.values,
+            edges=utils.get_edges(positions[tissue_mask], Layout.HEX),
+            barcodes=barcodes,
         )
 
     @classmethod
