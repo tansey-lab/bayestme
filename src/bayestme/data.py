@@ -297,7 +297,7 @@ class SpatialExpressionDataset:
 
         positions_df = positions_df.set_index("barcode")
 
-        tissue_mask = positions_df.loc[ad.obs_names, IN_TISSUE_ATTR].values
+        tissue_mask = positions_df.loc[ad.obs_names, IN_TISSUE_ATTR].values.astype(bool)
         positions = positions_df.loc[
             ad.obs_names, [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]
         ].values
