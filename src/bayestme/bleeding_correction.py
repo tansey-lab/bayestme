@@ -380,12 +380,7 @@ def fit_spot_rates(Reads, tissue_mask, Weights, x_init=None):
         ).mean()
 
         # Add a small amount of L2 penalty to reduce variance between spots
-        # print('Rates loss before L2:', L)
         L += 1e-1 * (t_Rates**2).mean()
-        # print(Mu.data.numpy()[tissue_mask][:10])
-        # print(t_Beta0)
-        # print(L)
-        # print('Rates loss after L2:', L)
 
         return L
 
@@ -409,6 +404,7 @@ def decontaminate_spots(
     basis_init=None,
     Rates_init=None,
 ):
+    logger.info("Calling decontaminate_spots with n_top={}".format(n_top))
     # Handle case where n_top is larger than the number of genes in the experiment
     n_top = min(n_top, Reads.shape[1])
 
@@ -425,8 +421,6 @@ def decontaminate_spots(
 
     logger.info(f"Fitting basis functions to first {n_top} genes")
     for step in tqdm.trange(max_steps, desc="Fitting bleed correction basis functions"):
-        logger.info(f"\nStep {step + 1}/{max_steps}")
-
         basis_functions, Weights, res = fit_basis_functions(
             Reads[:, :n_top],
             tissue_mask,
@@ -446,12 +440,11 @@ def decontaminate_spots(
         Rates_init = res.x
         loss = res.fun
 
-        logger.info(f"\tLoss: {loss:.2f}")
+        logger.debug(f"Step {step} loss: {loss:.2f}")
 
     Rates = np.zeros(Reads.shape)
     global_rates = np.zeros(Reads.shape[1])
     for g in tqdm.trange(Reads.shape[1], desc="Fitting bleed spot rates"):
-        logger.info(f"\nGene {g + 1}/{Reads.shape[1]}")
         global_rates[g], Rates[:, g : g + 1], res = fit_spot_rates(
             Reads[:, g : g + 1], tissue_mask, Weights, x_init=None
         )

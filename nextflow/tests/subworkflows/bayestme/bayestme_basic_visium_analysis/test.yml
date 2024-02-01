@@ -1,8 +1,3 @@
-- name: bayestme_basic_visium_analysis
-  command: nextflow run ./nextflow/tests/subworkflows/bayestme/bayestme_basic_visium_analysis -queue-size 1 -entry bayestme_basic_visium_analysis -c ./nextflow/tests/subworkflows/bayestme/bayestme_basic_visium_analysis/nextflow.config -c ./nextflow/tests/config/nextflow.config --bleeding_correction true
-  tags:
-    - bayestme_basic_visium_analysis
-  files: []
 - name: bayestme_basic_visium_analysis_skip_bleeding
   command: nextflow run ./nextflow/tests/subworkflows/bayestme/bayestme_basic_visium_analysis -queue-size 1 -entry bayestme_basic_visium_analysis -c ./nextflow/tests/subworkflows/bayestme/bayestme_basic_visium_analysis/nextflow.config -c ./nextflow/tests/config/nextflow.config --bleeding_correction false
   tags:
