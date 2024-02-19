@@ -16,11 +16,20 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: jeffquinnmsk/bayestme
+          tags: |
+            type=sha,format=long
       - name: Build and push BayesTME container
         uses: docker/build-push-action@v3
         with:
-          push: true
-          tags: jeffquinnmsk/bayestme:latest
+          tags: |
+            jeffquinnmsk/bayestme:latest
+            jeffquinnmsk/bayestme:${{ steps.meta.outputs.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=jeffquinnmsk/bayestme:latest
           cache-to: type=inline
   nextflow-integration:
