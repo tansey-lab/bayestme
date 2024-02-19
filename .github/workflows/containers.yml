@@ -19,6 +19,7 @@ jobs:
       - name: Build and push BayesTME container
         uses: docker/build-push-action@v3
         with:
+          push: true
           tags: |
             jeffquinnmsk/bayestme:latest
             jeffquinnmsk/bayestme:${{ github.sha }}
