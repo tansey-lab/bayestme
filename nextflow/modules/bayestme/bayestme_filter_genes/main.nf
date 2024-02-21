@@ -2,8 +2,8 @@ process BAYESTME_FILTER_GENES {
     tag "$meta.id"
     label 'process_single'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest' :
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
+        'docker://jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' :
+        'docker.io/jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' }"
 
     input:
     tuple val(meta), path(adata), val(filter_ribosomal_genes), val(n_top_by_standard_deviation), val(spot_threshold), path(expression_truth)

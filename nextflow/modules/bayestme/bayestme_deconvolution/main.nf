@@ -3,8 +3,8 @@ process BAYESTME_DECONVOLUTION {
     label 'process_high_memory'
     label 'process_long'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest' :
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
+        'docker://jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' :
+        'docker.io/jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' }"
 
     input:
     tuple val(meta), path(adata), val(n_cell_types), val(spatial_smoothing_parameter), path(expression_truth)
