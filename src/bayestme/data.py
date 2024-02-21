@@ -126,7 +126,7 @@ class SpatialExpressionDataset:
         X = self.adata.X
 
         if issparse(X):
-            return X.todense()
+            return np.asarray(X.todense())
         else:
             return X
 
@@ -135,7 +135,7 @@ class SpatialExpressionDataset:
         X = self.adata[self.adata.obs[IN_TISSUE_ATTR]].X
 
         if issparse(X):
-            return X.todense()
+            return np.asarray(X.todense())
         else:
             return X
 
