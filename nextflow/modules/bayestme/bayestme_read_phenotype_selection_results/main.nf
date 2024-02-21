@@ -2,8 +2,8 @@ process BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS {
     tag "$meta.id"
     label "process_single"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:latest' :
-        'docker.io/jeffquinnmsk/bayestme:latest' }"
+        'docker://jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' :
+        'docker.io/jeffquinnmsk/bayestme:89a932361287e7eaa9552d70908239d95479937e' }"
 
     input:
     tuple val(meta), file(fold_results)
