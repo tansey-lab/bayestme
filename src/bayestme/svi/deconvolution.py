@@ -135,6 +135,8 @@ class BayesTME_VI:
 
         # exprected expression
         expected_exp = d @ celltype_exp
+        expected_exp = pyro.deterministic("expected_exp", expected_exp)
+
         # TODO: potentially can speed this up further
         #       calc something like log_prob = (data_flat * log(expected_exp_flat) - expected_exp_flat).sum()
         #       do pyro.factor('obs', log_prob)
