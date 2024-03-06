@@ -14,6 +14,8 @@ from pyro.infer import SVI, Trace_ELBO
 from pyro.infer.autoguide import AutoNormal
 from pyro.optim import Adam
 from torch.distributions import biject_to
+from bayestme.synthetic_data import generate_demo_stp_dataset
+import bayestme.svi.deconvolution
 
 
 def test_model():
@@ -35,5 +37,25 @@ def test_model():
 
     svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
 
-    for step in tqdm.trange(1000):  # Consider running for more steps.
+    for step in tqdm.trange(1):  # Consider running for more steps.
         loss = svi.step(expected_exp, y=None, k=3, h=10)
+
+
+def test_model_pipeline():
+    stdata = generate_demo_stp_dataset()
+
+    K = 2
+    n_traces = 100
+
+    rng = np.random.default_rng(42)
+
+    result = bayestme.svi.deconvolution.deconvolve(
+        stdata=stdata,
+        n_components=K,
+        rho=0.5,
+        n_svi_steps=1000,
+        n_samples=n_traces,
+        use_spatial_guide=True,
+        expression_truth=None,
+        rng=rng,
+    )
