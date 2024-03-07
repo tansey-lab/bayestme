@@ -521,6 +521,7 @@ class DeconvolutionResult:
         lam2: float,
         n_components: int,
         losses: Optional[np.ndarray] = None,
+        expected_exp_trace: Optional[np.ndarray] = None,
     ):
         """
 
@@ -532,6 +533,7 @@ class DeconvolutionResult:
         :param lam2: lambda smoothing parameter used for the posterior distribution
         :param n_components: N components value for the posterior distribution
         :param losses: Training loss (if applicable for inference method)
+        :param expected_exp_trace: Expected expression trace (if applicable for inference method)
         """
         self.reads_trace = reads_trace
         self.cell_prob_trace = cell_prob_trace
@@ -541,6 +543,7 @@ class DeconvolutionResult:
         self.lam2 = lam2
         self.n_components = n_components
         self.losses = losses
+        self.expected_exp_trace = expected_exp_trace
 
     def save(self, path):
         with h5py.File(path, "w") as f:
@@ -551,6 +554,8 @@ class DeconvolutionResult:
             f["reads_trace"] = self.reads_trace
             if self.losses is not None:
                 f["losses"] = self.losses
+            if self.expected_exp_trace is not None:
+                f["expected_exp_trace"] = self.expected_exp_trace
             f.attrs["lam2"] = self.lam2
             f.attrs["n_components"] = self.n_components
 
@@ -664,6 +669,11 @@ class DeconvolutionResult:
             else:
                 losses = None
 
+            if "expected_exp_trace" in f:
+                expected_exp_trace = f["expected_exp_trace"][:]
+            else:
+                expected_exp_trace = None
+
             return cls(
                 cell_prob_trace=cell_prob_trace,
                 expression_trace=expression_trace,
@@ -673,6 +683,7 @@ class DeconvolutionResult:
                 lam2=lam2,
                 n_components=n_components,
                 losses=losses,
+                expected_exp_trace=expected_exp_trace,
             )
 
 

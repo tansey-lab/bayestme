@@ -268,6 +268,7 @@ class BayesTME_VI:
             beta_trace=samples["exp_load"],
             cell_num_trace=(samples["cell_num_total"].T * samples["psi"].T).T,
             reads_trace=samples["read_trace"],
+            expected_exp_trace=samples["expected_exp"],
             lam2=self.sp_reg_coeff,
             n_components=K,
             losses=np.array(self.losses),
