@@ -1,4 +1,4 @@
-from bayestme.svi.spatial_expression import model
+from bayestme.svi.spatial_expression import model, get_loss_for_seed, config_enumerate
 import pyro
 import torch
 import numpy as np
@@ -63,14 +63,24 @@ def test_model_pipeline():
     )
 
     pyro.clear_param_store()
+    h = 4
 
-    y_igk = deconv_result.reads_trace.mean(axis=0)
-    args = {"y_igk": torch.tensor(y_igk), "h": 2, "alpha0_hparam": 1.0}
+    y_igk = torch.tensor(deconv_result.reads_trace.mean(axis=0))
+    args = {"y_igk": y_igk, "h": h, "alpha0_hparam": 1.0}
 
     optimizer = Adam(optim_args={"lr": 0.05})
     guide = AutoNormal(poutine.block(model, hide=["h"]))
 
-    svi = SVI(model, guide, optimizer, loss=TraceEnum_ELBO())
+    elbo = TraceEnum_ELBO()
+
+    best_loss, best_seed = min(
+        [get_loss_for_seed(seed, optimizer, elbo, y_igk, h) for seed in range(1000)]
+    )
+    print(best_loss, best_seed)
+    pyro.set_rng_seed(best_seed)
+    pyro.clear_param_store()
+
+    svi = SVI(model, guide, optimizer, loss=elbo)
 
     for step in tqdm.trange(10_000):  # Consider running for more steps.
         loss = svi.step(**args)
@@ -78,7 +88,7 @@ def test_model_pipeline():
     params = pyro.get_param_store()
 
     result = defaultdict(list)
-    for _ in tqdm.trange(1000):
+    for _ in tqdm.trange(500):
         guide_trace = poutine.trace(guide).get_trace(**args)
         model_trace = poutine.trace(poutine.replay(model, guide_trace)).get_trace(
             **args
@@ -114,7 +124,4 @@ def test_model_pipeline():
 
     samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
 
-    print(samples)
-
-
-1
+    print(samples, h_modes, h_freqs)

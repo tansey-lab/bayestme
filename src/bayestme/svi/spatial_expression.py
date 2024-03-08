@@ -2,6 +2,41 @@ import pyro
 import pyro.distributions as dist
 import torch
 from pyro.infer.enum import config_enumerate
+from pyro.infer.autoguide import AutoNormal
+from pyro.infer.svi import SVI
+from pyro import poutine
+
+
+def init_loc_fn(site, y_igk, h=None):
+    i = y_igk.shape[0]
+    g = y_igk.shape[1]
+    k = y_igk.shape[2]
+
+    if site["name"] == "v":
+        return torch.distributions.Normal(0, 1).sample((k, g, 1))
+    elif site["name"] == "p":
+        return torch.distributions.Dirichlet(torch.ones(h)).sample((k, g))[
+            :, :, None, :
+        ]
+    elif site["name"] == "c":
+        return torch.distributions.Normal(0, 1).sample((k, g, 1))
+    elif site["name"] == "h":
+        return torch.randint(0, h, (1, g, k))
+    elif site["name"] == "w":
+        return torch.distributions.Normal(0, 1).sample((h, k, 1, i))
+    else:
+        raise ValueError(site["name"])
+
+
+def get_loss_for_seed(seed, optim, elbo, y_igk, h=None):
+    pyro.set_rng_seed(seed)
+    pyro.clear_param_store()
+    guide = AutoNormal(
+        poutine.block(model, hide=["h"]),
+        init_loc_fn=lambda site: init_loc_fn(site=site, y_igk=y_igk, h=h),
+    )
+    svi = SVI(model, guide, optim, loss=elbo)
+    return svi.loss(model, guide, y_igk=y_igk, h=h), seed
 
 
 @config_enumerate(default="parallel")
