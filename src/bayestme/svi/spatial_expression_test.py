@@ -10,7 +10,7 @@ import torch
 import tqdm
 from pyro import poutine
 from pyro.distributions import Gamma, Dirichlet
-from pyro.infer import SVI, Trace_ELBO
+from pyro.infer import SVI, Trace_ELBO, TraceEnum_ELBO
 from pyro.infer.autoguide import AutoNormal
 from pyro.optim import Adam
 from torch.distributions import biject_to
@@ -51,7 +51,7 @@ def test_model_pipeline():
 
     rng = np.random.default_rng(42)
 
-    result = bayestme.svi.deconvolution.deconvolve(
+    deconv_result = bayestme.svi.deconvolution.deconvolve(
         stdata=stdata,
         n_components=K,
         rho=0.5,
@@ -64,22 +64,21 @@ def test_model_pipeline():
 
     pyro.clear_param_store()
 
-    reads = torch.tensor(result.reads_trace.mean(0))
-
-    args = {"reads": reads, "y": torch.tensor(stdata.counts), "k": 2, "h": 2}
+    y_igk = deconv_result.reads_trace.mean(axis=0)
+    args = {"y_igk": torch.tensor(y_igk), "h": 2, "alpha0_hparam": 1.0}
 
     optimizer = Adam(optim_args={"lr": 0.05})
-    guide = AutoNormal(poutine.block(model, hide=["y_h"]))
+    guide = AutoNormal(poutine.block(model, hide=["h"]))
 
-    svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
+    svi = SVI(model, guide, optimizer, loss=TraceEnum_ELBO())
 
-    for step in tqdm.trange(4000):  # Consider running for more steps.
+    for step in tqdm.trange(10_000):  # Consider running for more steps.
         loss = svi.step(**args)
 
     params = pyro.get_param_store()
 
     result = defaultdict(list)
-    for _ in tqdm.trange(200):
+    for _ in tqdm.trange(1000):
         guide_trace = poutine.trace(guide).get_trace(**args)
         model_trace = poutine.trace(poutine.replay(model, guide_trace)).get_trace(
             **args
@@ -102,6 +101,20 @@ def test_model_pipeline():
         for k, v in sample.items():
             result[k].append(v)
 
+    all_h_values = np.stack(result["h"])[:, :, :, 0]
+
+    h_modes = np.zeros_like(all_h_values[0, ...])
+    h_freqs = np.zeros_like(all_h_values[0, ...]).astype(float)
+
+    for k in range(all_h_values.shape[1]):
+        for g in range(all_h_values.shape[2]):
+            vals, counts = np.unique(all_h_values[:, k, g], return_counts=True)
+            h_modes[k, g] = vals[counts.argmax()]
+            h_freqs[k, g] = float(counts.max()) / float(counts.sum())
+
     samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
 
     print(samples)
+
+
+1

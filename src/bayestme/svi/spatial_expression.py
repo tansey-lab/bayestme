@@ -1,40 +1,50 @@
 import pyro
 import pyro.distributions as dist
 import torch
+from pyro.infer.enum import config_enumerate
 
 
-def model(data=None, h=None, alpha0_hparam=10, alpha_hparam=1):
+@config_enumerate(default="parallel")
+def model(y_igk, h=None, alpha0_hparam=10, alpha_hparam=1):
     """
     Model for spatial expression
-    :param expected_exp: Expected expression N spot x G genes
-
     """
-    i = data.shape[0]
-    g = data.shape[1]
-    k = data.shape[2]
+    i = y_igk.shape[0]
+    g = y_igk.shape[1]
+    k = y_igk.shape[2]
 
-    w = pyro.sample("w", dist.Normal(0, 1).expand([i, k, h]).to_event(3))
+    spot_plate = pyro.plate("spot", i, dim=-1)
+    gene_plate = pyro.plate("gene", g, dim=-2)
+    component_plate = pyro.plate("component", k, dim=-3)
+    stp_plate = pyro.plate("stp", h, dim=-4)
 
-    v = pyro.sample("v", dist.Normal(0, 1).expand([g, k]).to_event(2))
+    y = y_igk.sum(dim=-1).int()
 
     alpha = torch.ones(h) * alpha_hparam
     alpha[0] = alpha0_hparam
 
-    p = pyro.sample("p", dist.Dirichlet(alpha).expand([g, k]).to_event(2))
+    with spot_plate, component_plate, stp_plate:
+        w = pyro.sample("w", dist.Normal(0, 1))
 
-    p_logit = torch.logit(p)
+    w[..., 0, :, :, :] *= 0.0
+    w = w[..., torch.zeros(g, dtype=torch.long), :]
 
-    c = pyro.sample("c", dist.Normal(0, 1).expand([g, k]).to_event(2))
+    with gene_plate, component_plate:
+        v = pyro.sample("v", dist.Normal(0, 1))
+        p = pyro.sample("p", dist.Dirichlet(alpha))
+        c = pyro.sample("c", dist.Normal(0, 1))
+        h = pyro.sample("h", dist.Categorical(p))
 
-    theta = torch.einsum("gkh,ikh,gk->igk", p_logit, w, v)
-    theta += c.squeeze()[None, ...]
+        h = h[..., torch.zeros(i, dtype=torch.long)]
 
-    theta = pyro.deterministic("theta", theta.permute(2, 0, 1))
+        with spot_plate:
+            w_h = w[
+                ...,
+                h,
+                torch.arange(h.shape[-3])[:, None, None],
+                torch.arange(h.shape[-2])[None, :, None],
+                torch.arange(h.shape[-1])[None, None, :],
+            ]
 
-    y = pyro.sample(
-        "y", dist.NegativeBinomial(expected_exp, logits=theta).to_event(3), obs=data
-    )
-
-    y_loc = y_h.sum(dim=0)
-
-    y = pyro.sample("y", dist.Normal(y_loc, 1).to_event(2), obs=y)
+            theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
+            pyro.sample("y_h", dist.NegativeBinomial(y.T, theta), obs=y_igk.T.int())

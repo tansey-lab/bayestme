@@ -368,9 +368,7 @@ def generate_demo_stp_dataset():
         [
             gene_north_exp.flatten() * 10,
             gene_south_exp.flatten() * 10,
-            gene_stp_exp.flatten() * 10,
-            noise_exp.flatten(),
-            noise_exp.flatten() * 2,
+            gene_stp_exp.flatten() * 2,
         ]
     ).T
 
@@ -382,15 +380,7 @@ def generate_demo_stp_dataset():
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,
-        gene_names=np.array(
-            [
-                "north_marker",
-                "south_marker",
-                "north_stp",
-                "noise_weak",
-                "noise_strong",
-            ]
-        ),
+        gene_names=np.array(["north_marker", "south_marker", "north_stp"]),
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
         edges=bayestme.utils.get_edges(
             locations[tissue_mask], bayestme.common.Layout.SQUARE
