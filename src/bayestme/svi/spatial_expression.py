@@ -7,7 +7,7 @@ from pyro.infer.svi import SVI
 from pyro import poutine
 
 
-def init_loc_fn(site, y_igk, h=None):
+def init_loc_fn(site, y_igk=None, h=None, **kwargs):
     i = y_igk.shape[0]
     g = y_igk.shape[1]
     k = y_igk.shape[2]
@@ -28,19 +28,19 @@ def init_loc_fn(site, y_igk, h=None):
         raise ValueError(site["name"])
 
 
-def get_loss_for_seed(seed, optim, elbo, y_igk, h=None):
+def get_loss_for_seed(seed, optim, elbo, kwargs):
     pyro.set_rng_seed(seed)
     pyro.clear_param_store()
     guide = AutoNormal(
         poutine.block(model, hide=["h"]),
-        init_loc_fn=lambda site: init_loc_fn(site=site, y_igk=y_igk, h=h),
+        init_loc_fn=lambda site: init_loc_fn(site=site, **kwargs),
     )
     svi = SVI(model, guide, optim, loss=elbo)
-    return svi.loss(model, guide, y_igk=y_igk, h=h), seed
+    return svi.loss(model, guide, **kwargs), seed
 
 
 @config_enumerate(default="parallel")
-def model(y_igk, h=None, alpha0_hparam=10, alpha_hparam=1):
+def model(r_igk, y_igk, h=None, alpha0_hparam=10, alpha_hparam=1):
     """
     Model for spatial expression
     """
@@ -52,8 +52,6 @@ def model(y_igk, h=None, alpha0_hparam=10, alpha_hparam=1):
     gene_plate = pyro.plate("gene", g, dim=-2)
     component_plate = pyro.plate("component", k, dim=-3)
     stp_plate = pyro.plate("stp", h, dim=-4)
-
-    y = y_igk.sum(dim=-1).int()
 
     alpha = torch.ones(h) * alpha_hparam
     alpha[0] = alpha0_hparam
@@ -82,4 +80,4 @@ def model(y_igk, h=None, alpha0_hparam=10, alpha_hparam=1):
             ]
 
             theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
-            pyro.sample("y_h", dist.NegativeBinomial(y.T, theta), obs=y_igk.T.int())
+            pyro.sample("y_h", dist.NegativeBinomial(r_igk.T, theta), obs=y_igk.T.int())

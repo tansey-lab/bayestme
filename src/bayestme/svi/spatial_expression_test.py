@@ -19,35 +19,13 @@ import bayestme.svi.deconvolution
 from collections import defaultdict
 
 
-def test_model():
-    pyro.util.set_rng_seed(0)
-    expected_exp = torch.tensor(np.random.random((64, 5)))
-
-    trace = poutine.trace(model).get_trace(
-        expected_exp,
-        y=None,
-        k=3,
-        h=10,
-    )
-    trace.compute_log_prob()
-    print("---------- Tensor Shapes ------------")
-    print(trace.format_shapes())
-
-    optimizer = Adam(optim_args={"lr": 0.05})
-    guide = AutoNormal(poutine.block(model, hide=["y"]))
-
-    svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
-
-    for step in tqdm.trange(1):  # Consider running for more steps.
-        loss = svi.step(expected_exp, y=None, k=3, h=10)
-
-
 def test_model_pipeline():
     pyro.util.set_rng_seed(0)
     stdata = generate_demo_stp_dataset()
 
     K = 2
     n_traces = 100
+    svi_steps = 1
 
     rng = np.random.default_rng(42)
 
@@ -55,18 +33,28 @@ def test_model_pipeline():
         stdata=stdata,
         n_components=K,
         rho=0.5,
-        n_svi_steps=10_000,
+        n_svi_steps=svi_steps,
         n_samples=n_traces,
         use_spatial_guide=False,
         expression_truth=None,
         rng=rng,
     )
 
+    r_igk = torch.tensor(
+        np.transpose(
+            (deconv_result.cell_num_trace.mean(0) * deconv_result.beta_trace.mean(0).T)[
+                :, :, None
+            ]
+            * deconv_result.expression_trace.mean(0)[None, :, :],
+            (0, 2, 1),
+        )
+    )
+
     pyro.clear_param_store()
-    h = 4
+    h = 2
 
     y_igk = torch.tensor(deconv_result.reads_trace.mean(axis=0))
-    args = {"y_igk": y_igk, "h": h, "alpha0_hparam": 1.0}
+    args = {"r_igk": r_igk, "y_igk": y_igk, "h": h, "alpha0_hparam": 1.0}
 
     optimizer = Adam(optim_args={"lr": 0.05})
     guide = AutoNormal(poutine.block(model, hide=["h"]))
@@ -74,7 +62,7 @@ def test_model_pipeline():
     elbo = TraceEnum_ELBO()
 
     best_loss, best_seed = min(
-        [get_loss_for_seed(seed, optimizer, elbo, y_igk, h) for seed in range(1000)]
+        [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
     )
     print(best_loss, best_seed)
     pyro.set_rng_seed(best_seed)
@@ -82,7 +70,7 @@ def test_model_pipeline():
 
     svi = SVI(model, guide, optimizer, loss=elbo)
 
-    for step in tqdm.trange(10_000):  # Consider running for more steps.
+    for step in tqdm.trange(svi_steps):  # Consider running for more steps.
         loss = svi.step(**args)
 
     params = pyro.get_param_store()
@@ -123,5 +111,14 @@ def test_model_pipeline():
             h_freqs[k, g] = float(counts.max()) / float(counts.sum())
 
     samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
+
+    prog_cell_type_0 = np.zeros((9, 9))
+    prog_cell_type_1 = np.zeros((9, 9))
+    prog_cell_type_0[
+        stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
+    ] = samples["w"][1, 0, 0, :]
+    prog_cell_type_1[
+        stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
+    ] = samples["w"][1, 1, 0, :]
 
     print(samples, h_modes, h_freqs)

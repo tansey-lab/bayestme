@@ -58,7 +58,7 @@ def construct_trendfilter(adjacency_matrix, k):
     return transformed_edge_adjacency_matrix
 
 
-def create_reads_trace(psi, exp_profile, exp_load, cell_num_total):
+def create_reads_trace(psi, exp_profile, exp_load, cell_num_total, rng=None):
     """
     :param psi: <N tissue spots> x <N components> matrix
     :param exp_profile: <N components> x <N markers> matrix
@@ -66,9 +66,27 @@ def create_reads_trace(psi, exp_profile, exp_load, cell_num_total):
     :param cell_num_total: <N tissue spots> matrix
     :return: <N tissue spots> x <N markers> x <N components> matrix
     """
+    if rng is None:
+        rng = np.random.default_rng()
     number_of_cells_per_component = (psi.T * cell_num_total).T * exp_load.T
     result = number_of_cells_per_component[:, :, None] * exp_profile[None, :, :]
-    return np.transpose(result, (0, 2, 1))
+
+    reads = []
+
+    for k in range(exp_profile.shape[0]):
+        probs = exp_profile[k, :]
+        spot_reads = []
+        for n in number_of_cells_per_component[:, k]:
+            n = round(n)
+            if n <= 0:
+                spot_reads.append(np.zeros(exp_profile.shape[1]))
+            else:
+                spot_reads.append(rng.multinomial(n, probs))
+        reads.append(spot_reads)
+
+    reads = np.array(reads)
+
+    return np.transpose(reads, (1, 2, 0))
 
 
 class BayesTME_VI:
