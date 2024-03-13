@@ -73,4 +73,8 @@ autodoc_mock_imports = [
     "torch",
     "tqdm",
     "pyro",
+    "sksparse_minimal",
+    "shapely",
+    "spatialdata_io",
+    "geopandas",
 ]
