@@ -54,71 +54,78 @@ def test_model_pipeline():
     h = 2
 
     y_igk = torch.tensor(deconv_result.reads_trace.mean(axis=0))
-    args = {"r_igk": r_igk, "y_igk": y_igk, "h": h, "alpha0_hparam": 1.0}
 
-    optimizer = Adam(optim_args={"lr": 0.05})
-    guide = AutoNormal(poutine.block(model, hide=["h"]))
-
-    elbo = TraceEnum_ELBO()
-
-    best_loss, best_seed = min(
-        [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
-    )
-    print(best_loss, best_seed)
-    pyro.set_rng_seed(best_seed)
-    pyro.clear_param_store()
-
-    svi = SVI(model, guide, optimizer, loss=elbo)
-
-    for step in tqdm.trange(svi_steps):  # Consider running for more steps.
-        loss = svi.step(**args)
-
-    params = pyro.get_param_store()
-
-    result = defaultdict(list)
-    for _ in tqdm.trange(500):
-        guide_trace = poutine.trace(guide).get_trace(**args)
-        model_trace = poutine.trace(poutine.replay(model, guide_trace)).get_trace(
-            **args
-        )
-        sample = {
-            name: site["value"]
-            for name, site in model_trace.nodes.items()
-            if (
-                (site["type"] == "sample")
-                and (
-                    (not site.get("is_observed", True))
-                    or (site.get("infer", False).get("_deterministic", False))
-                )
-                and not isinstance(
-                    site.get("fn", None), poutine.subsample_messenger._Subsample
-                )
-            )
+    for k in range(K):
+        args = {
+            "r_ig": r_igk[:, :, k],
+            "y_ig": y_igk[:, :, k],
+            "h": h,
+            "alpha0_hparam": 1.0,
         }
-        sample = {name: site.detach().numpy() for name, site in sample.items()}
-        for k, v in sample.items():
-            result[k].append(v)
 
-    all_h_values = np.stack(result["h"])[:, :, :, 0]
+        optimizer = Adam(optim_args={"lr": 0.05})
+        guide = AutoNormal(poutine.block(model, hide=["h"]))
 
-    h_modes = np.zeros_like(all_h_values[0, ...])
-    h_freqs = np.zeros_like(all_h_values[0, ...]).astype(float)
+        elbo = TraceEnum_ELBO(max_plate_nesting=2)
 
-    for k in range(all_h_values.shape[1]):
-        for g in range(all_h_values.shape[2]):
-            vals, counts = np.unique(all_h_values[:, k, g], return_counts=True)
-            h_modes[k, g] = vals[counts.argmax()]
-            h_freqs[k, g] = float(counts.max()) / float(counts.sum())
+        best_loss, best_seed = min(
+            [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
+        )
+        print(best_loss, best_seed)
+        pyro.set_rng_seed(best_seed)
+        pyro.clear_param_store()
 
-    samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
+        svi = SVI(model, guide, optimizer, loss=elbo)
 
-    prog_cell_type_0 = np.zeros((9, 9))
-    prog_cell_type_1 = np.zeros((9, 9))
-    prog_cell_type_0[
-        stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
-    ] = samples["w"][1, 0, 0, :]
-    prog_cell_type_1[
-        stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
-    ] = samples["w"][1, 1, 0, :]
+        for step in tqdm.trange(svi_steps):  # Consider running for more steps.
+            loss = svi.step(**args)
 
-    print(samples, h_modes, h_freqs)
+        params = pyro.get_param_store()
+
+        result = defaultdict(list)
+        for _ in tqdm.trange(500):
+            guide_trace = poutine.trace(guide).get_trace(**args)
+            model_trace = poutine.trace(poutine.replay(model, guide_trace)).get_trace(
+                **args
+            )
+            sample = {
+                name: site["value"]
+                for name, site in model_trace.nodes.items()
+                if (
+                    (site["type"] == "sample")
+                    and (
+                        (not site.get("is_observed", True))
+                        or (site.get("infer", False).get("_deterministic", False))
+                    )
+                    and not isinstance(
+                        site.get("fn", None), poutine.subsample_messenger._Subsample
+                    )
+                )
+            }
+            sample = {name: site.detach().numpy() for name, site in sample.items()}
+            for k, v in sample.items():
+                result[k].append(v)
+
+        all_h_values = np.stack(result["h"])[:, :, :, 0]
+
+        h_modes = np.zeros_like(all_h_values[0, ...])
+        h_freqs = np.zeros_like(all_h_values[0, ...]).astype(float)
+
+        for k in range(all_h_values.shape[1]):
+            for g in range(all_h_values.shape[2]):
+                vals, counts = np.unique(all_h_values[:, k, g], return_counts=True)
+                h_modes[k, g] = vals[counts.argmax()]
+                h_freqs[k, g] = float(counts.max()) / float(counts.sum())
+
+        samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
+
+        prog_cell_type_0 = np.zeros((9, 9))
+        prog_cell_type_1 = np.zeros((9, 9))
+        prog_cell_type_0[
+            stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
+        ] = samples["w"][1, 0, 0, :]
+        prog_cell_type_1[
+            stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
+        ] = samples["w"][1, 1, 0, :]
+
+        print(samples, h_modes, h_freqs)
