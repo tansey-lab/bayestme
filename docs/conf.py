@@ -76,5 +76,5 @@ autodoc_mock_imports = [
     "sksparse_minimal",
     "shapely",
     "spatialdata_io",
-    "geopandas"
+    "geopandas",
 ]
