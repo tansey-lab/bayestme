@@ -28,7 +28,7 @@ process BAYESTME_FILTER_GENES {
     def filter_ribosomal_genes_flag = filter_ribosomal_genes ? "" : "--filter-ribosomal-genes"
     def n_top_by_standard_deviation_flag = "--n-top-by-standard-deviation ${n_top_by_standard_deviation}"
     def spot_threshold_flag = need_spot_threshold_flag ? "--spot-threshold ${spot_threshold}" : ""
-    def expression_truth_flag = expression_truth ? "--expression-truth ${task.ext.expression_truth}" : ""
+    def expression_truth_flag = expression_truth ? "--expression-truth ${expression_truth}" : ""
 
     expression_truth_flag = need_expression_truth_flag ? expression_truth_flag : ""
     n_top_by_standard_deviation_flag = need_n_top_by_standard_deviation_flag ? n_top_by_standard_deviation_flag : ""
