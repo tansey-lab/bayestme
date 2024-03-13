@@ -47,24 +47,24 @@ def model(r_ig, y_ig, h=None, alpha0_hparam=10, alpha_hparam=1):
 
     spot_plate = pyro.plate("spot", i, dim=-1)
     gene_plate = pyro.plate("gene", g, dim=-2)
-    stp_plate = pyro.plate("stp", h, dim=-3)
 
     alpha = torch.ones(h) * alpha_hparam
     alpha[0] = alpha0_hparam
 
-    with spot_plate, stp_plate:
-        w = pyro.sample("w", dist.Normal(0, 1))
+    w = pyro.sample("w", dist.Normal(0, 1).expand((h, i)).to_event(2))
 
     w[0] *= 0.0
     p = pyro.sample("p", dist.Dirichlet(alpha).to_event())
+    h = pyro.sample("h", dist.Categorical(p).expand((g,)).to_event())
 
     with gene_plate:
         v = pyro.sample("v", dist.Normal(0, 1))
         c = pyro.sample("c", dist.Normal(0, 1))
-        h = pyro.sample("h", dist.Categorical(p))
 
         with spot_plate:
-            w_h = Vindex(w)[h, :]
+            w_h = Vindex(w)[..., h, :]
 
             theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
-            pyro.sample("y_h", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int())
+            y_h = pyro.sample(
+                "y_h", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int()
+            )

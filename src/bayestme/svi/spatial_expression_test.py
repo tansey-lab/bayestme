@@ -26,7 +26,7 @@ def test_model_pipeline():
 
     K = 2
     n_traces = 100
-    svi_steps = 1
+    svi_steps = 10_000
 
     rng = np.random.default_rng(42)
 
@@ -67,7 +67,7 @@ def test_model_pipeline():
         optimizer = Adam(optim_args={"lr": 0.05})
         guide = AutoNormal(poutine.block(model, hide=["h"]))
 
-        elbo = TraceEnum_ELBO(max_plate_nesting=3)
+        elbo = TraceEnum_ELBO(max_plate_nesting=2)
 
         # best_loss, best_seed = min(
         #    [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
@@ -107,26 +107,16 @@ def test_model_pipeline():
             for k, v in sample.items():
                 result[k].append(v)
 
-        all_h_values = np.stack(result["h"])[:, :, :, 0]
+        all_h_values = np.stack(result["h"])
 
         h_modes = np.zeros_like(all_h_values[0, ...])
         h_freqs = np.zeros_like(all_h_values[0, ...]).astype(float)
 
-        for k in range(all_h_values.shape[1]):
-            for g in range(all_h_values.shape[2]):
-                vals, counts = np.unique(all_h_values[:, k, g], return_counts=True)
-                h_modes[k, g] = vals[counts.argmax()]
-                h_freqs[k, g] = float(counts.max()) / float(counts.sum())
+        for g in range(all_h_values.shape[1]):
+            vals, counts = np.unique(all_h_values[:, g], return_counts=True)
+            h_modes[g] = vals[counts.argmax()]
+            h_freqs[g] = float(counts.max()) / float(counts.sum())
 
         samples = {k: np.stack(v).mean(axis=0) for k, v in result.items()}
-
-        prog_cell_type_0 = np.zeros((9, 9))
-        prog_cell_type_1 = np.zeros((9, 9))
-        prog_cell_type_0[
-            stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
-        ] = samples["w"][1, 0, 0, :]
-        prog_cell_type_1[
-            stdata.positions_tissue[:, 0], stdata.positions_tissue[:, 1]
-        ] = samples["w"][1, 1, 0, :]
 
         print(samples, h_modes, h_freqs)
