@@ -75,6 +75,7 @@ def test_build_basis_indices():
 
 def test_decontaminate_spots():
     np.random.seed(100)
+
     # This is just a smoke test, eventually we should make some assertions here
     (
         locations,
@@ -102,7 +103,7 @@ def test_decontaminate_spots():
         tissue_mask=tissue_mask,
         basis_idxs=basis_idx,
         basis_mask=basis_mask,
-        n_top=1
+        n_top=1,
     )
 
 
