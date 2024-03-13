@@ -80,8 +80,13 @@ def load_expression_truth(stdata: data.SpatialExpressionDataset, seurat_output: 
 
     phi_k_truth = df.loc[stdata.gene_names].to_numpy()
 
+    L = np.min(phi_k_truth[phi_k_truth > 0]) / 10.0
+    phi_k_truth[phi_k_truth == 0] = L
+
     # re-normalize so expression values sum to 1 within each component for
     # this subset of genes
     phi_k_truth_normalized = phi_k_truth / phi_k_truth.sum(axis=0)
 
-    return phi_k_truth_normalized.T
+    expression_truth = phi_k_truth_normalized.T
+
+    return expression_truth
