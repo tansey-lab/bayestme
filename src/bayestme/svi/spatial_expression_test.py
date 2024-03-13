@@ -17,6 +17,7 @@ from torch.distributions import biject_to
 from bayestme.synthetic_data import generate_demo_stp_dataset
 import bayestme.svi.deconvolution
 from collections import defaultdict
+import pyro.distributions as dist
 
 
 def test_model_pipeline():
@@ -66,13 +67,13 @@ def test_model_pipeline():
         optimizer = Adam(optim_args={"lr": 0.05})
         guide = AutoNormal(poutine.block(model, hide=["h"]))
 
-        elbo = TraceEnum_ELBO(max_plate_nesting=2)
+        elbo = TraceEnum_ELBO(max_plate_nesting=3)
 
-        best_loss, best_seed = min(
-            [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
-        )
-        print(best_loss, best_seed)
-        pyro.set_rng_seed(best_seed)
+        # best_loss, best_seed = min(
+        #    [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
+        # )
+        # print(best_loss, best_seed)
+        # pyro.set_rng_seed(best_seed)
         pyro.clear_param_store()
 
         svi = SVI(model, guide, optimizer, loss=elbo)
