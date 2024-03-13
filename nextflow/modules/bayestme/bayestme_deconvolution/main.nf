@@ -25,8 +25,11 @@ process BAYESTME_DECONVOLUTION {
     def args2 = task.ext.args2 ?: ""
     def args3 = task.ext.args3 ?: ""
     def n_components_flag = "--n-components ${n_cell_types}"
+    def need_expression_truth_flag = !args.contains("--expression-truth")
     def spatial_smoothing_parameter_flag = "--spatial-smoothing-parameter ${spatial_smoothing_parameter}"
-    def expression_truth_flag = expression_truth ? "--expression-truth ${task.ext.expression_truth}" : ""
+    def expression_truth_flag = expression_truth ? "--expression-truth ${expression_truth}" : ""
+
+    expression_truth_flag = need_expression_truth_flag ? expression_truth_flag : ""
     """
     mkdir -p "${prefix}/plots"
 
