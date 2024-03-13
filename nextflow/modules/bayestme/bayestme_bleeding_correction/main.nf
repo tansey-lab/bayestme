@@ -3,8 +3,8 @@ process BAYESTME_BLEEDING_CORRECTION {
     label 'process_high_memory'
     label 'process_long'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:21c53649d85be0642a9e3c797132f1b3088a4a36' :
-        'docker.io/jeffquinnmsk/bayestme:21c53649d85be0642a9e3c797132f1b3088a4a36' }"
+        'docker://jeffquinnmsk/bayestme:ae23c801016481039b32e1fd3c81ce1f025ccd79' :
+        'docker.io/jeffquinnmsk/bayestme:ae23c801016481039b32e1fd3c81ce1f025ccd79' }"
 
     input:
     tuple val(meta), path(adata)
