@@ -415,7 +415,9 @@ def decontaminate_spots(
     if Rates_init is None:
         # Initialize the rates to be the local observed reads
         Rates = np.copy(
-            Reads[:, top_gene_selector] * tissue_mask[:, None] * RATE_INITIALIZATION_FACTOR
+            Reads[:, top_gene_selector]
+            * tissue_mask[:, None]
+            * RATE_INITIALIZATION_FACTOR
         ).clip(1e-2, None)
         global_rates = np.median(Reads[:, top_gene_selector], axis=0)
     else:
