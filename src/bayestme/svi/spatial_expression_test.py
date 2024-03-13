@@ -61,7 +61,7 @@ def test_model_pipeline():
             "r_ig": r_igk[:, :, k],
             "y_ig": y_igk[:, :, k],
             "h": h,
-            "alpha0_hparam": 1.0,
+            "alpha0_hparam": 10.0,
         }
 
         optimizer = Adam(optim_args={"lr": 0.05})

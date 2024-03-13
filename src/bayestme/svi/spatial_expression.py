@@ -65,6 +65,4 @@ def model(r_ig, y_ig, h=None, alpha0_hparam=10, alpha_hparam=1):
             w_h = Vindex(w)[..., h, :]
 
             theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
-            y_h = pyro.sample(
-                "y_h", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int()
-            )
+            y = pyro.sample("y", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int())
