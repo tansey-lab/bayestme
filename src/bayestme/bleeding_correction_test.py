@@ -102,33 +102,7 @@ def test_decontaminate_spots():
         tissue_mask=tissue_mask,
         basis_idxs=basis_idx,
         basis_mask=basis_mask,
-    )
-
-
-def test_select_local_weight():
-    np.random.seed(100)
-    (
-        locations,
-        tissue_mask,
-        true_rates,
-        true_counts,
-        bleed_counts,
-    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
-        n_rows=12, n_cols=12, n_genes=1
-    )
-
-    basis_indices, basis_mask = bleeding_correction.build_basis_indices(
-        locations, tissue_mask
-    )
-
-    (
-        best_local_weight,
-        delta_local_weight,
-        lw_losses,
-        lw_grid,
-        (best_basis_init, best_rates_init),
-    ) = bleeding_correction.select_local_weight(
-        bleed_counts, tissue_mask, basis_indices, basis_mask, n_weights=3
+        n_top=1
     )
 
 

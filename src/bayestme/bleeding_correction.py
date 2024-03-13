@@ -408,12 +408,16 @@ def decontaminate_spots(
     # Handle case where n_top is larger than the number of genes in the experiment
     n_top = min(n_top, Reads.shape[1])
 
+    ordering = utils.get_stddev_ordering(Reads)
+
+    top_gene_selector = ordering[:n_top]
+
     if Rates_init is None:
         # Initialize the rates to be the local observed reads
         Rates = np.copy(
-            Reads[:, :n_top] * tissue_mask[:, None] * RATE_INITIALIZATION_FACTOR
+            Reads[:, top_gene_selector] * tissue_mask[:, None] * RATE_INITIALIZATION_FACTOR
         ).clip(1e-2, None)
-        global_rates = np.median(Reads[:, :n_top], axis=0)
+        global_rates = np.median(Reads[:, top_gene_selector], axis=0)
     else:
         global_rates, Rates = rates_from_raw(
             Rates_init, tissue_mask, (Reads.shape[0], n_top)
@@ -422,7 +426,7 @@ def decontaminate_spots(
     logger.info(f"Fitting basis functions to first {n_top} genes")
     for step in tqdm.trange(max_steps, desc="Fitting bleed correction basis functions"):
         basis_functions, Weights, res = fit_basis_functions(
-            Reads[:, :n_top],
+            Reads[:, top_gene_selector],
             tissue_mask,
             Rates,
             global_rates,
@@ -435,7 +439,7 @@ def decontaminate_spots(
         basis_init = res.x
 
         global_rates, Rates, res = fit_spot_rates(
-            Reads[:, :n_top], tissue_mask, Weights, x_init=Rates_init
+            Reads[:, top_gene_selector], tissue_mask, Weights, x_init=Rates_init
         )
         Rates_init = res.x
         loss = res.fun
@@ -450,99 +454,6 @@ def decontaminate_spots(
         )
 
     return global_rates, Rates, basis_functions, Weights, basis_init, Rates_init
-
-
-def select_local_weight(
-    reads,
-    tissue_mask,
-    basis_idxs,
-    basis_mask,
-    min_weight=1,
-    max_weight=100,
-    n_weights=11,
-    test_pct=0.2,
-    n_top=10,
-):
-    reads = reads[:, :n_top]
-
-    # Build the candidate grid
-    # weight_grid = np.exp(np.linspace(np.log(min_weight), np.log(max_weight), n_weights)) # Log-linear grid
-    weight_grid = np.linspace(min_weight, max_weight, n_weights)  # Linear grid
-
-    # Hold out some non-tissue spots
-    n_test = int(np.ceil((~tissue_mask).sum() * test_pct))
-    test_idxs = np.random.choice(np.where(~tissue_mask)[0], size=n_test, replace=False)
-    test_mask = np.zeros(reads.shape[0], dtype=bool)
-    test_mask[test_idxs] = True
-    train = (
-        reads[~test_mask],
-        tissue_mask[~test_mask],
-        np.array(basis_idxs[~test_mask][:, ~test_mask]),
-        np.array(basis_mask[~test_mask][:, ~test_mask]),
-    )
-    test = (
-        reads[test_mask],
-        tissue_mask[test_mask],
-        np.array(basis_idxs[test_mask][:, test_mask]),
-        np.array(basis_mask[test_mask][:, test_mask]),
-    )
-
-    N = reads[test_mask].sum(axis=0)
-    losses = np.zeros(n_weights)
-    basis_init, Rates_init = None, None
-    best_inits = None
-    for widx, local_weight in enumerate(weight_grid):
-        res = decontaminate_spots(
-            train[0],
-            train[1],
-            train[2],
-            train[3],
-            local_weight=local_weight,
-            basis_init=basis_init,
-            Rates_init=Rates_init,
-            n_top=n_top,
-        )
-        (
-            global_rates,
-            train_Rates,
-            basis_functions,
-            Weights,
-            basis_init,
-            Rates_init,
-        ) = res
-
-        # Reconstruct the weights and rates for the full dataset
-        Weights = weights_from_basis(
-            basis_functions, basis_idxs, basis_mask, tissue_mask, local_weight
-        )
-        Rates = np.zeros(reads.shape)
-        Rates[~test_mask] = train_Rates
-
-        # Now calculate the test-set-specific probabilities
-        Mu = (Rates[None] * Weights[..., None]).sum(axis=1) + global_rates[None]
-        Mu = Mu[test_mask]
-        Mu = Mu / Mu.sum(axis=0, keepdims=True)
-        L = -np.mean(
-            [
-                multinomial.logpmf(reads[test_mask, i], N[i], Mu[:, i])
-                for i in range(reads.shape[1])
-            ]
-        )
-
-        losses[widx] = L
-        for i in range(widx + 1):
-            logger.info(f"{i}. local_weight={weight_grid[i]} loss={losses[i]:.2f}")
-
-        if np.argmin(losses[: widx + 1]) == widx:
-            best_inits = (basis_init, Rates_init)
-
-    best = weight_grid[np.argmin(losses)]
-    logger.info(f"Best: {best}")
-
-    best_delta = weight_grid[np.argmax(losses[1:] - losses[:-1]) + 1]
-    logger.info(f"Best by delta rule: {best_delta}")
-
-    return best, best_delta, losses, weight_grid, best_inits
 
 
 def has_non_tissue_spots(dataset: data.SpatialExpressionDataset) -> bool:
