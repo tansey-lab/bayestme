@@ -55,14 +55,14 @@ def model(r_ig, y_ig, h=None, alpha0_hparam=10, alpha_hparam=1):
 
     w[0] *= 0.0
     p = pyro.sample("p", dist.Dirichlet(alpha).to_event())
-    h = pyro.sample("h", dist.Categorical(p).expand((g,)).to_event())
 
     with gene_plate:
         v = pyro.sample("v", dist.Normal(0, 1))
         c = pyro.sample("c", dist.Normal(0, 1))
+        h_g = pyro.sample("h", dist.Categorical(p))
 
-        with spot_plate:
-            w_h = Vindex(w)[..., h, :]
+        with spot_plate as spot_plate_idx:
+            w_h = Vindex(w)[..., h_g, spot_plate_idx]
 
             theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
             y = pyro.sample("y", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int())
