@@ -126,8 +126,8 @@ def test_model_pipeline():
         params = set(
             site["value"].unconstrained() for site in param_capture.trace.nodes.values()
         )
-        optimizer = torch.optim.Adam(params, lr=0.001, betas=(0.90, 0.999))
-        for i in tqdm.trange(svi_steps):
+        optimizer = torch.optim.Adam(params, lr=0.01, betas=(0.90, 0.999))
+        for i in tqdm.trange(svi_steps * 2):
             # compute loss
             loss = loss_fn(model, guide)
             spatial_loss_value = spatial_loss(D)
@@ -138,7 +138,6 @@ def test_model_pipeline():
             optimizer.step()
             optimizer.zero_grad()
 
-        result = defaultdict(list)
         for _ in tqdm.trange(500):
             guide_trace = poutine.trace(guide).get_trace(**args)  # record the globals
             trained_model = poutine.replay(model, trace=guide_trace)
@@ -151,49 +150,6 @@ def test_model_pipeline():
                 return trace.nodes["h"]["value"]
 
             h_for_real = classifier(args)
-
-            sample = {
-                name: site["value"]
-                for name, site in model_trace.nodes.items()
-                if (
-                    (site["type"] == "sample")
-                    and (
-                        (not site.get("is_observed", True))
-                        or (site.get("infer", False).get("_deterministic", False))
-                    )
-                    and not isinstance(
-                        site.get("fn", None), poutine.subsample_messenger._Subsample
-                    )
-                )
-            }
-            sample = {name: site.detach().numpy() for name, site in sample.items()}
-            for name, v in sample.items():
-                result[name].append(v)
-
-        all_h_values = np.stack(result["h"])
-
-        h_modes = np.zeros_like(all_h_values[0, ...])
-        h_freqs = np.zeros_like(all_h_values[0, ...]).astype(float)
-
-        for g in range(all_h_values.shape[1]):
-            vals, counts = np.unique(all_h_values[:, g], return_counts=True)
-            h_modes[g] = vals[counts.argmax()]
-            h_freqs[g] = float(counts.max()) / float(counts.sum())
-
-        samples = {name: np.stack(v).mean(axis=0) for name, v in result.items()}
-
-        for h in range(5):
-            if h == 0:
-                continue
-            img = np.zeros((20, 20))
-            weights = samples["w"][h, :]
-
-            img[stdata.positions[:, 0], stdata.positions[:, 1]] = weights
-
-            plt.imshow(img)
-            plt.savefig(f"w_k_{k}_h_{h}.png")
-
-        print(samples, h_modes, h_freqs)
 
 
 if __name__ == "__main__":
