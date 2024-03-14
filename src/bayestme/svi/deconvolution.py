@@ -71,6 +71,8 @@ def create_reads_trace(psi, exp_profile, exp_load, cell_num_total, rng=None):
     number_of_cells_per_component = (psi.T * cell_num_total).T * exp_load.T
     result = number_of_cells_per_component[:, :, None] * exp_profile[None, :, :]
 
+    exp_profile = exp_profile.astype(np.float64)
+    exp_profile = exp_profile / exp_profile.sum(axis=1)[:, None]
     reads = []
 
     for k in range(exp_profile.shape[0]):

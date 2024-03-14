@@ -286,95 +286,39 @@ def generate_demo_dataset():
     )
 
 
-def generate_demo_stp_dataset():
+def generate_demo_stp_dataset(width=100, height=100):
     """
     Generate a fake dataset for use in testing or demonstration.
     This dataset should produce two cell types, with a clear spatial expression
     pattern within the first cell type.
     """
-    slide_tissue = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 0, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    )
+    slide_tissue = np.ones((width, height))
 
-    gene_north_exp = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    )
+    gene_north_exp = np.zeros((width, height))
 
-    gene_stp_exp = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 5, 0, 0, 0, 0],
-            [0, 0, 0, 7, 5, 2, 0, 0, 0],
-            [0, 0, 8, 7, 5, 2, 1, 0, 0],
-            [0, 9, 8, 7, 5, 2, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    )
+    gene_north_exp[:50, :] = width / 2
 
-    gene_south_exp = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    )
+    gene_south_exp = np.zeros((width, height))
 
-    noise_exp = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 2, 1, 0, 0, 0],
-            [0, 0, 1, 2, 1, 2, 1, 0, 0],
-            [0, 1, 2, 1, 2, 1, 2, 1, 0],
-            [0, 0, 3, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 1, 2, 2, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    )
+    gene_south_exp[50:, :] = width / 2
+
+    gene_stp_exp = np.stack([np.arange(width) for _ in range(height)])
+
+    gene_stp_exp[50:, :] = 0
 
     tissue_mask = slide_tissue.flatten() == 1
 
     raw_counts = np.vstack(
         [
-            gene_north_exp.flatten() * 10,
-            gene_south_exp.flatten() * 10,
-            gene_stp_exp.flatten() * 2,
+            gene_north_exp.flatten(),
+            gene_south_exp.flatten(),
+            gene_stp_exp.flatten(),
         ]
     ).T
 
-    locations = np.vstack([np.tile(np.arange(9), 9), np.repeat(np.arange(9), 9)]).T[
-        ::-1, :
-    ]
+    locations = np.vstack(
+        [np.tile(np.arange(width), width), np.repeat(np.arange(height), height)]
+    ).T[::-1, :]
 
     return data.SpatialExpressionDataset.from_arrays(
         raw_counts=raw_counts,

@@ -64,5 +64,8 @@ def model(r_ig, y_ig, h=None, alpha0_hparam=10, alpha_hparam=1):
         with spot_plate as spot_plate_idx:
             w_h = Vindex(w)[..., h_g, spot_plate_idx]
 
-            theta = pyro.deterministic("theta", torch.sigmoid(w_h * v + c))
+            theta = pyro.deterministic(
+                "theta", torch.sigmoid(w_h * v + c).clip(1e-5, 1 - 1e-5)
+            )
+
             y = pyro.sample("y", dist.NegativeBinomial(r_ig.T, theta), obs=y_ig.T.int())
