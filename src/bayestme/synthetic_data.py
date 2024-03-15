@@ -296,15 +296,25 @@ def generate_demo_stp_dataset(width=100, height=100):
 
     gene_north_exp = np.zeros((width, height))
 
-    gene_north_exp[:50, :] = width / 2
+    midpoint = int((width / 2))
+
+    gene_north_exp[:midpoint, :] = width / 2
 
     gene_south_exp = np.zeros((width, height))
 
-    gene_south_exp[50:, :] = width / 2
+    gene_south_exp[midpoint:, :] = width / 2
 
-    gene_stp_exp = np.stack([np.arange(width) for _ in range(height)])
+    gene_south_exp2 = np.zeros((width, height))
 
-    gene_stp_exp[50:, :] = 0
+    gene_south_exp2[midpoint:, :] = width / 2
+
+    gene_stp_exp_l_to_r = np.stack([np.arange(width) for _ in range(height)])
+
+    gene_stp_exp_l_to_r[midpoint:, :] = 0
+
+    gene_stp_exp_r_to_l = np.stack([np.arange(width)[::-1] for _ in range(height)])
+
+    gene_stp_exp_r_to_l[midpoint:, :] = 0
 
     tissue_mask = slide_tissue.flatten() == 1
 
@@ -312,7 +322,9 @@ def generate_demo_stp_dataset(width=100, height=100):
         [
             gene_north_exp.flatten(),
             gene_south_exp.flatten(),
-            gene_stp_exp.flatten(),
+            gene_south_exp2.flatten(),
+            gene_stp_exp_l_to_r.flatten(),
+            gene_stp_exp_r_to_l.flatten(),
         ]
     ).T
 
@@ -324,7 +336,9 @@ def generate_demo_stp_dataset(width=100, height=100):
         raw_counts=raw_counts,
         tissue_mask=tissue_mask,
         positions=locations,
-        gene_names=np.array(["north_marker", "south_marker", "north_stp"]),
+        gene_names=np.array(
+            ["north_marker", "south_marker", "south_marker2", "north_stp", "north_stp2"]
+        ),
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
         edges=bayestme.utils.get_edges(
             locations[tissue_mask], bayestme.common.Layout.SQUARE

@@ -1,36 +1,27 @@
 import os.path
+from collections import defaultdict
 
-from bayestme.svi.spatial_expression import model, get_loss_for_seed, config_enumerate
-import pyro
-import torch
-import numpy as np
-from pyro import poutine
+import h5py
 import numpy as np
 import pyro
 import pyro.util
 import torch
 import tqdm
 from pyro import poutine
-from pyro.distributions import Gamma, Dirichlet
-from pyro.infer import SVI, Trace_ELBO, TraceEnum_ELBO
+from pyro.infer import TraceEnum_ELBO, infer_discrete
 from pyro.infer.autoguide import AutoNormal
-from pyro.optim import Adam
-from torch.distributions import biject_to
-from bayestme.synthetic_data import generate_demo_stp_dataset
+
 import bayestme.svi.deconvolution
-from collections import defaultdict
-import pyro.distributions as dist
-from matplotlib import pyplot as plt
-from bayestme.plot.common import plot_gene_in_tissue_counts
-from bayestme.plot.deconvolution import plot_deconvolution
 from bayestme.data import (
     add_deconvolution_results_to_dataset,
     SpatialExpressionDataset,
     DeconvolutionResult,
 )
-from bayestme.utils import construct_trendfilter
+from bayestme.plot.common import plot_gene_in_tissue_counts
+from bayestme.svi.spatial_expression import model
+from bayestme.synthetic_data import generate_demo_stp_dataset
 from bayestme.utils import construct_edge_adjacency
-from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, infer_discrete
+from bayestme.utils import construct_trendfilter
 
 
 def spatial_loss(D):
@@ -60,10 +51,13 @@ def test_model_pipeline():
     plot_gene_in_tissue_counts(
         stdata, gene="north_stp", output_file="stp_gene_expression.png"
     )
+    plot_gene_in_tissue_counts(
+        stdata, gene="north_stp2", output_file="stp2_gene_expression.png"
+    )
 
     K = 2
     n_traces = 100
-    svi_steps = 10_000
+    svi_steps = 100_000
 
     rng = np.random.default_rng(42)
 
@@ -86,6 +80,8 @@ def test_model_pipeline():
         stdata = SpatialExpressionDataset.read_h5("./stdata.h5")
         deconv_result = DeconvolutionResult.read_h5("./decon_results.h5")
 
+    pyro.clear_param_store()
+
     r_igk = torch.tensor(
         np.transpose(
             (deconv_result.cell_num_trace.mean(0) * deconv_result.beta_trace.mean(0).T)[
@@ -96,7 +92,6 @@ def test_model_pipeline():
         )
     )
 
-    pyro.clear_param_store()
     h = 2
 
     y_igk = torch.tensor(deconv_result.reads_trace.mean(axis=0))
@@ -113,11 +108,6 @@ def test_model_pipeline():
 
         elbo = TraceEnum_ELBO(max_plate_nesting=2)
 
-        # best_loss, best_seed = min(
-        #    [get_loss_for_seed(seed, optimizer, elbo, args) for seed in range(1000)]
-        # )
-        # print(best_loss, best_seed)
-        # pyro.set_rng_seed(best_seed)
         pyro.clear_param_store()
 
         loss_fn = lambda model, guide: elbo.differentiable_loss(model, guide, **args)
@@ -126,8 +116,8 @@ def test_model_pipeline():
         params = set(
             site["value"].unconstrained() for site in param_capture.trace.nodes.values()
         )
-        optimizer = torch.optim.Adam(params, lr=0.01, betas=(0.90, 0.999))
-        for i in tqdm.trange(svi_steps * 2):
+        optimizer = torch.optim.Adam(params, lr=0.001, betas=(0.90, 0.999))
+        for i in tqdm.trange(svi_steps):
             # compute loss
             loss = loss_fn(model, guide)
             spatial_loss_value = spatial_loss(D)
@@ -138,7 +128,9 @@ def test_model_pipeline():
             optimizer.step()
             optimizer.zero_grad()
 
-        for _ in tqdm.trange(500):
+        results = defaultdict(list)
+
+        for _ in tqdm.trange(100):
             guide_trace = poutine.trace(guide).get_trace(**args)  # record the globals
             trained_model = poutine.replay(model, trace=guide_trace)
 
@@ -147,9 +139,17 @@ def test_model_pipeline():
                     trained_model, temperature=temperature, first_available_dim=-3
                 )  # avoid conflict with data plate
                 trace = poutine.trace(inferred_model).get_trace(**args)
-                return trace.nodes["h"]["value"]
+                return trace
 
-            h_for_real = classifier(args)
+            trace = classifier(args)
+
+            for name, v in trace.nodes.items():
+                if name in ["v", "p", "c", "h", "w"]:
+                    results[name].append(v["value"].detach().numpy())
+
+        with h5py.File(f"stp_k_{k}.h5", "w") as f:
+            for name, v in results.items():
+                f.create_dataset(name=name, data=v, compression="gzip")
 
 
 if __name__ == "__main__":
