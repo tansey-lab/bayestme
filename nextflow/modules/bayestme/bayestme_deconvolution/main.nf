@@ -49,6 +49,7 @@ process BAYESTME_DECONVOLUTION {
     mkdir plots
     plot_deconvolution --adata "${prefix}/dataset_deconvolved_marker_genes.h5ad" \
         --output-dir "${prefix}/plots" \
+        ${expression_truth_flag} \
         ${args3}
 
     cat <<-END_VERSIONS > versions.yml
