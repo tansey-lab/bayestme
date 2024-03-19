@@ -4,6 +4,7 @@ import logging
 import bayestme.log_config
 import bayestme.plot.deconvolution
 from bayestme import data
+from bayestme.expression_truth import load_expression_truth
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,15 @@ def get_parser():
         help="A comma separated list of cell type names to use for plots."
         'For example --cell-type-names "type 1, type 2, type 3"',
     )
+    parser.add_argument(
+        "--expression-truth",
+        help="Use expression ground truth from one or matched samples that have been processed "
+        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
+        " for multiple matched samples.",
+        type=str,
+        action="append",
+        default=None,
+    )
     bayestme.log_config.add_logging_args(parser)
 
     return parser
@@ -37,6 +47,16 @@ def main():
         cell_type_names = [name.strip() for name in args.cell_type_names.split(",")]
     else:
         cell_type_names = None
+
+    if args.expression_truth is not None:
+        expression_truth = load_expression_truth(stdata, args.expression_truth[0])
+        cell_type_names = expression_truth.columns.tolist()
+
+        # pad cell type names up to length stdata.n_cell_types
+        i = 1
+        while len(cell_type_names) < stdata.n_cell_types:
+            cell_type_names.append(f"unknown_{i}")
+            i += 1
 
     bayestme.plot.deconvolution.plot_deconvolution(
         stdata=stdata, output_dir=args.output_dir, cell_type_names=cell_type_names

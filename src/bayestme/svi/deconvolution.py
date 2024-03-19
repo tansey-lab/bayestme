@@ -120,9 +120,8 @@ class BayesTME_VI:
             )
         else:
             exp_truth_weighted = (
-                self.expression_truth.T
-                * (self.expression_truth_weight / self.expression_truth.mean(axis=1))
-            ).T
+                self.expression_truth * self.expression_truth_weight * self.G
+            )
 
             for _ in range(self.expression_truth_n_dummy_cell_types):
                 exp_truth_weighted = np.concatenate(
