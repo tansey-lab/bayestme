@@ -80,6 +80,8 @@ class BayesTME_VI:
         beta_1=0.90,
         beta_2=0.999,
         expression_truth: Optional[ArrayType] = None,
+        expression_truth_weight=10.0,
+        expression_truth_n_dummy_cell_types=2,
     ):
         # Obs:  ST count mat
         #       etiher np array or torch tensor
@@ -98,8 +100,10 @@ class BayesTME_VI:
         self.D = construct_trendfilter(self.D, 0)
         self.sp_reg_coeff = rho
         self.losses = []
+        self.expression_truth_weight = expression_truth_weight
+        self.expression_truth_n_dummy_cell_types = expression_truth_n_dummy_cell_types
         if expression_truth is not None:
-            self.expression_truth = torch.Tensor(expression_truth)
+            self.expression_truth = expression_truth
         else:
             self.expression_truth = None
 
@@ -115,8 +119,19 @@ class BayesTME_VI:
                 "exp_profile", dist.Dirichlet(alpha_0).expand([self.K]).to_event()
             )
         else:
+            exp_truth_weighted = (
+                self.expression_truth.T
+                * (self.expression_truth_weight / self.expression_truth.mean(axis=1))
+            ).T
+
+            for _ in range(self.expression_truth_n_dummy_cell_types):
+                exp_truth_weighted = np.concatenate(
+                    [exp_truth_weighted, np.ones(self.G)[None, :]]
+                )
+
             phi = pyro.sample(
-                "exp_profile", dist.Dirichlet(self.expression_truth).to_event(1)
+                "exp_profile",
+                dist.Dirichlet(torch.tensor(exp_truth_weighted)).to_event(1),
             )
         # expression
         celltype_exp = beta[:, None] * phi
@@ -204,7 +219,13 @@ class BayesTME_VI:
         return torch.abs(self.Delta @ x.reshape(-1, 1)).sum() * self.sp_reg_coeff
 
     def deconvolution(self, K, n_iter=10000, n_traces=1000, use_spatial_guide=True):
-        self.K = K
+        if self.expression_truth is not None:
+            self.K = (
+                self.expression_truth.shape[0]
+                + self.expression_truth_n_dummy_cell_types
+            )
+        else:
+            self.K = K
         # TODO: maybe make Delta sparse, but need to change spatial_regularizer as well (double check if sparse grad is supported)
         self.Delta = torch.kron(torch.eye(self.K), self.D.to_dense())
         logger.info("Optimizer: {} {}".format("Adam", self.opt_params))

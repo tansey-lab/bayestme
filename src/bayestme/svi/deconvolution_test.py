@@ -100,12 +100,12 @@ def test_deconvolve_with_no_spatial_guide_and_expression_truth():
 
     assert result.beta_trace.shape == (
         n_traces,
-        K,
+        K + 2,
     )
-    assert result.expression_trace.shape == (n_traces, K, n_genes)
-    assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K)
-    assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K)
-    assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K)
+    assert result.expression_trace.shape == (n_traces, K + 2, n_genes)
+    assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K + 2)
+    assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K + 2)
+    assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K + 2)
 
 
 def test_deconvolve_with_spatial_guide():
@@ -198,9 +198,9 @@ def test_deconvolve_with_spatial_guide_and_expression_truth():
 
     assert result.beta_trace.shape == (
         n_traces,
-        K,
+        K + 2,
     )
-    assert result.expression_trace.shape == (n_traces, K, n_genes)
-    assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K)
-    assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K)
-    assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K)
+    assert result.expression_trace.shape == (n_traces, K + 2, n_genes)
+    assert result.cell_prob_trace.shape == (n_traces, stdata.n_spot_in, K + 2)
+    assert result.cell_num_trace.shape == (n_traces, stdata.n_spot_in, K + 2)
+    assert result.reads_trace.shape == (n_traces, stdata.n_spot_in, n_genes, K + 2)
