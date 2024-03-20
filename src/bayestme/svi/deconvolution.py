@@ -287,7 +287,7 @@ class BayesTME_VI:
             cell_num_trace=(samples["cell_num_total"].T * samples["psi"].T).T,
             reads_trace=samples["read_trace"],
             lam2=self.sp_reg_coeff,
-            n_components=K,
+            n_components=self.K,
             losses=np.array(self.losses),
         )
 
