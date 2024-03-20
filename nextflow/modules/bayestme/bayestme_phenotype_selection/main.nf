@@ -20,8 +20,8 @@ process BAYESTME_PHENOTYPE_SELECTION {
     label 'process_high_memory'
     label 'process_long'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:5e9a3ca9b60378207c76a8e378df164b99abd928' :
-        'docker.io/jeffquinnmsk/bayestme:5e9a3ca9b60378207c76a8e378df164b99abd928' }"
+        'docker://jeffquinnmsk/bayestme:172a8bfa3ea29f170313e2622cb6afd595beaf51' :
+        'docker.io/jeffquinnmsk/bayestme:172a8bfa3ea29f170313e2622cb6afd595beaf51' }"
 
     input:
     tuple val(meta), path(adata), val(job_index), val(min_n_cell_types), val(max_n_cell_types), val(min_lambda), val(max_lambda), val(n_folds)
