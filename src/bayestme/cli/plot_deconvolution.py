@@ -1,6 +1,6 @@
 import argparse
 import logging
-
+import pandas
 import bayestme.log_config
 import bayestme.plot.deconvolution
 from bayestme import data
@@ -49,8 +49,9 @@ def main():
         cell_type_names = None
 
     if args.expression_truth is not None:
-        expression_truth = load_expression_truth(stdata, args.expression_truth[0])
-        cell_type_names = expression_truth.columns.tolist()
+        cell_type_names = pandas.read_csv(
+            args.expression_truth[0], index_col=0
+        ).columns.tolist()
 
         # pad cell type names up to length stdata.n_cell_types
         i = 1
