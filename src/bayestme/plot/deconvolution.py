@@ -247,7 +247,6 @@ def rank_genes_groups_plot(
     stdata: data.SpatialExpressionDataset,
     cell_type_labels: Optional[List[str]],
     output_path: str,
-    n_genes: int = 15,
     fontsize: int = 8,
     ncols: int = 4,
     sharey: bool = True,
@@ -264,11 +263,13 @@ def rank_genes_groups_plot(
     else:
         group_names = cell_type_labels
 
+    n_marker = len(np.concatenate(stdata.marker_gene_indices))
+
     n_panels_per_row = ncols
-    if n_genes < 1:
+    if n_marker < 1:
         raise NotImplementedError(
             "Specifying a negative number for n_genes has not been implemented for "
-            f"this plot. Received n_genes={n_genes}."
+            f"this plot. Received n_genes={n_marker}."
         )
 
     # one panel for each group
@@ -292,8 +293,8 @@ def rank_genes_groups_plot(
         scores = stdata.omega_difference[celltype_idx][marker_gene_set]
         sorted_order = np.argsort(scores)[::-1]
 
-        scores = scores[sorted_order][:n_genes]
-        gene_names = gene_names[sorted_order][:n_genes]
+        scores = scores[sorted_order][:n_marker]
+        gene_names = gene_names[sorted_order][:n_marker]
 
         # Setting up axis, calculating y bounds
         if sharey:
@@ -313,7 +314,7 @@ def rank_genes_groups_plot(
             ax = fig.add_subplot(gs[celltype_idx])
             ax.set_ylim(ymin, ymax)
 
-        ax.set_xlim(-0.9, n_genes - 0.1)
+        ax.set_xlim(-0.9, n_marker - 0.1)
 
         # Making labels
         for ig, gene_name in enumerate(gene_names):
