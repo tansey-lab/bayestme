@@ -134,6 +134,9 @@ def test_deconvolution_results_properties():
         dataset.relative_expression >= -1.0
     )
 
+    assert dataset.relative_mean_expression.shape == (n_components, n_gene)
+    assert np.all(dataset.relative_mean_expression >= 0)
+
     assert dataset.nb_probs.shape == (n_samples, n_nodes, n_gene)
 
 

@@ -28,6 +28,7 @@ CELL_TYPE_COUNT_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_counts"
 CELL_TYPE_PROB_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_probabilities"
 MARKER_GENE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_cell_type_marker"
 OMEGA_DIFFERENCE_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega_difference"
+RELATIVE_MEAN_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_mean_expression"
 OMEGA_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega"
 RELATIVE_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_expression"
 POSITIONS_X_COLUMN = "array_col"
@@ -210,6 +211,13 @@ class SpatialExpressionDataset:
             return
 
         return self.adata.varm[OMEGA_DIFFERENCE_ATTR].T
+
+    @property
+    def relative_mean_expression(self) -> Optional[ArrayType]:
+        if RELATIVE_MEAN_EXPRESSION_ATTR not in self.adata.varm:
+            return
+
+        return self.adata.varm[RELATIVE_MEAN_EXPRESSION_ATTR].T
 
     def save(self, path):
         self.adata.write_h5ad(path)
@@ -636,6 +644,24 @@ class DeconvolutionResult:
         return expression
 
     @property
+    def relative_mean_expression(self):
+        """
+        Return a matrix of average expression in this cell type, divided by the average expression in all cell types.
+
+        :return: An <N cell types> x <N markers> floating point matrix.
+        """
+        expression = np.zeros(
+            shape=self.expression_trace.shape[1:], dtype=np.float64
+        )  # n_components, n_genes
+        gene_expression = self.expression_trace.mean(axis=0)  # n_components, n_genes
+        for k in range(self.n_components):
+            mask = np.arange(self.n_components) != k
+            out_group_mean = gene_expression[mask].mean(axis=0)  # n_genes
+            expression[k] = gene_expression[k] / out_group_mean
+
+        return expression
+
+    @property
     def nb_probs(self):
         rates = (
             self.cell_prob_trace[..., None]
@@ -919,3 +945,4 @@ def add_deconvolution_results_to_dataset(
     stdata.adata.varm[OMEGA_DIFFERENCE_ATTR] = result.omega_difference.T
     stdata.adata.varm[OMEGA_ATTR] = result.omega.T
     stdata.adata.varm[RELATIVE_EXPRESSION_ATTR] = result.relative_expression.T
+    stdata.adata.varm[RELATIVE_MEAN_EXPRESSION_ATTR] = result.relative_mean_expression.T
