@@ -290,7 +290,7 @@ def rank_genes_groups_plot(
     ymax = -np.Inf
     for celltype_idx, marker_gene_set in enumerate(stdata.marker_gene_indices):
         gene_names = stdata.gene_names[marker_gene_set]
-        scores = stdata.omega_difference[celltype_idx][marker_gene_set]
+        scores = stdata.relative_mean_expression[celltype_idx][marker_gene_set]
         sorted_order = np.argsort(scores)[::-1]
 
         scores = scores[sorted_order][:n_marker]
