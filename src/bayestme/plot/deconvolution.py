@@ -210,8 +210,9 @@ def plot_one_vs_all_cell_num_scatterpie(
     fig, ax = plt.subplots()
 
     for cell_type_idx, cell_type_name in enumerate(cell_type_names):
+        cell_type_name_safe = cell_type_name.replace(os.pathsep, "_")
         output_path = os.path.join(
-            output_dir, f"cell_num_one_vs_all_scatterpie__{cell_type_name}.pdf"
+            output_dir, f"cell_num_one_vs_all_scatterpie__{cell_type_name_safe}.pdf"
         )
 
         cell_type_counts = np.zeros((stdata.cell_type_counts.shape[0], 2))
