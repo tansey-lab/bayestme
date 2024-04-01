@@ -251,6 +251,7 @@ def rank_genes_groups_plot(
     ncols: int = 4,
     sharey: bool = True,
     ax=None,
+    y_label="score",
 ):
     if stdata.marker_gene_indices is None:
         raise RuntimeError("SpatialExpressionDataset contains no marker genes")
@@ -263,7 +264,7 @@ def rank_genes_groups_plot(
     else:
         group_names = cell_type_labels
 
-    n_marker = len(np.concatenate(stdata.marker_gene_indices))
+    n_marker = len(stdata.marker_gene_indices[0])
 
     n_panels_per_row = ncols
     if n_marker < 1:
@@ -334,7 +335,7 @@ def rank_genes_groups_plot(
 
         # print the 'score' label only on the first panel per row.
         if celltype_idx % n_panels_x == 0:
-            ax.set_ylabel("score")
+            ax.set_ylabel(y_label)
 
     if sharey is True:
         ymax += 0.3 * (ymax - ymin)
