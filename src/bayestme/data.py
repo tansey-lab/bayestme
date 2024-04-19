@@ -564,9 +564,9 @@ class DeconvolutionResult:
 
     def align_celltype(self, sc_expression, n=50):
         """
-        reorder the deconvolution results, aligned the detected cell type with the given scrna rerference
-        :param sc_expression: K by G matrix, K cell types and G genes
-        :returen: the ordering of the deconvolution result that matches the given scref
+        reorder the deconvolution results, aligned the detected cell type with the given scRNA reference
+        :param sc_expression: <N cell types> by <N genes> matrix
+        :return: The ordering of the deconvolution result that matches the given single cell reference
         """
         from scipy.stats import pearsonr
 
