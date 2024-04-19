@@ -87,13 +87,8 @@ def main():
         n_components=n_components,
         spatial_smoothing_parameter=args.spatial_smoothing_parameter,
         n_samples=args.n_samples,
-        mcmc_n_burn=args.n_burn,
-        mcmc_n_thin=args.n_thin,
         n_svi_steps=args.n_svi_steps,
-        background_noise=args.background_noise,
-        lda_initialization=args.lda_initialization,
         expression_truth=expression_truth,
-        inference_type=args.inference_type,
         use_spatial_guide=args.use_spatial_guide,
         rng=rng,
     )

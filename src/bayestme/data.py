@@ -10,7 +10,7 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import issparse
-from spatialdata_io.readers._utils._read_10x_h5 import _read_10x_h5
+from scanpy import read_10x_h5
 from scipy.sparse import csr_matrix
 
 from bayestme import utils
@@ -301,7 +301,7 @@ class SpatialExpressionDataset:
         if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
             raise RuntimeError("Tissue positions list has unexpected columns")
 
-        ad = _read_10x_h5(raw_h5_path)
+        ad = read_10x_h5(raw_h5_path)
 
         positions_df = positions_df.set_index("barcode")
 

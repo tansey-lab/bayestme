@@ -115,13 +115,8 @@ def run_phenotype_selection_single_job(
     fold_number: int,
     stdata: data.SpatialExpressionDataset,
     n_samples: int,
-    mcmc_n_burn: int,
-    mcmc_n_thin: int,
     n_svi_steps: int,
-    background_noise: bool,
-    lda_initialization: bool,
     use_spatial_guide: bool,
-    inference_type: InferenceType = InferenceType.MCMC,
     rng: Optional[np.random.Generator] = None,
 ) -> data.PhenotypeSelectionResult:
     stdata_holdout = stdata.copy()
@@ -132,12 +127,7 @@ def run_phenotype_selection_single_job(
         n_components=n_components,
         spatial_smoothing_parameter=spatial_smoothing_parameter,
         n_samples=n_samples,
-        inference_type=inference_type,
-        mcmc_n_burn=mcmc_n_burn,
-        mcmc_n_thin=mcmc_n_thin,
         n_svi_steps=n_svi_steps,
-        background_noise=background_noise,
-        lda_initialization=lda_initialization,
         use_spatial_guide=use_spatial_guide,
         rng=rng,
     )
