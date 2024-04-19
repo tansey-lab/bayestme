@@ -1,4 +1,4 @@
-name: Increment value test
+name: Bump Version
 on:
   push:
     branches:
@@ -8,7 +8,7 @@ on:
       - 'version.config'
 jobs:
   test:
-    name: Increment value test
+    name: Bump Nextflow Container Version
     runs-on: ubuntu-latest
     permissions:
       contents: write
