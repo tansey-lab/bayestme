@@ -19,7 +19,7 @@ jobs:
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: '(bayestme_version\s*=\s*")[^"]*"'
-          replace: format('bayestme_version = "{0}"', ${{ github.sha }})
+          replace: ${{ format('bayestme_version = "{0}"', github.sha) }}
           regex: true
           include: 'version.config'
       - name: Push changes
