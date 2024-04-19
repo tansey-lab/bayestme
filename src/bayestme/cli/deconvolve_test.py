@@ -40,6 +40,7 @@ def test_deconvolve():
         "100",
         "--n-components",
         "5",
+        "--no-use-spatial-guide",
     ]
 
     try:
