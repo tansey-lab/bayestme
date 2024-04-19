@@ -38,14 +38,8 @@ def test_deconvolve():
         "1000",
         "--n-samples",
         "100",
-        "--n-burn",
-        "500",
-        "--n-thin",
-        "2",
         "--n-components",
         "5",
-        "--inference-type",
-        "MCMC",
     ]
 
     try:
@@ -67,14 +61,9 @@ def test_deconvolve():
                     n_components=5,
                     spatial_smoothing_parameter=1000.0,
                     n_samples=100,
-                    mcmc_n_burn=500,
-                    mcmc_n_thin=2,
-                    background_noise=False,
-                    lda_initialization=False,
                     expression_truth=None,
                     n_svi_steps=10000,
                     use_spatial_guide=False,
-                    inference_type=InferenceType.MCMC,
                     rng=mock.ANY,
                 )
 
@@ -107,17 +96,11 @@ def test_deconvolve_with_expression_truth():
         "1000",
         "--n-samples",
         "100",
-        "--n-burn",
-        "500",
-        "--n-thin",
-        "2",
         "--n-svi-steps",
         "99",
         "--use-spatial-guide",
         "--expression-truth",
         "xxx",
-        "--inference-type",
-        "MCMC",
     ]
 
     try:
@@ -144,13 +127,8 @@ def test_deconvolve_with_expression_truth():
                         n_components=9,
                         spatial_smoothing_parameter=1000.0,
                         n_samples=100,
-                        mcmc_n_burn=500,
-                        mcmc_n_thin=2,
                         n_svi_steps=99,
-                        background_noise=False,
-                        lda_initialization=False,
                         expression_truth=mock.ANY,
-                        inference_type=InferenceType.MCMC,
                         use_spatial_guide=True,
                         rng=mock.ANY,
                     )
