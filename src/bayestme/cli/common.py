@@ -42,8 +42,8 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--use-spatial-guide",
         help="Use spatial guide (variational family with spatial priors) for SVI",
-        action="store_true",
-        default=False,
+        action=argparse.BooleanOptionalAction,
+        default=True,
     )
 
     return parser
