@@ -58,6 +58,21 @@ def construct_trendfilter(adjacency_matrix, k):
     return transformed_edge_adjacency_matrix
 
 
+def rv_should_be_sampled(site):
+    """
+    Determine if a random variable in the model should be saved or
+    if its redundant.
+    """
+    return (
+        (site["type"] == "sample")
+        and (
+            (not site.get("is_observed", True))
+            or (site.get("infer", False).get("_deterministic", False))
+        )
+        and not isinstance(site.get("fn", None), poutine.subsample_messenger._Subsample)
+    )
+
+
 def create_reads_trace(psi, exp_profile, exp_load, cell_num_total):
     """
     :param psi: <N tissue spots> x <N components> matrix
@@ -92,13 +107,13 @@ class BayesTME_VI:
         self.opt_params = {"lr": lr, "betas": (beta_1, beta_2)}
         self.optimizer = Adam(self.opt_params)
 
-        self.Obs = torch.tensor(stdata.counts)
+        self.counts = torch.tensor(stdata.counts)
         self.N = stdata.n_spot_in
-        self.G = stdata.n_gene
+        self.n_genes = stdata.n_gene
         self.edges = get_edges(stdata.positions_tissue, layout=stdata.layout)
-        self.D = construct_edge_adjacency(self.edges)
-        self.D = construct_trendfilter(self.D, 0)
-        self.sp_reg_coeff = rho
+        self.delta = construct_edge_adjacency(self.edges)
+        self.delta = construct_trendfilter(self.delta, 0)
+        self.spatial_regularization_coefficient = rho
         self.losses = []
         self.expression_truth_weight = expression_truth_weight
         self.expression_truth_n_dummy_cell_types = expression_truth_n_dummy_cell_types
@@ -111,21 +126,24 @@ class BayesTME_VI:
         # expression coeff
         a_0 = torch.tensor(100.0)
         b_0 = torch.tensor(1.0)
-        beta = pyro.sample("exp_load", dist.Gamma(a_0, b_0).expand([self.K]).to_event())
+        beta = pyro.sample(
+            "exp_load", dist.Gamma(a_0, b_0).expand([self.n_celltypes]).to_event()
+        )
         # expression profile
-        alpha_0 = torch.ones(self.G)
+        alpha_0 = torch.ones(self.n_genes)
         if self.expression_truth is None:
             phi = pyro.sample(
-                "exp_profile", dist.Dirichlet(alpha_0).expand([self.K]).to_event()
+                "exp_profile",
+                dist.Dirichlet(alpha_0).expand([self.n_celltypes]).to_event(),
             )
         else:
             exp_truth_weighted = (
-                self.expression_truth * self.expression_truth_weight * self.G
+                self.expression_truth * self.expression_truth_weight * self.n_genes
             )
 
             for _ in range(self.expression_truth_n_dummy_cell_types):
                 exp_truth_weighted = np.concatenate(
-                    [exp_truth_weighted, np.ones(self.G)[None, :]]
+                    [exp_truth_weighted, np.ones(self.n_genes)[None, :]]
                 )
 
             phi = pyro.sample(
@@ -136,7 +154,7 @@ class BayesTME_VI:
         celltype_exp = beta[:, None] * phi
 
         # cell type probs
-        psi_0 = torch.ones(self.K)
+        psi_0 = torch.ones(self.n_celltypes)
         psi = pyro.sample("psi", dist.Dirichlet(psi_0).expand([self.N]).to_event())
         # cell numbers
         d_a = torch.tensor(10.0)
@@ -159,7 +177,9 @@ class BayesTME_VI:
         guide without spatial regularizer
         """
         beta_a = pyro.param(
-            "beta_a", torch.ones(self.K) * 100.0, constraint=constraints.positive
+            "beta_a",
+            torch.ones(self.n_celltypes) * 100.0,
+            constraint=constraints.positive,
         )
         beta_b = pyro.param(
             "beta_b", torch.tensor(1.0), constraint=constraints.positive
@@ -167,12 +187,16 @@ class BayesTME_VI:
         beta = pyro.sample("exp_load", dist.Gamma(beta_a, beta_b).to_event())
 
         phi_a = pyro.param(
-            "phi_a", torch.ones(self.K, self.G), constraint=constraints.positive
+            "phi_a",
+            torch.ones(self.n_celltypes, self.n_genes),
+            constraint=constraints.positive,
         )
         phi = pyro.sample("exp_profile", dist.Dirichlet(phi_a).to_event())
 
         psi_a = pyro.param(
-            "psi_a", torch.ones(self.N, self.K), constraint=constraints.positive
+            "psi_a",
+            torch.ones(self.N, self.n_celltypes),
+            constraint=constraints.positive,
         )
         psi = pyro.sample("psi", dist.Dirichlet(psi_a).to_event())
 
@@ -187,7 +211,9 @@ class BayesTME_VI:
         guide with spatial regularizer
         """
         beta_a = pyro.param(
-            "beta_a", torch.ones(self.K) * 100.0, constraint=constraints.positive
+            "beta_a",
+            torch.ones(self.n_celltypes) * 100.0,
+            constraint=constraints.positive,
         )
         beta_b = pyro.param(
             "beta_b", torch.tensor(1.0), constraint=constraints.positive
@@ -195,12 +221,16 @@ class BayesTME_VI:
         beta = pyro.sample("exp_load", dist.Gamma(beta_a, beta_b).to_event())
 
         phi_a = pyro.param(
-            "phi_a", torch.ones(self.K, self.G), constraint=constraints.positive
+            "phi_a",
+            torch.ones(self.n_celltypes, self.n_genes),
+            constraint=constraints.positive,
         )
         phi = pyro.sample("exp_profile", dist.Dirichlet(phi_a).to_event())
 
         psi_a = pyro.param(
-            "psi_a", torch.ones(self.N, self.K), constraint=constraints.positive
+            "psi_a",
+            torch.ones(self.N, self.n_celltypes),
+            constraint=constraints.positive,
         )
         psi = pyro.sample("psi", dist.Dirichlet(psi_a).to_event())
         # spatial regularizer
@@ -215,22 +245,25 @@ class BayesTME_VI:
     def spatial_regularizer(self, x):
         # Delta should be of size (n_edges * n_celltype) by (n_spot * n_celltype)
         # x should be of size n_spot by n_celltype
-        return torch.abs(self.Delta @ x.reshape(-1, 1)).sum() * self.sp_reg_coeff
+        return (
+            torch.abs(self.Delta @ x.reshape(-1, 1)).sum()
+            * self.spatial_regularization_coefficient
+        )
 
     def deconvolution(self, K, n_iter=10000, n_traces=1000, use_spatial_guide=True):
         if self.expression_truth is not None:
-            self.K = (
+            self.n_celltypes = (
                 self.expression_truth.shape[0]
                 + self.expression_truth_n_dummy_cell_types
             )
         else:
-            self.K = K
+            self.n_celltypes = K
         # TODO: maybe make Delta sparse, but need to change spatial_regularizer as well (double check if sparse grad is supported)
-        self.Delta = torch.kron(torch.eye(self.K), self.D.to_dense())
+        self.Delta = torch.kron(torch.eye(self.n_celltypes), self.delta.to_dense())
         logger.info("Optimizer: {} {}".format("Adam", self.opt_params))
         logger.info(
             "Deconvolving: {} spots, {} genes, {} cell types".format(
-                self.N, self.G, self.K
+                self.N, self.n_genes, self.n_celltypes
             )
         )
 
@@ -244,50 +277,33 @@ class BayesTME_VI:
         pyro.clear_param_store()
         svi = SVI(self.model, guide, self.optimizer, loss=Trace_ELBO())
         for step in tqdm.trange(n_iter):
-            self.losses.append(svi.step(self.Obs, self.K, self.G))
+            self.losses.append(svi.step(self.counts, self.n_celltypes, self.n_genes))
 
         result = defaultdict(list)
         for _ in tqdm.trange(n_traces):
-            guide_trace = poutine.trace(guide).get_trace(self.Obs, self.K, self.G)
+            guide_trace = poutine.trace(guide).get_trace(
+                self.counts, self.n_celltypes, self.n_genes
+            )
             model_trace = poutine.trace(
                 poutine.replay(self.model, guide_trace)
-            ).get_trace(self.Obs, self.K, self.G)
+            ).get_trace(self.counts, self.n_celltypes, self.n_genes)
             sample = {
                 name: site["value"]
                 for name, site in model_trace.nodes.items()
-                if (
-                    (site["type"] == "sample")
-                    and (
-                        (not site.get("is_observed", True))
-                        or (site.get("infer", False).get("_deterministic", False))
-                    )
-                    and not isinstance(
-                        site.get("fn", None), poutine.subsample_messenger._Subsample
-                    )
-                )
+                if rv_should_be_sampled(site)
             }
             sample = {name: site.detach().numpy() for name, site in sample.items()}
             for k, v in sample.items():
                 result[k].append(v)
-
-            result["read_trace"].append(
-                create_reads_trace(
-                    psi=sample["psi"],
-                    exp_profile=sample["exp_profile"],
-                    exp_load=sample["exp_load"],
-                    cell_num_total=sample["cell_num_total"],
-                )
-            )
 
         samples = {k: np.stack(v) for k, v in result.items()}
         return DeconvolutionResult(
             cell_prob_trace=samples["psi"],
             expression_trace=samples["exp_profile"],
             beta_trace=samples["exp_load"],
-            cell_num_trace=(samples["cell_num_total"].T * samples["psi"].T).T,
-            reads_trace=samples["read_trace"],
-            lam2=self.sp_reg_coeff,
-            n_components=self.K,
+            cell_num_total_trace=samples["cell_num_total"],
+            lam2=self.spatial_regularization_coefficient,
+            n_components=self.n_celltypes,
             losses=np.array(self.losses),
         )
 
