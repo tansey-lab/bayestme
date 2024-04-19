@@ -1,7 +1,10 @@
 name: Tests
 on:
   pull_request: { }
-  push: { branches: main }
+  push:
+    branches:
+      - 'main'
+      - 'v2'
 
 jobs:
   lint:
