@@ -56,12 +56,11 @@ def test_serialize_deserialize_deconvolution_results_dataset():
     n_samples = 100
     n_nodes = 25
     n_components = 4
-    n_gene = 100
-    cell_prob_trace = np.random.random((n_samples, n_nodes, n_components + 1))
-    cell_num_trace = np.random.random((n_samples, n_nodes, n_components + 1))
+    n_gene = 50
+    cell_prob_trace = np.random.random((n_samples, n_nodes, n_components))
+    cell_num_total_trace = np.random.random((n_samples, n_nodes))
     expression_trace = np.random.random((n_samples, n_components, n_gene))
     beta_trace = np.random.random((n_samples, n_components))
-    reads_trace = np.random.random((n_samples, n_nodes, n_gene, n_components))
     losses = np.random.random((n_samples,))
     lam2 = 1000
 
@@ -69,8 +68,7 @@ def test_serialize_deserialize_deconvolution_results_dataset():
         cell_prob_trace=cell_prob_trace,
         expression_trace=expression_trace,
         beta_trace=beta_trace,
-        cell_num_trace=cell_num_trace,
-        reads_trace=reads_trace,
+        cell_num_total_trace=cell_num_total_trace,
         lam2=lam2,
         n_components=n_components,
         losses=losses,
@@ -107,24 +105,24 @@ def test_deconvolution_results_properties():
     n_components = 4
     n_gene = 50
     cell_prob_trace = rng.random((n_samples, n_nodes, n_components))
-    cell_num_trace = rng.random((n_samples, n_nodes, n_components))
+    cell_num_total_trace = rng.random((n_samples, n_nodes))
     expression_trace = rng.random((n_samples, n_components, n_gene))
     beta_trace = rng.random((n_samples, n_components))
-    reads_trace = rng.random((n_samples, n_nodes, n_gene, n_components))
     lam2 = 1000
 
     dataset = data.DeconvolutionResult(
         cell_prob_trace=cell_prob_trace,
         expression_trace=expression_trace,
         beta_trace=beta_trace,
-        cell_num_trace=cell_num_trace,
-        reads_trace=reads_trace,
+        cell_num_total_trace=cell_num_total_trace,
         lam2=lam2,
         n_components=n_components,
     )
 
     assert dataset.omega.shape == (n_components, n_gene)
-    assert (dataset.omega.sum(axis=0) == np.array(1.0)).sum() == 50
+    np.testing.assert_almost_equal(
+        dataset.omega.sum(axis=0), np.ones_like(dataset.omega.sum(axis=0))
+    )
 
     assert dataset.omega_difference.shape == (n_components, n_gene)
     assert np.all(dataset.omega_difference <= 1.0)

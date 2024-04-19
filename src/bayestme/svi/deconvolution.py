@@ -296,22 +296,12 @@ class BayesTME_VI:
             for k, v in sample.items():
                 result[k].append(v)
 
-            result["read_trace"].append(
-                create_reads_trace(
-                    psi=sample["psi"],
-                    exp_profile=sample["exp_profile"],
-                    exp_load=sample["exp_load"],
-                    cell_num_total=sample["cell_num_total"],
-                )
-            )
-
         samples = {k: np.stack(v) for k, v in result.items()}
         return DeconvolutionResult(
             cell_prob_trace=samples["psi"],
             expression_trace=samples["exp_profile"],
             beta_trace=samples["exp_load"],
-            cell_num_trace=(samples["cell_num_total"].T * samples["psi"].T).T,
-            reads_trace=samples["read_trace"],
+            cell_num_total_trace=samples["cell_num_total"],
             lam2=self.spatial_regularization_coefficient,
             n_components=self.n_celltypes,
             losses=np.array(self.losses),

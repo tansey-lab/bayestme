@@ -571,9 +571,8 @@ def create_toy_deconvolve_result(
     return data.DeconvolutionResult(
         lam2=1000,
         n_components=n_components,
-        cell_num_trace=np.random.random((n_samples, n_nodes, n_components)),
+        cell_num_total_trace=np.random.random((n_samples, n_nodes)),
         cell_prob_trace=np.random.random((n_samples, n_nodes, n_components)),
         expression_trace=np.random.random((n_samples, n_components, n_gene)),
         beta_trace=np.random.random((n_samples, n_components)),
-        reads_trace=np.random.random((n_samples, n_nodes, n_gene, n_components)),
     )
