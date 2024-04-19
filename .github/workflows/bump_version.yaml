@@ -1,0 +1,28 @@
+name: Increment value test
+on:
+  push:
+    branches:
+      - main
+      - v2
+    paths-ignore:
+      - 'version.config'
+jobs:
+  test:
+    name: Increment value test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: '(bayestme_version\s*=\s*")[^"]*"'
+          replace: format('bayestme_version = "{0}"', ${{ github.sha }})
+          regex: true
+          include: 'version.config'
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Auto-increment version number
