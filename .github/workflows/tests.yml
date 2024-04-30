@@ -25,14 +25,13 @@ jobs:
     needs:
       - lint
       - docs
-    name: Run python unit tests in docker
+    name: Run python unit tests
     runs-on: ubuntu-latest
-    container:
-      image: jeffquinnmsk/bayestme:latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Run tests
-      run: make python-unittest
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run tests
+        run: make python-unittest
