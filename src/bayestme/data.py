@@ -669,6 +669,9 @@ class DeconvolutionResult:
 
     @property
     def reads_trace(self):
+        """
+        :return: <N Samples> x <N Spots> x <N Genes> x <N Cell Types>
+        """
         number_of_cells_per_component = (
             self.cell_prob_trace.T * self.cell_num_total_trace.T
         ).T * self.beta_trace[:, None, :]
@@ -721,196 +724,35 @@ class DeconvolutionResult:
             )
 
 
-class SpatialDifferentialExpressionSamplerState:
-    """
-    Data model for internal SDE gibbs sampler state
-    """
-
-    def __init__(
-        self,
-        pickled_bit_generator: bytes,
-        n_cell_types: int,
-        n_nodes: int,
-        n_signals: int,
-        n_spatial_patterns: int,
-        lam2: float,
-        edges: np.ndarray,
-        alpha: np.ndarray,
-        W: np.ndarray,
-        Gamma: np.ndarray,
-        H: np.ndarray,
-        C: np.ndarray,
-        V: np.ndarray,
-        Theta: np.ndarray,
-        Omegas: np.ndarray,
-        prior_vars: np.ndarray,
-        Delta: scipy.sparse.csc.csc_matrix,
-        DeltaT: scipy.sparse.csc.csc_matrix,
-        Tau2: np.ndarray,
-        Tau2_a: np.ndarray,
-        Tau2_b: np.ndarray,
-        Tau2_c: np.ndarray,
-        Sigma0_inv: scipy.sparse.csc.csc_matrix,
-        Cov_mats: np.ndarray,
-    ):
-        self.pickled_bit_generator = pickled_bit_generator
-        self.n_cell_types = n_cell_types
-        self.n_nodes = n_nodes
-        self.n_signals = n_signals
-        self.n_spatial_patterns = n_spatial_patterns
-        self.lam2 = lam2
-        self.edges = edges
-        self.alpha = alpha
-        self.W = W
-        self.Gamma = Gamma
-        self.H = H
-        self.C = C
-        self.V = V
-        self.Theta = Theta
-        self.Omegas = Omegas
-        self.prior_vars = prior_vars
-        self.Delta = Delta
-        self.DeltaT = DeltaT
-        self.Tau2 = Tau2
-        self.Tau2_a = Tau2_a
-        self.Tau2_b = Tau2_b
-        self.Tau2_c = Tau2_c
-        self.Sigma0_inv = Sigma0_inv
-        self.Cov_mats = Cov_mats
-
-    def save(self, path):
-        with h5py.File(path, "w") as f:
-            f.attrs["pickled_bit_generator"] = np.void(self.pickled_bit_generator)
-            f.attrs["n_cell_types"] = self.n_cell_types
-            f.attrs["n_nodes"] = self.n_nodes
-            f.attrs["n_signals"] = self.n_signals
-            f.attrs["n_spatial_patterns"] = self.n_spatial_patterns
-            f.attrs["lam2"] = self.lam2
-            f["edges"] = self.edges
-            f["alpha"] = self.alpha
-            f["W"] = self.W
-            f["Gamma"] = self.Gamma
-            f["H"] = self.H
-            f["C"] = self.C
-            f["V"] = self.V
-            f["Theta"] = self.Theta
-            f["Omegas"] = self.Omegas
-            f["prior_vars"] = self.prior_vars
-            f["Tau2"] = self.Tau2
-            f["Tau2_a"] = self.Tau2_a
-            f["Tau2_b"] = self.Tau2_b
-            f["Tau2_c"] = self.Tau2_c
-            f["Cov_mats"] = self.Cov_mats
-            anndata._io.h5ad.write_sparse_as_dense(f, "Delta", self.Delta)
-            anndata._io.h5ad.write_sparse_as_dense(f, "DeltaT", self.DeltaT)
-            anndata._io.h5ad.write_sparse_as_dense(f, "Sigma0_inv", self.Sigma0_inv)
-
-    @classmethod
-    def read_h5(cls, path):
-        """
-        Read this class from an h5 archive
-        :param path: Path to h5 file.
-        :return: SpatialExpressionDataset
-        """
-        with h5py.File(path, "r") as f:
-            pickled_bit_generator = f.attrs["pickled_bit_generator"].tobytes()
-            n_cell_types = f.attrs["n_cell_types"]
-            n_nodes = f.attrs["n_nodes"]
-            n_signals = f.attrs["n_signals"]
-            n_spatial_patterns = f.attrs["n_spatial_patterns"]
-            lam2 = f.attrs["lam2"]
-            edges = f["edges"][:]
-            alpha = f["alpha"][:]
-            W = f["W"][:]
-            Gamma = f["Gamma"][:]
-            H = f["H"][:]
-            C = f["C"][:]
-            V = f["V"][:]
-            Theta = f["Theta"][:]
-            Omegas = f["Omegas"][:]
-            prior_vars = f["prior_vars"][:]
-            Tau2 = f["Tau2"][:]
-            Tau2_a = f["Tau2_a"][:]
-            Tau2_b = f["Tau2_b"][:]
-            Tau2_c = f["Tau2_c"][:]
-            Cov_mats = f["Cov_mats"][:]
-            Delta = anndata._io.h5ad.read_dense_as_csc(f["Delta"])
-            DeltaT = anndata._io.h5ad.read_dense_as_csc(f["DeltaT"])
-            Sigma0_inv = anndata._io.h5ad.read_dense_as_csc(f["Sigma0_inv"])
-
-            return cls(
-                pickled_bit_generator=pickled_bit_generator,
-                n_cell_types=n_cell_types,
-                n_nodes=n_nodes,
-                n_signals=n_signals,
-                n_spatial_patterns=n_spatial_patterns,
-                lam2=lam2,
-                edges=edges,
-                alpha=alpha,
-                W=W,
-                Gamma=Gamma,
-                H=H,
-                C=C,
-                V=V,
-                Theta=Theta,
-                Omegas=Omegas,
-                prior_vars=prior_vars,
-                Tau2=Tau2,
-                Tau2_a=Tau2_a,
-                Tau2_b=Tau2_b,
-                Tau2_c=Tau2_c,
-                Cov_mats=Cov_mats,
-                Delta=Delta,
-                DeltaT=DeltaT,
-                Sigma0_inv=Sigma0_inv,
-            )
-
-
 class SpatialDifferentialExpressionResult:
     """
     Data model for results from sampling from the spatial differential expression posterior distribution.
     """
 
-    def __init__(
-        self,
-        w_samples: np.ndarray,
-        c_samples: np.ndarray,
-        gamma_samples: np.ndarray,
-        h_samples: np.ndarray,
-        v_samples: np.ndarray,
-        theta_samples: np.ndarray,
-    ):
+    def __init__(self, w_hat: np.array, v_hat: np.array):
         """
-        :param w_samples: <N samples> x <N components> x <N spatial patterns + 1> x <N tissue spots>
-        :param c_samples: <N samples> x <N markers> x <N components>
-        :param gamma_samples: <N samples> x <N components> x <N spatial patterns + 1>
-        :param h_samples: <N samples> x <N markers> x <N components>
-        :param v_samples: <N samples> x <N markers> x <N components>
-        :param theta_samples: <N samples> x <N tissue spots> x <N markers> x <N components>
+        :param w_hat: <N Cell Types> x <N Spatial Patterns> x <N tissue spots>
+        :param v_hat: <N Cell Types> x <N Genes> x <N Spatial Patterns>
         """
-        self.theta_samples = theta_samples
-        self.v_samples = v_samples
-        self.h_samples = h_samples
-        self.gamma_samples = gamma_samples
-        self.c_samples = c_samples
-        self.w_samples = w_samples
+        self.w_hat = w_hat
+        self.v_hat = v_hat
 
     def save(self, path):
         with h5py.File(path, "w") as f:
-            f["theta_samples"] = self.theta_samples
-            f["v_samples"] = self.v_samples
-            f["h_samples"] = self.h_samples
-            f["gamma_samples"] = self.gamma_samples
-            f["c_samples"] = self.c_samples
-            f["w_samples"] = self.w_samples
+            f["w_hat"] = self.w_hat
+            f["v_hat"] = self.v_hat
 
     @property
     def n_spatial_patterns(self):
-        return self.gamma_samples.shape[2] - 1
+        return self.w_hat.shape[1]
 
     @property
     def n_components(self):
-        return self.c_samples.shape[2]
+        return self.w_hat.shape[0]
+
+    @property
+    def spatial_hat(self):
+        return np.exp((self.w_hat[:, None] * self.v_hat[..., None, None]).sum(axis=2))
 
     @classmethod
     def read_h5(cls, path):
@@ -920,21 +762,10 @@ class SpatialDifferentialExpressionResult:
         :return: SpatialExpressionDataset
         """
         with h5py.File(path, "r") as f:
-            theta_samples = f["theta_samples"][:]
-            v_samples = f["v_samples"][:]
-            h_samples = f["h_samples"][:]
-            gamma_samples = f["gamma_samples"][:]
-            c_samples = f["c_samples"][:]
-            w_samples = f["w_samples"][:]
+            w_hat = f["w_hat"][:]
+            v_hat = f["v_hat"][:]
 
-            return cls(
-                theta_samples=theta_samples,
-                v_samples=v_samples,
-                h_samples=h_samples,
-                gamma_samples=gamma_samples,
-                c_samples=c_samples,
-                w_samples=w_samples,
-            )
+            return cls(w_hat=w_hat, v_hat=v_hat)
 
 
 def add_deconvolution_results_to_dataset(
