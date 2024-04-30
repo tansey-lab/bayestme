@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import logging
 from torch.nn.parameter import Parameter
 from typing import Optional
 from bayestme.data import (
@@ -10,6 +11,9 @@ from bayestme.data import (
     SpatialDifferentialExpressionResult,
 )
 import tqdm
+
+
+logger = logging.getLogger(__name__)
 
 
 class SpatialPrograms(nn.Module):
