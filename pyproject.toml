@@ -1,6 +1,6 @@
 [project]
 name = "bayestme"
-version = "0.0.1"
+version = "1.0.0"
 description = "A reference-free Bayesian method that discovers spatial transcriptional programs in the tissue microenvironment"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -39,10 +39,8 @@ dependencies = [
         "statsmodels>=0.13.2,<1",
         "anndata>=0.8.0,<1",
         "h5py>=3.7.0,<4",
-        "libpysal>=4.5.1,<5",
         "tqdm>=4.64.0,<5",
         "shapely>=1.8.0,<2.1",
-        "sksparse-minimal>=0.2",
         "geopandas>=0.14.1,<1",
         "scanpy>=1.10.1,<2"
 ]
