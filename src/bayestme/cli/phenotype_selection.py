@@ -117,13 +117,8 @@ def main():
                 fold_number=fold_number,
                 stdata=stdata,
                 n_samples=args.n_samples,
-                mcmc_n_burn=args.n_burn,
-                mcmc_n_thin=args.n_thin,
                 n_svi_steps=args.n_svi_steps,
-                background_noise=args.background_noise,
-                lda_initialization=args.lda_initialization,
                 use_spatial_guide=args.use_spatial_guide,
-                inference_type=args.inference_type,
                 rng=rng,
             )
         )

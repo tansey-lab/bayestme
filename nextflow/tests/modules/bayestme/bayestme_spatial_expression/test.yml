@@ -1,6 +1,0 @@
-- name: bayestme_spatial_expression
-  command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_spatial_expression -entry bayestme_spatial_expression -c ./nextflow/tests/modules/bayestme/bayestme_spatial_expression/nextflow.config -c ./nextflow/tests/config/nextflow.config
-  tags:
-    - bayestme_spatial_expression
-  files:
-    - path: output/test/sde_samples.h5

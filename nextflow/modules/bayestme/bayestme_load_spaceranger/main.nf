@@ -2,8 +2,8 @@ process BAYESTME_LOAD_SPACERANGER {
     tag "$meta.id"
     label 'process_single'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://jeffquinnmsk/bayestme:23a8cad61219c103ff8384f79f5c53734e71ad81' :
-        'docker.io/jeffquinnmsk/bayestme:23a8cad61219c103ff8384f79f5c53734e71ad81' }"
+        ('docker://jeffquinnmsk/bayestme:' + params.bayestme_version) :
+        ('docker.io/jeffquinnmsk/bayestme:' + params.bayestme_version) }"
 
     input:
     tuple val(meta), path(spaceranger_dir)

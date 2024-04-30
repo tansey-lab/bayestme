@@ -10,7 +10,7 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import issparse
-from spatialdata_io.readers._utils._read_10x_h5 import _read_10x_h5
+from scanpy import read_10x_h5
 from scipy.sparse import csr_matrix
 
 from bayestme import utils
@@ -303,7 +303,7 @@ class SpatialExpressionDataset:
         if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
             raise RuntimeError("Tissue positions list has unexpected columns")
 
-        ad = _read_10x_h5(raw_h5_path)
+        ad = read_10x_h5(raw_h5_path)
 
         positions_df = positions_df.set_index("barcode")
 
@@ -533,8 +533,7 @@ class DeconvolutionResult:
         cell_prob_trace: np.ndarray,
         expression_trace: np.ndarray,
         beta_trace: np.ndarray,
-        cell_num_trace: np.ndarray,
-        reads_trace: np.ndarray,
+        cell_num_total_trace: np.ndarray,
         lam2: float,
         n_components: int,
         losses: Optional[np.ndarray] = None,
@@ -544,17 +543,15 @@ class DeconvolutionResult:
         :param cell_prob_trace: <N samples> x <N tissue spots> x <N components> matrix
         :param expression_trace: <N samples> x <N components> x <N markers> matrix
         :param beta_trace: <N samples> x <N components> matrix
-        :param cell_num_trace: <N samples> x <N tissue spots> x <N components> matrix
-        :param reads_trace: <N samples> x <N tissue spots> x <N markers> x <N components>
+        :param cell_num_total_trace: <N samples> x <N tissue spots> matrix
         :param lam2: lambda smoothing parameter used for the posterior distribution
         :param n_components: N components value for the posterior distribution
         :param losses: Training loss (if applicable for inference method)
         """
-        self.reads_trace = reads_trace
         self.cell_prob_trace = cell_prob_trace
         self.expression_trace = expression_trace
         self.beta_trace = beta_trace
-        self.cell_num_trace = cell_num_trace
+        self.cell_num_total_trace = cell_num_total_trace
         self.lam2 = lam2
         self.n_components = n_components
         self.losses = losses
@@ -564,7 +561,7 @@ class DeconvolutionResult:
             f["cell_prob_trace"] = self.cell_prob_trace
             f["expression_trace"] = self.expression_trace
             f["beta_trace"] = self.beta_trace
-            f["cell_num_trace"] = self.cell_num_trace
+            f["cell_num_total_trace"] = self.cell_num_total_trace
             f["reads_trace"] = self.reads_trace
             if self.losses is not None:
                 f["losses"] = self.losses
@@ -671,6 +668,21 @@ class DeconvolutionResult:
         return expression
 
     @property
+    def reads_trace(self):
+        number_of_cells_per_component = (
+            self.cell_prob_trace.T * self.cell_num_total_trace.T
+        ).T * self.beta_trace[:, None, :]
+        result = (
+            number_of_cells_per_component[:, :, :, None]
+            * self.expression_trace[:, None, :, :]
+        )
+        return np.transpose(result, (0, 1, 3, 2))
+
+    @property
+    def cell_num_trace(self):
+        return (self.cell_num_total_trace.T * self.cell_prob_trace.T).T
+
+    @property
     def nb_probs(self):
         rates = (
             self.cell_prob_trace[..., None]
@@ -689,8 +701,7 @@ class DeconvolutionResult:
             cell_prob_trace = f["cell_prob_trace"][:]
             expression_trace = f["expression_trace"][:]
             beta_trace = f["beta_trace"][:]
-            cell_num_trace = f["cell_num_trace"][:]
-            reads_trace = f["reads_trace"][:]
+            cell_num_total_trace = f["cell_num_total_trace"][:]
             lam2 = f.attrs["lam2"]
             n_components = f.attrs["n_components"]
 
@@ -703,8 +714,7 @@ class DeconvolutionResult:
                 cell_prob_trace=cell_prob_trace,
                 expression_trace=expression_trace,
                 beta_trace=beta_trace,
-                cell_num_trace=cell_num_trace,
-                reads_trace=reads_trace,
+                cell_num_total_trace=cell_num_total_trace,
                 lam2=lam2,
                 n_components=n_components,
                 losses=losses,

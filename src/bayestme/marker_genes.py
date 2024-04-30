@@ -1,13 +1,14 @@
 import os
 from enum import Enum
 from typing import List, Optional
-
+import logging
 import numpy as np
 import pandas
 from matplotlib import cm as cm, pyplot as plt, colors
 
 from bayestme import data
-from bayestme.mcmc.deconvolution import logger
+
+logger = logging.getLogger(__name__)
 
 
 class MarkerGeneMethod(Enum):
