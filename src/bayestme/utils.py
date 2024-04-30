@@ -351,22 +351,6 @@ def get_regular_grid_edges(
     return edges
 
 
-def plot_points_and_edges(positions, edges, output_path):
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-
-    # Plot the points
-    ax.scatter(positions[:, 0], positions[:, 1], c="blue", label="Points")
-
-    # Plot the edges
-    for edge in edges:
-        point1 = positions[edge[0], :]
-        point2 = positions[edge[1], :]
-        ax.plot([point1[0], point2[0]], [point1[1], point2[1]], c="red")
-
-    # Show the plot
-    plt.savefig(output_path, dpi=600)
-
-
 def filter_reads_to_top_n_genes(reads, n_gene):
     n_gene = min(n_gene, reads.shape[1])
     top = np.argsort(np.std(np.log(1 + reads), axis=0))[::-1]
