@@ -33,6 +33,8 @@ OMEGA_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_omega"
 RELATIVE_EXPRESSION_ATTR = f"{BAYESTME_ANNDATA_PREFIX}_relative_expression"
 POSITIONS_X_COLUMN = "array_col"
 POSITIONS_Y_COLUMN = "array_row"
+REAL_POSITION_X_COLUMN = "pxl_col_in_fullres"
+REAL_POSITION_Y_COLUMN = "pxl_row_in_fullres"
 VISIUM_SPATIAL_COLUMNS = [
     "barcode",
     "in_tissue",
@@ -309,6 +311,13 @@ class SpatialExpressionDataset:
         positions = positions_df.loc[
             ad.obs_names, [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]
         ].values
+
+        physical_positions = positions_df.loc[
+            ad.obs_names, [REAL_POSITION_X_COLUMN, REAL_POSITION_Y_COLUMN]
+        ].values
+
+        edges = utils.get_edges(physical_positions[tissue_mask], Layout.HEX)
+
         gene_names = ad.var_names.values
         barcodes = ad.obs_names.values
         raw_count = ad.X
@@ -319,7 +328,7 @@ class SpatialExpressionDataset:
             tissue_mask=tissue_mask,
             gene_names=gene_names,
             layout=Layout.HEX,
-            edges=utils.get_edges(positions[tissue_mask], Layout.HEX),
+            edges=edges,
             barcodes=barcodes,
         )
 
