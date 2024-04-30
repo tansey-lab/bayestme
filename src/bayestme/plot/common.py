@@ -10,6 +10,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.colors import Normalize
 from matplotlib.patches import RegularPolygon, Wedge, Patch, Polygon
 from scipy.spatial import Voronoi
+import networkx as nx
 
 import shapely
 from matplotlib import patches
@@ -418,3 +419,35 @@ def plot_gene_raw_counts(
 
     fig.savefig(output_file)
     plt.close(fig)
+
+
+def plot_spot_connectivity_graph(node_coordinates, edges, output_fn):
+    # Create a graph instance
+    fig, ax = plt.subplots(1, figsize=(10, 10))
+    G = nx.Graph()
+
+    # Add nodes and their positions to the graph
+    for i, (x, y) in enumerate(node_coordinates):
+        G.add_node(i, pos=(x, y))
+
+    # Add edges to the graph
+    for edge in edges:
+        G.add_edge(*edge)
+
+    # Get node positions for plotting
+    pos = nx.get_node_attributes(G, "pos")
+
+    # Draw the graph
+    nx.draw(
+        G,
+        pos,
+        with_labels=False,
+        node_color="skyblue",
+        node_size=5,
+        edge_color="gray",
+        ax=ax,
+    )
+
+    ax.set_title("Spot Connectivity Graph")
+
+    fig.savefig(output_fn)
