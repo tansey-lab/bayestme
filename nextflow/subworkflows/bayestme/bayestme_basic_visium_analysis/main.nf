@@ -2,7 +2,7 @@ include { BAYESTME_LOAD_SPACERANGER } from '../../../modules/bayestme/bayestme_l
 include { BAYESTME_FILTER_GENES } from '../../../modules/bayestme/bayestme_filter_genes/main'
 include { BAYESTME_BLEEDING_CORRECTION } from '../../../modules/bayestme/bayestme_bleeding_correction/main'
 include { BAYESTME_DECONVOLUTION } from '../../../modules/bayestme/bayestme_deconvolution/main'
-
+include { BAYESTME_SPATIAL_TRANSCRIPTIONAL_PROGRAMS } from '../../../modules/bayestme/bayestme_spatial_transcriptional_programs/main'
 
 workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
 
@@ -39,6 +39,12 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
     }
 
     BAYESTME_DECONVOLUTION( deconvolution_input )
+
+    BAYESTME_DECONVOLUTION.out.adata_deconvolved.join(BAYESTME_DECONVOLUTION.out.deconvolution_samples)
+        .map { tuple(it[0], it[1], it[2], []) }
+        .tap { stp_input }
+
+    BAYESTME_SPATIAL_TRANSCRIPTIONAL_PROGRAMS( stp_input )
 
     emit:
     adata                      = BAYESTME_DECONVOLUTION.out.adata_deconvolved

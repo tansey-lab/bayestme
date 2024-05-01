@@ -2,7 +2,7 @@
 name: bayestme_basic_visium_analysis
 description: |
   A subworkflow for a basic bleed correction, deconvolution, and marker gene analysis of Visium10x data.
-  This is suitable for most beginner users of BayesTME to start with.
+  This is suitable for beginner users of BayesTME to start with.
 keywords:
   - spatial_transcriptomics
   - spatial
@@ -14,6 +14,7 @@ components:
   - bayestme/bayestme_bleeding_correction
   - bayestme/bayestme_deconvolution
   - bayestme/bayestme_marker_genes
+  - bayestme/bayestme_spatial_transcriptional_programs
 
 input:
   - ch_input:
