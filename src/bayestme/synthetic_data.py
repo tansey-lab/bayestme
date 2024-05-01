@@ -407,6 +407,9 @@ def generate_demo_stp_dataset():
         ),
         layout=bayestme.common.Layout.SQUARE,
         barcodes=np.array(["barcode" + str(i) for i in range(len(locations))]),
+        edges=bayestme.utils.get_edges(
+            locations[tissue_mask], bayestme.common.Layout.SQUARE
+        ),
     )
 
 
