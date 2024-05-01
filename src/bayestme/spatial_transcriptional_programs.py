@@ -196,20 +196,22 @@ def train(
     )
 
 
+def plot_loss(stp: SpatialDifferentialExpressionResult, output_path: str):
+    fig, ax = plt.subplots()
+    ax.set_title("STP Training Loss")
+    ax.plot(stp.losses)
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Loss")
+    fig.savefig(output_path)
+    plt.close(fig)
+
+
 def plot_spatial_transcriptional_programs(
     stp: SpatialDifferentialExpressionResult,
     data: SpatialExpressionDataset,
     output_dir: str,
     output_format: str = "pdf",
 ):
-    fig, ax = plt.subplots()
-    ax.set_title("STP Training Loss")
-    ax.plot(stp.losses)
-    ax.set_xlabel("Iteration")
-    ax.set_ylabel("Loss")
-    fig.savefig(os.path.join(output_dir, f"training_loss.{output_format}"))
-    plt.close(fig)
-
     for cell_type_idx in range(stp.n_components):
         n_panels_x = min(3, stp.n_spatial_patterns)
         n_panels_y = np.ceil(stp.n_spatial_patterns / n_panels_x).astype(int)
@@ -229,7 +231,7 @@ def plot_spatial_transcriptional_programs(
         for program_idx in range(stp.n_spatial_patterns):
             ax = fig.add_subplot(gs[program_idx])
 
-            ax.set_title(f"Program {program_idx+1}")
+            ax.set_title(f"Program {program_idx}")
             values = stp.w_hat[cell_type_idx, program_idx, :]
             ax, cb, norm, hcoord, vcoord = plot_colored_spatial_polygon(
                 fig=fig,
@@ -250,3 +252,57 @@ def plot_spatial_transcriptional_programs(
             os.path.join(output_dir, f"cell_type_{cell_type_idx}_stp.{output_format}")
         )
         plt.close(fig)
+
+
+def plot_top_spatial_program_genes(
+    stp: SpatialDifferentialExpressionResult,
+    data: SpatialExpressionDataset,
+    output_dir: str,
+    output_format: str = "pdf",
+    n_top_genes: int = 5,
+):
+    for cell_type_idx in range(stp.n_components):
+        for program_idx in range(stp.n_spatial_patterns):
+            n_panels_x = min(3, n_top_genes)
+            n_panels_y = np.ceil(n_top_genes / n_panels_x).astype(int)
+
+            fig = plt.figure(
+                figsize=(
+                    n_panels_x * 5,
+                    n_panels_y * 5,
+                )
+            )
+            gs = gridspec.GridSpec(
+                nrows=n_panels_y, ncols=n_panels_x, wspace=0.22, hspace=0.3
+            )
+
+            values = stp.v_hat[cell_type_idx, :, program_idx]
+            sorted_order = np.argsort(np.abs(values))[::-1]
+            gene_names = data.gene_names[sorted_order[:n_top_genes]]
+            gene_indices = sorted_order[:n_top_genes]
+
+            fig.suptitle(f"Cell Type {cell_type_idx} Program {program_idx} Top Genes")
+
+            for plot_idx, (gene_idx, gene_name) in enumerate(
+                zip(gene_indices, gene_names)
+            ):
+                ax = fig.add_subplot(gs[plot_idx])
+
+                plot_colored_spatial_polygon(
+                    fig=fig,
+                    ax=ax,
+                    coords=data.positions_tissue,
+                    values=data.counts[:, gene_idx],
+                    layout=data.layout,
+                    colormap=cm.coolwarm,
+                )
+
+                ax.set_title(f"{gene_name}")
+                ax.set_axis_off()
+            fig.savefig(
+                os.path.join(
+                    output_dir,
+                    f"cell_type_{cell_type_idx}_program_{program_idx}_top_{n_top_genes}_genes.{output_format}",
+                )
+            )
+            plt.close(fig)

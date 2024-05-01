@@ -109,3 +109,12 @@ def main():
         stp=stp_results,
         output_dir=plot_dir,
     )
+    spatial_transcriptional_programs.plot_loss(
+        stp=stp_results,
+        output_path=os.path.join(plot_dir, "training_loss.pdf"),
+    )
+    spatial_transcriptional_programs.plot_top_spatial_program_genes(
+        data=dataset,
+        stp=stp_results,
+        output_dir=plot_dir,
+    )

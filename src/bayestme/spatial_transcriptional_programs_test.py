@@ -38,5 +38,8 @@ def test_stp():
         spatial_transcriptional_programs.plot_spatial_transcriptional_programs(
             stp_result, data, output_dir=tempdir
         )
+        spatial_transcriptional_programs.plot_top_spatial_program_genes(
+            stp_result, data, output_dir=tempdir
+        )
     finally:
         shutil.rmtree(tempdir)
