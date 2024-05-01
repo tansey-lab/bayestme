@@ -77,4 +77,5 @@ autodoc_mock_imports = [
     "shapely",
     "spatialdata_io",
     "geopandas",
+    "scanpy",
 ]

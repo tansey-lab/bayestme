@@ -63,14 +63,14 @@ filtered according to adjustable criteria. One or more of the criteria can be sp
    :ref: bayestme.cli.select_marker_genes.get_parser
    :prog: select_marker_genes
 
-.. _cli_spatial_expression:
+.. _cli_spatial_transcriptional_programs:
 
-``spatial_expression``
-----------------------
+``spatial_transcriptional_programs``
+------------------------------------
 
 .. argparse::
-   :ref: bayestme.cli.spatial_expression.get_parser
-   :prog: spatial_expression
+   :ref: bayestme.cli.spatial_transcriptional_programs.get_parser
+   :prog: spatial_transcriptional_programs
 
 Plotting
 --------
@@ -94,12 +94,3 @@ Creating plots is separated into separate commands:
 .. argparse::
    :ref: bayestme.cli.plot_deconvolution.get_parser
    :prog: plot_deconvolution
-
-.. _cli_plot_spatial_expression:
-
-``plot_spatial_expression``
----------------------------
-
-.. argparse::
-   :ref: bayestme.cli.plot_spatial_expression.get_parser
-   :prog: plot_spatial_expression

@@ -54,16 +54,6 @@ command:
 
 5. Run phenotype selection / cross validation using the :ref:`phenotype_selection <cli_bleeding_correction>`.
 
-We offer two different equivalent methods for inference during this step, MCMC and SVI. You can select between
-them using the `--inference-type` argument.
-
-Using the MCMC method this step is very computationally expensive as we need to re-run the deconvolution gibbs sampler thousands of times
-in order to do cross validation to learn the number of cell types and the lambda parameter.
-This step cannot be feasibly accomplished on a single computer,
-a computational cluster or cloud service provider needs to be used in order to run many MCMC samplers in parallel.
-
-Using the SVI method this step in much faster, but still requires significant resources.
-
 If you have some outside data telling you how many cell types are in your sample you can feasibly skip this step and go straight to step 6,
 however you will need to have a reasonable guess for the lambda parameter. If you are taking this quick and dirty approach,
 ``lambda = 1000`` is probably a reasonable guess.
@@ -102,12 +92,8 @@ the results and see which value of lambda and n_cell_types performed the best.
     deconvolve --adata dataset_filtered_corrected.h5ad \
         --adata-output dataset_deconvolved.h5ad \
         --output deconvolution_samples.h5 \
-        --lam2 <value of lambda learned from step 4> \
-        --n-components <value of n cell types learned from step 4> \
-        --inference-type MCMC
-
-We offer two equivalent methods for inference during this step, MCMC and SVI. SVI is much faster than MCMC.
-You can select between them using the `--inference-type` argument.
+        --spatial-smoothing-parameter <value of lambda learned from step 4> \
+        --n-components <value of n cell types learned from step 4>
 
 The deconvolve step is basically the same model used in the
 phenotype_selection step, in phenotype_selection we just run deconvolve many times in order to select
@@ -117,7 +103,7 @@ This will create a new anndata archive ``dataset_deconvolved.h5ad`` which has be
 include the summarized deconvolution results.
 
 This will also create another h5 archive, which is a serialized :py:class:`bayestme.data.DeconvolutionResult`.
-The serialized :py:class:`bayestme.data.DeconvolutionResult` can be very large (~ 10GB) as it saves all of the MCMC
+The serialized :py:class:`bayestme.data.DeconvolutionResult` can be very large (~ 10GB) as it saves all of the posterior
 samples, each of which are high dimensional numerical arrays.
 
 
@@ -141,24 +127,12 @@ command:
 This will create a new anndata archive ``dataset_deconvolved_marker_genes.h5ad`` which has annotations added to
 note the selected marker genes.
 
-9. Run spatial differential expression using the :ref:`spatial_expression <cli_spatial_expression>` command:
+9. Run spatial differential expression using the :ref:`spatial_transcriptional_programs <cli_spatial_transcriptional_programs>` command:
 
 .. code::
 
-    spatial_expression --adata dataset_deconvolved_marker_genes.h5ad \
+    spatial_transcriptional_programs --adata dataset_deconvolved_marker_genes.h5ad \
+        --deconvolution-result deconvolution_samples.h5 \
         --output sde_samples.h5
 
-This will an h5 serialized :py:class:`bayestme.data.SpatialDifferentialExpressionResult`.
-The serialized :py:class:`bayestme.data.SpatialDifferentialExpressionResult` can be very large (~ 10GB) as
-it saves all of the MCMC samples, each of which are high dimensional numerical arrays.
-
-
-10. Plot spatial differential expression using the :ref:`plot_spatial_expression <cli_plot_spatial_expression>`
-command:
-
-.. code::
-
-    plot_spatial_expression --adata dataset_deconvolved_marker_genes.h5ad \
-        --deconvolution-result deconvolution_samples.h5 \
-        --sde-result sde_samples.h5 \
-        --output-dir sde_plots
+This will create an h5 serialized :py:class:`bayestme.data.SpatialDifferentialExpressionResult`.
