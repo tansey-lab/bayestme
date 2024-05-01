@@ -206,13 +206,27 @@ def plot_loss(stp: SpatialDifferentialExpressionResult, output_path: str):
     plt.close(fig)
 
 
+def make_name_lower_snakecase(name):
+    name = name.lower().replace(" ", "_")
+    # remove all non-alphanumeric characters
+    name = "".join([c for c in name if c.isalnum() or c == " "])
+    return name
+
+
 def plot_spatial_transcriptional_programs(
     stp: SpatialDifferentialExpressionResult,
     data: SpatialExpressionDataset,
     output_dir: str,
     output_format: str = "pdf",
+    cell_type_names: list[str] = None,
 ):
     for cell_type_idx in range(stp.n_components):
+        cell_type_name = (
+            cell_type_names[cell_type_idx]
+            if cell_type_names
+            else f"Cell Type {cell_type_idx}"
+        )
+
         n_panels_x = min(3, stp.n_spatial_patterns)
         n_panels_y = np.ceil(stp.n_spatial_patterns / n_panels_x).astype(int)
 
@@ -226,7 +240,7 @@ def plot_spatial_transcriptional_programs(
             nrows=n_panels_y, ncols=n_panels_x, wspace=0.22, hspace=0.3
         )
 
-        fig.suptitle(f"Cell Type {cell_type_idx} Spatial Programs")
+        fig.suptitle(f"{cell_type_name} Spatial Programs")
 
         for program_idx in range(stp.n_spatial_patterns):
             ax = fig.add_subplot(gs[program_idx])
@@ -249,7 +263,10 @@ def plot_spatial_transcriptional_programs(
             cb.ax.set_yscale("linear")
             ax.set_axis_off()
         fig.savefig(
-            os.path.join(output_dir, f"cell_type_{cell_type_idx}_stp.{output_format}")
+            os.path.join(
+                output_dir,
+                f"{make_name_lower_snakecase(cell_type_name)}_stp.{output_format}",
+            )
         )
         plt.close(fig)
 
@@ -260,8 +277,15 @@ def plot_top_spatial_program_genes(
     output_dir: str,
     output_format: str = "pdf",
     n_top_genes: int = 5,
+    cell_type_names: list[str] = None,
 ):
     for cell_type_idx in range(stp.n_components):
+        cell_type_name = (
+            cell_type_names[cell_type_idx]
+            if cell_type_names
+            else f"Cell Type {cell_type_idx}"
+        )
+
         for program_idx in range(stp.n_spatial_patterns):
             n_panels_x = min(3, n_top_genes)
             n_panels_y = np.ceil(n_top_genes / n_panels_x).astype(int)
@@ -281,7 +305,7 @@ def plot_top_spatial_program_genes(
             gene_names = data.gene_names[sorted_order[:n_top_genes]]
             gene_indices = sorted_order[:n_top_genes]
 
-            fig.suptitle(f"Cell Type {cell_type_idx} Program {program_idx} Top Genes")
+            fig.suptitle(f"{cell_type_name} Program {program_idx} Top Genes")
 
             for plot_idx, (gene_idx, gene_name) in enumerate(
                 zip(gene_indices, gene_names)
@@ -302,7 +326,7 @@ def plot_top_spatial_program_genes(
             fig.savefig(
                 os.path.join(
                     output_dir,
-                    f"cell_type_{cell_type_idx}_program_{program_idx}_top_{n_top_genes}_genes.{output_format}",
+                    f"{make_name_lower_snakecase(cell_type_name)}_program_{program_idx}_top_{n_top_genes}_genes.{output_format}",
                 )
             )
             plt.close(fig)

@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import pandas
 
 import bayestme
 import bayestme.cli.common
@@ -33,6 +34,21 @@ def get_parser():
         type=int,
         help="Number of spatial programs per cell type to learn",
         default=5,
+    )
+    parser.add_argument(
+        "--expression-truth",
+        help="Use expression ground truth from one or matched samples that have been processed "
+        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
+        " for multiple matched samples.",
+        type=str,
+        action="append",
+        default=None,
+    )
+    parser.add_argument(
+        "--cell-type-names",
+        default=None,
+        help="A comma separated list of cell type names to use for plots."
+        'For example --cell-type-names "type 1, type 2, type 3"',
     )
     parser.add_argument(
         "--trend-filtering-lambda",
@@ -84,6 +100,22 @@ def main():
 
     deconvolution_results = data.DeconvolutionResult.read_h5(args.deconvolution_result)
 
+    if args.cell_type_names is not None:
+        cell_type_names = [name.strip() for name in args.cell_type_names.split(",")]
+    else:
+        cell_type_names = None
+
+    if args.expression_truth is not None:
+        cell_type_names = pandas.read_csv(
+            args.expression_truth[0], index_col=0
+        ).columns.tolist()
+
+        # pad cell type names up to length stdata.n_cell_types
+        i = 1
+        while len(cell_type_names) < dataset.n_cell_types:
+            cell_type_names.append(f"unknown_{i}")
+            i += 1
+
     stp_results = spatial_transcriptional_programs.train(
         data=dataset,
         deconvolution_result=deconvolution_results,
@@ -108,6 +140,7 @@ def main():
         data=dataset,
         stp=stp_results,
         output_dir=plot_dir,
+        cell_type_names=cell_type_names,
     )
     spatial_transcriptional_programs.plot_loss(
         stp=stp_results,
@@ -117,4 +150,5 @@ def main():
         data=dataset,
         stp=stp_results,
         output_dir=plot_dir,
+        cell_type_names=cell_type_names,
     )
