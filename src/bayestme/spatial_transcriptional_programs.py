@@ -10,8 +10,12 @@ from bayestme.data import (
     DeconvolutionResult,
     SpatialDifferentialExpressionResult,
 )
+from bayestme.plot.common import plot_colored_spatial_polygon
 import tqdm
-
+import os.path
+from matplotlib import pyplot as plt
+from matplotlib import gridspec, cm
+from matplotlib.colors import TwoSlopeNorm
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +87,20 @@ def edges_to_linear_tf(edges):
 
 def train(
     data: SpatialExpressionDataset,
-    deconv: DeconvolutionResult,
+    deconvolution_result: DeconvolutionResult,
     n_programs: int,
     n_steps=10000,
     batchsize_spots=1000,
     batchsize_genes=50,
-    tf_lam=1,
-    lasso_lam=0.1,
+    trend_filtering_lambda=1,
+    lasso_lambda=0.1,
     rng: Optional[np.random.Generator] = None,
 ) -> SpatialDifferentialExpressionResult:
     if rng is None:
         rng = np.random.default_rng()
-    r_flat = deconv.reads_trace.mean(axis=0)  # <N Spots> x <N Genes> x <N Cell Types>
+    r_flat = deconvolution_result.reads_trace.mean(
+        axis=0
+    )  # <N Spots> x <N Genes> x <N Cell Types>
     r_flat = r_flat.transpose(2, 1, 0)  # <N Cell Types> x <N Genes> x <N Spots>
     r_flat = np.clip(r_flat, 1e-10, np.inf)
     trendfilter_indices = edges_to_linear_tf(data.edges)
@@ -102,10 +108,10 @@ def train(
     n_genes = data.n_gene
 
     t_log_rates = torch.tensor(np.log(r_flat))
-    t_Reads = torch.tensor(data.counts)
+    t_Reads = torch.tensor(data.counts.T)
     model = SpatialPrograms(
         log_rates=t_log_rates,
-        n_cell_types=data.n_cell_types,
+        n_cell_types=deconvolution_result.n_components,
         n_programs=n_programs,
         n_genes=n_genes,
         n_spots=n_spots,
@@ -113,6 +119,7 @@ def train(
     )
 
     optimizer = optim.Adam(model.parameters(), lr=0.1)
+    losses = []
 
     for step in tqdm.trange(n_steps):
         # Set the model to training mode
@@ -166,7 +173,11 @@ def train(
         t_lasso = model.V[:, batch_genes].abs().mean()
 
         # Get the regularized loss
-        loss = -t_log_like + tf_lam * t_trend_filter + lasso_lam * t_lasso
+        loss = (
+            -t_log_like
+            + trend_filtering_lambda * t_trend_filter
+            + lasso_lambda * t_lasso
+        )
 
         # Calculate gradients
         loss.backward()
@@ -174,11 +185,68 @@ def train(
         # Apply the update
         optimizer.step()
 
+        losses.append(loss.item())
+
     model.eval()
     w_hat = model.W.detach().numpy()  # (n_cell_types, n_programs, n_spots)
     v_hat = model.V.detach().numpy()  # (n_cell_types, n_genes, n_programs)
 
     return SpatialDifferentialExpressionResult(
-        w_hat=w_hat,
-        v_hat=v_hat,
+        w_hat=w_hat, v_hat=v_hat, losses=np.array(losses)
     )
+
+
+def plot_spatial_transcriptional_programs(
+    stp: SpatialDifferentialExpressionResult,
+    data: SpatialExpressionDataset,
+    output_dir: str,
+    output_format: str = "pdf",
+):
+    fig, ax = plt.subplots()
+    ax.set_title("STP Training Loss")
+    ax.plot(stp.losses)
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Loss")
+    fig.savefig(os.path.join(output_dir, f"training_loss.{output_format}"))
+    plt.close(fig)
+
+    for cell_type_idx in range(stp.n_components):
+        n_panels_x = min(3, stp.n_spatial_patterns)
+        n_panels_y = np.ceil(stp.n_spatial_patterns / n_panels_x).astype(int)
+
+        fig = plt.figure(
+            figsize=(
+                n_panels_x * 5,
+                n_panels_y * 5,
+            )
+        )
+        gs = gridspec.GridSpec(
+            nrows=n_panels_y, ncols=n_panels_x, wspace=0.22, hspace=0.3
+        )
+
+        fig.suptitle(f"Cell Type {cell_type_idx} Spatial Programs")
+
+        for program_idx in range(stp.n_spatial_patterns):
+            ax = fig.add_subplot(gs[program_idx])
+
+            ax.set_title(f"Program {program_idx+1}")
+            values = stp.w_hat[cell_type_idx, program_idx, :]
+            ax, cb, norm, hcoord, vcoord = plot_colored_spatial_polygon(
+                fig=fig,
+                ax=ax,
+                coords=data.positions_tissue,
+                values=values,
+                layout=data.layout,
+                colormap=cm.coolwarm,
+                norm=TwoSlopeNorm(
+                    vmin=min(values.min(), -1e-6),
+                    vcenter=0,
+                    vmax=max(values.max(), 1e-6),
+                ),
+            )
+            cb.ax.set_yscale("linear")
+            ax.set_axis_off()
+        fig.savefig(
+            os.path.join(output_dir, f"cell_type_{cell_type_idx}_stp.{output_format}")
+        )
+        plt.close(fig)

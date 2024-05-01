@@ -729,18 +729,21 @@ class SpatialDifferentialExpressionResult:
     Data model for results from sampling from the spatial differential expression posterior distribution.
     """
 
-    def __init__(self, w_hat: np.array, v_hat: np.array):
+    def __init__(self, w_hat: np.array, v_hat: np.array, losses: np.array):
         """
         :param w_hat: <N Cell Types> x <N Spatial Patterns> x <N tissue spots>
         :param v_hat: <N Cell Types> x <N Genes> x <N Spatial Patterns>
+        :param losses: <N Iter> array of loss values
         """
         self.w_hat = w_hat
         self.v_hat = v_hat
+        self.losses = losses
 
     def save(self, path):
         with h5py.File(path, "w") as f:
             f["w_hat"] = self.w_hat
             f["v_hat"] = self.v_hat
+            f["losses"] = self.losses
 
     @property
     def n_spatial_patterns(self):
@@ -752,6 +755,9 @@ class SpatialDifferentialExpressionResult:
 
     @property
     def spatial_hat(self):
+        """
+        Return the per spot gene expression learned by the factor model
+        """
         return np.exp((self.w_hat[:, None] * self.v_hat[..., None, None]).sum(axis=2))
 
     @classmethod
@@ -764,8 +770,9 @@ class SpatialDifferentialExpressionResult:
         with h5py.File(path, "r") as f:
             w_hat = f["w_hat"][:]
             v_hat = f["v_hat"][:]
+            losses = f["losses"][:]
 
-            return cls(w_hat=w_hat, v_hat=v_hat)
+            return cls(w_hat=w_hat, v_hat=v_hat, losses=losses)
 
 
 def add_deconvolution_results_to_dataset(
