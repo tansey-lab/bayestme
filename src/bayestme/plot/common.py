@@ -241,7 +241,7 @@ def plot_colored_spatial_polygon(
                 facecolor=colormap(norm(v)) if normalize else colormap(v),
                 alpha=1,
                 edgecolor="black" if has_border else "white",
-                linewidth=0.3,
+                linewidth=0.1,
             )
             ax.add_patch(polygon)
     elif layout is Layout.IRREGULAR:
