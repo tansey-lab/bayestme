@@ -18,6 +18,7 @@ from scipy.stats import multinomial
 from torch.distributions.multinomial import Multinomial
 from torch.nn import Softmax
 from torch.nn import Softplus
+from matplotlib.colors import TwoSlopeNorm, Normalize
 
 import bayestme.plot.common
 from bayestme import data, utils
@@ -557,8 +558,20 @@ def plot_before_after_cleanup(
 
     after_correction_counts[~after_correction.tissue_mask] = np.nan
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.set_figwidth(fig.get_size_inches()[0] * 2)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    fig.set_figwidth(fig.get_size_inches()[0] * 3)
+
+    colorbar_min = min(
+        before_correction.raw_counts[:, gene_idx_before].min(),
+        after_correction_counts[:, gene_idx_after].min(),
+    )
+
+    colorbar_max = max(
+        before_correction.raw_counts[:, gene_idx_before].max(),
+        after_correction_counts[:, gene_idx_after].max(),
+    )
+
+    norm = Normalize(vmin=colorbar_min, vmax=colorbar_max)
 
     bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig,
@@ -567,10 +580,12 @@ def plot_before_after_cleanup(
         values=before_correction.raw_counts[:, gene_idx_before],
         layout=before_correction.layout,
         colormap=cmap,
+        norm=norm,
     )
 
-    ax1.set_title("Raw Reads")
+    ax1.set_title("Raw")
     ax1.set_axis_off()
+
     bayestme.plot.common.plot_colored_spatial_polygon(
         fig=fig,
         ax=ax2,
@@ -579,10 +594,29 @@ def plot_before_after_cleanup(
         layout=after_correction.layout,
         colormap=cmap,
         plotting_coordinates=after_correction.positions,
+        norm=norm,
     )
 
-    ax2.set_title("Corrected Reads")
+    ax2.set_title("Bleed-Corrected")
     ax2.set_axis_off()
+
+    differences = (
+        after_correction.counts[:, gene_idx_after]
+        - before_correction.counts[:, gene_idx_before]
+    )
+    bayestme.plot.common.plot_colored_spatial_polygon(
+        fig=fig,
+        ax=ax3,
+        coords=after_correction.positions_tissue,
+        values=differences,
+        layout=after_correction.layout,
+        colormap=cm.coolwarm,
+        plotting_coordinates=after_correction.positions,
+        norm=TwoSlopeNorm(vmin=differences.min(), vcenter=0, vmax=differences.max()),
+    )
+
+    ax3.set_title("Count Difference (Corrected - Raw)")
+    ax3.set_axis_off()
 
     fig.savefig(os.path.join(output_dir, f"{gene}_bleeding_plot.{output_format}"))
     plt.close(fig)
