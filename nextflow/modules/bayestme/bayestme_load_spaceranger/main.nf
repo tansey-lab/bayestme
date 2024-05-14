@@ -10,7 +10,8 @@ process BAYESTME_LOAD_SPACERANGER {
 
     output:
     tuple val(meta), path("${prefix}/dataset.h5ad"), emit: adata
-    path  "versions.yml"                 , emit: versions
+    tuple val(meta), path("${prefix}/*.pdf")       , emit: plots
+    path  "versions.yml"                           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

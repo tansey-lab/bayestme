@@ -97,7 +97,8 @@ def main():
 
     if results.losses is not None:
         bayestme.plot.deconvolution.plot_loss(
-            results, os.path.join(os.path.dirname(args.output), "loss.pdf")
+            results,
+            os.path.join(os.path.dirname(args.output), "deconvolution_loss.pdf"),
         )
 
     bayestme.data.add_deconvolution_results_to_dataset(stdata=dataset, result=results)

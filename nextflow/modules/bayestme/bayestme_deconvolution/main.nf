@@ -14,7 +14,8 @@ process BAYESTME_DECONVOLUTION {
     tuple val(meta), path("${prefix}/deconvolution_samples.h5")                  , emit: deconvolution_samples
     tuple val(meta), path("${prefix}/plots/*")                                   , emit: plots
     tuple val(meta), path("${prefix}/*.csv")                                     , emit: marker_gene_lists
-    path  "versions.yml"                                               , emit: versions
+    tuple val(meta), path("${prefix}/deconvolution_loss.pdf")                    , emit: loss_plot
+    path  "versions.yml"                                                         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
