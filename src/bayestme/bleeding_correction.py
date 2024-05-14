@@ -612,7 +612,9 @@ def plot_before_after_cleanup(
         layout=after_correction.layout,
         colormap=cm.coolwarm,
         plotting_coordinates=after_correction.positions,
-        norm=TwoSlopeNorm(vmin=differences.min(), vcenter=0, vmax=differences.max()),
+        norm=TwoSlopeNorm(
+            vmin=min(-1, differences.min()), vcenter=0, vmax=max(1, differences.max())
+        ),
     )
 
     ax3.set_title("Count Difference (Corrected - Raw)")
