@@ -12,14 +12,6 @@ bayestme.bleeding\_correction module
    :undoc-members:
    :show-inheritance:
 
-bayestme.communities module
----------------------------
-
-.. automodule:: bayestme.communities
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 bayestme.cv\_likelihoods module
 -------------------------------
 
@@ -44,14 +36,6 @@ bayestme.deconvolution module
    :undoc-members:
    :show-inheritance:
 
-bayestme.mcmc.deconvolution module
-----------------------------------
-
-.. automodule:: bayestme.mcmc.deconvolution
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 bayestme.svi.deconvolution module
 ---------------------------------
 
@@ -69,14 +53,6 @@ bayestme.expression_truth module
    :undoc-members:
    :show-inheritance:
 
-bayestme.fast\_multivariate\_normal module
-------------------------------------------
-
-.. automodule:: bayestme.fast_multivariate_normal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 bayestme.gene\_filtering module
 -------------------------------
 
@@ -85,34 +61,10 @@ bayestme.gene\_filtering module
    :undoc-members:
    :show-inheritance:
 
-bayestme.mcmc.gfbt\_multinomial module
---------------------------------------
-
-.. automodule:: bayestme.mcmc.gfbt_multinomial
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-bayestme.hmm\_fast module
--------------------------
-
-.. automodule:: bayestme.hmm_fast
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 bayestme.log_config module
 --------------------------
 
 .. automodule:: bayestme.log_config
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-bayestme.mcmc.model\_bkg module
--------------------------------
-
-.. automodule:: bayestme.mcmc.model_bkg
    :members:
    :undoc-members:
    :show-inheritance:
@@ -149,10 +101,10 @@ bayestme.semi\_synthetic\_spatial module
    :undoc-members:
    :show-inheritance:
 
-bayestme.spatial\_expression module
------------------------------------
+bayestme.spatial\_transcriptional\_programs module
+--------------------------------------------------
 
-.. automodule:: bayestme.spatial_expression
+.. automodule:: bayestme.spatial_transcriptional_programs
    :members:
    :undoc-members:
    :show-inheritance:

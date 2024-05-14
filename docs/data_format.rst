@@ -64,19 +64,11 @@ The AnnData fields added by this step are as follows:
 Marker Gene AnnData Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``adata.varm['bayestme_cell_type_marker']`` - <N marker> x <N cell type> integer matrix. Set to -1 if gene is not a
-marker gene for cell type, otherwise set to monotonically increasing 0-indexed integers indicating marker gene
-significance.
-- ``adata.varm['bayestme_omega_difference']`` - <N marker> x <N cell type> floating point matrix. This statistic
-represents the "overexpression" of a gene in a cell type, and is used for scaling the dot size in our marker gene plot.
-- ``adata.varm['bayestme_omega']`` - <N marker> x <N cell type> floating point matrix.
-ω_kg from equation 6 of the preprint
-- ``adata.varm['bayestme_relative_expression']`` - <N marker> x <N cell type> floating point matrix. Average expression
-in this cell type, minus the max expression in all other cell types, divided by the maximum expression in all
-cell types. A higher number for this statistic represents a better candidate marker gene. This statistic is used as
-a tiebreaker criteria for marker gene selection when omega_kg values are equal.
+- ``adata.varm['bayestme_cell_type_marker']`` - <N marker> x <N cell type> integer matrix. Set to -1 if gene is not a marker gene for cell type, otherwise set to monotonically increasing 0-indexed integers indicating marker gene significance.
+- ``adata.varm['bayestme_omega_difference']`` - <N marker> x <N cell type> floating point matrix. This statistic represents the "overexpression" of a gene in a cell type, and is used for scaling the dot size in our marker gene plot.
+- ``adata.varm['bayestme_omega']`` - <N marker> x <N cell type> floating point matrix. ω_kg from equation 6 of the preprint
+- ``adata.varm['bayestme_relative_expression']`` - <N marker> x <N cell type> floating point matrix. Average expression in this cell type, minus the max expression in all other cell types, divided by the maximum expression in all cell types. A higher number for this statistic represents a better candidate marker gene. This statistic is used as a tiebreaker criteria for marker gene selection when omega_kg values are equal.
 
 
-:ref:`spatial_expression <cli_spatial_expression>` will produce a :py:class:`bayestme.data.SpatialDifferentialExpressionResult`
-object in h5 format which represents all the raw samples from the posterior distribution.
-This object can be quite large (>10GB) as it is contains very high dimensional arrays of floating point numbers.
+:ref:`spatial_transcriptional_programs <cli_spatial_transcriptional_programs>` will produce a :py:class:`bayestme.data.SpatialDifferentialExpressionResult`
+object in h5 format which contains estimates of the model parameters.
