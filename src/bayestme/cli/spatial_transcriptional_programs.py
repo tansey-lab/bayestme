@@ -75,7 +75,7 @@ def get_parser():
         default=1000,
     )
     parser.add_argument(
-        "--n-iter", type=int, help="Number of iterations", default=10_000
+        "--n-iter", type=int, help="Number of iterations", default=50_000
     )
     parser.add_argument(
         "--seed", type=int, help="Seed value for random number generator", default=None
@@ -144,7 +144,7 @@ def main():
     )
     spatial_transcriptional_programs.plot_loss(
         stp=stp_results,
-        output_path=os.path.join(plot_dir, "training_loss.pdf"),
+        output_path=os.path.join(plot_dir, "stp_loss.pdf"),
     )
     spatial_transcriptional_programs.plot_top_spatial_program_genes(
         data=dataset,

@@ -37,7 +37,7 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
         "--n-svi-steps",
         type=int,
         help="Number of steps for fitting variational family",
-        default=10_000,
+        default=50_000,
     )
     parser.add_argument(
         "--use-spatial-guide",
