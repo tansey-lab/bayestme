@@ -41,6 +41,8 @@ def test_deconvolve():
         "--n-components",
         "5",
         "--no-use-spatial-guide",
+        "--n-svi-steps",
+        "4",
     ]
 
     try:
@@ -63,7 +65,7 @@ def test_deconvolve():
                     spatial_smoothing_parameter=1000.0,
                     n_samples=100,
                     expression_truth=None,
-                    n_svi_steps=10000,
+                    n_svi_steps=4,
                     use_spatial_guide=False,
                     rng=mock.ANY,
                 )
