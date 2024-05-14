@@ -70,7 +70,7 @@ def get_x_y_arrays_for_layout(
 ) -> Tuple[np.array, np.array]:
     if layout is Layout.HEX:
         hcoord = coords[:, 0]
-        vcoord = 2.0 * np.sin(np.radians(60)) * (coords[:, 1]) / 3.0
+        vcoord = coords[:, 1]
     elif layout is Layout.SQUARE:
         hcoord = coords[:, 0]
         vcoord = coords[:, 1]
