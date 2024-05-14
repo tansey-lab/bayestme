@@ -526,24 +526,10 @@ def create_deconvolve_dataset(
     n_samples: int = 100,
     n_genes: int = 100,
     n_marker_gene: int = 5,
+    layout=bayestme.common.Layout.SQUARE,
 ):
-    (
-        locations,
-        tissue_mask,
-        true_rates,
-        true_counts,
-        bleed_counts,
-    ) = bayestme.synthetic_data.generate_simulated_bleeding_reads_data(
-        n_rows=n_nodes, n_cols=n_nodes, n_genes=n_genes
-    )
-
-    dataset = data.SpatialExpressionDataset.from_arrays(
-        raw_counts=bleed_counts,
-        tissue_mask=tissue_mask,
-        positions=locations,
-        gene_names=np.array(["gene{}".format(x) for x in range(n_genes)]),
-        layout=bayestme.common.Layout.SQUARE,
-        edges=bayestme.utils.get_edges(locations, bayestme.common.Layout.SQUARE),
+    dataset = generate_fake_stdataset(
+        n_rows=int(n_nodes / 2), n_cols=int(n_nodes / 2), n_genes=n_genes, layout=layout
     )
 
     deconvolve_results = create_toy_deconvolve_result(

@@ -69,7 +69,7 @@ def get_x_y_arrays_for_layout(
     coords: np.ndarray, layout: bayestme.common.Layout
 ) -> Tuple[np.array, np.array]:
     if layout is Layout.HEX:
-        hcoord = coords[:, 0]
+        hcoord = 2.0 * np.sin(np.radians(60)) * (coords[:, 0]) / 3.0
         vcoord = coords[:, 1]
     elif layout is Layout.SQUARE:
         hcoord = coords[:, 0]
@@ -211,6 +211,8 @@ def plot_colored_spatial_polygon(
         border_mask = np.ones_like(values, dtype=bool)
 
     ax.set_aspect("equal")
+    # invert y axis
+    ax.invert_yaxis()
     hcoord, vcoord = get_x_y_arrays_for_layout(coords, layout)
     if plotting_coordinates is None:
         support_hcoord, support_vcoord = (hcoord, vcoord)
@@ -223,7 +225,7 @@ def plot_colored_spatial_polygon(
         if layout is Layout.HEX:
             num_vertices = 6
             packing_radius = 2.0 / 3.0
-            orientation = np.radians(30)
+            orientation = 0
         elif layout is Layout.SQUARE:
             num_vertices = 4
             packing_radius = math.sqrt(2) / 2.0
@@ -326,6 +328,7 @@ def plot_spatial_pie_charts(
     """
 
     ax.set_aspect("equal")
+    ax.invert_yaxis()
 
     hcoord, vcoord = get_x_y_arrays_for_layout(coords, layout)
     if plotting_coordinates is None:
@@ -424,6 +427,10 @@ def plot_gene_raw_counts(
 def plot_spot_connectivity_graph(node_coordinates, edges, output_fn):
     # Create a graph instance
     fig, ax = plt.subplots(1, figsize=(10, 10))
+
+    # invert y axis
+    ax.invert_yaxis()
+
     G = nx.Graph()
 
     # Add nodes and their positions to the graph
