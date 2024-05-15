@@ -22,42 +22,6 @@ from matplotlib import pyplot as plt
 logger = logging.getLogger(__name__)
 
 
-def construct_edge_adjacency(neighbors):
-    data, rows, cols = [], [], []
-    nrows = 0
-    for i, j in neighbors:
-        data.extend([1, -1])
-        rows.extend([nrows, nrows])
-        cols.extend([i, j])
-        nrows += 1
-    indices = torch.tensor([rows, cols])
-    values = torch.tensor(data)
-    edge_adjacency_matrix = torch.sparse_coo_tensor(indices, values).float()
-    return edge_adjacency_matrix
-
-
-def construct_trendfilter(adjacency_matrix, k):
-    transformed_edge_adjacency_matrix = adjacency_matrix.clone()
-    for i in range(k):
-        if i % 2 == 0:
-            transformed_edge_adjacency_matrix = adjacency_matrix.t().mm(
-                transformed_edge_adjacency_matrix
-            )
-        else:
-            transformed_edge_adjacency_matrix = adjacency_matrix.mm(
-                transformed_edge_adjacency_matrix
-            )
-    extra = torch.sparse_coo_tensor(
-        torch.tensor([[0], [0]]),
-        torch.tensor([1]),
-        size=(1, transformed_edge_adjacency_matrix.shape[1]),
-    )
-    transformed_edge_adjacency_matrix = torch.vstack(
-        [transformed_edge_adjacency_matrix, extra]
-    )
-    return transformed_edge_adjacency_matrix
-
-
 def rv_should_be_sampled(site):
     """
     Determine if a random variable in the model should be saved or
@@ -71,19 +35,6 @@ def rv_should_be_sampled(site):
         )
         and not isinstance(site.get("fn", None), poutine.subsample_messenger._Subsample)
     )
-
-
-def create_reads_trace(psi, exp_profile, exp_load, cell_num_total):
-    """
-    :param psi: <N tissue spots> x <N components> matrix
-    :param exp_profile: <N components> x <N markers> matrix
-    :param exp_load: <N components> matrix
-    :param cell_num_total: <N tissue spots> matrix
-    :return: <N tissue spots> x <N markers> x <N components> matrix
-    """
-    number_of_cells_per_component = (psi.T * cell_num_total).T * exp_load.T
-    result = number_of_cells_per_component[:, :, None] * exp_profile[None, :, :]
-    return np.transpose(result, (0, 2, 1))
 
 
 class BayesTME_VI:
@@ -111,8 +62,6 @@ class BayesTME_VI:
         self.N = stdata.n_spot_in
         self.n_genes = stdata.n_gene
         self.edges = get_edges(stdata.positions_tissue, layout=stdata.layout)
-        self.delta = construct_edge_adjacency(self.edges)
-        self.delta = construct_trendfilter(self.delta, 0)
         self.spatial_regularization_coefficient = rho
         self.losses = []
         self.expression_truth_weight = expression_truth_weight
