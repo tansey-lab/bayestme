@@ -101,7 +101,7 @@ def read_with_maybe_header(path, header):
     if set(seen_header).issubset(set(header)):
         return df
     else:
-        return pd.read_csv(path, header=header)
+        return pd.read_csv(path, names=header)
 
 
 class SpatialExpressionDataset:
