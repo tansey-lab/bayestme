@@ -95,6 +95,15 @@ def create_anndata_object(
     return adata
 
 
+def read_with_maybe_header(path, header):
+    df = pd.read_csv(path)
+    seen_header = df.columns
+    if set(seen_header).issubset(set(header)):
+        return df
+    else:
+        return pd.read_csv(path, header=header)
+
+
 class SpatialExpressionDataset:
     """
     Data model for holding read counts, their associated position information,
@@ -287,8 +296,8 @@ class SpatialExpressionDataset:
             logger.info(
                 f"Reading V1 tissue positions list at {tissue_positions_v1_path}"
             )
-            positions_df = pd.read_csv(
-                tissue_positions_v1_path, names=VISIUM_SPATIAL_COLUMNS
+            positions_df = read_with_maybe_header(
+                tissue_positions_v1_path, VISIUM_SPATIAL_COLUMNS
             )
         elif os.path.exists(tissue_positions_v2_path) and os.path.isfile(
             tissue_positions_v2_path
@@ -296,7 +305,9 @@ class SpatialExpressionDataset:
             logger.info(
                 f"Reading V2 tissue positions list at {tissue_positions_v2_path}"
             )
-            positions_df = pd.read_csv(tissue_positions_v2_path)
+            positions_df = read_with_maybe_header(
+                tissue_positions_v2_path, VISIUM_SPATIAL_COLUMNS
+            )
         else:
             raise RuntimeError("No positions list found in spaceranger directory")
 
@@ -307,14 +318,24 @@ class SpatialExpressionDataset:
 
         positions_df = positions_df.set_index("barcode")
 
-        tissue_mask = positions_df.loc[ad.obs_names, IN_TISSUE_ATTR].values.astype(bool)
-        positions = positions_df.loc[
-            ad.obs_names, [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]
-        ].values
+        tissue_mask = (
+            positions_df.loc[ad.obs_names, IN_TISSUE_ATTR]
+            .apply(int)
+            .values.astype(bool)
+        )
+        positions = (
+            positions_df.loc[ad.obs_names, [POSITIONS_X_COLUMN, POSITIONS_Y_COLUMN]]
+            .map(int)
+            .values
+        )
 
-        physical_positions = positions_df.loc[
-            ad.obs_names, [REAL_POSITION_X_COLUMN, REAL_POSITION_Y_COLUMN]
-        ].values
+        physical_positions = (
+            positions_df.loc[
+                ad.obs_names, [REAL_POSITION_X_COLUMN, REAL_POSITION_Y_COLUMN]
+            ]
+            .map(float)
+            .values
+        )
 
         edges = utils.get_edges(physical_positions[tissue_mask], Layout.HEX)
 
