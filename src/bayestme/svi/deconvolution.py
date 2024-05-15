@@ -246,7 +246,7 @@ class BayesTME_VI:
         # Delta should be of size (n_edges * n_celltype) by (n_spot * n_celltype)
         # x should be of size n_spot by n_celltype
         return (
-            torch.abs(self.Delta @ x.reshape(-1, 1)).sum()
+            torch.abs(x[self.edges[:, 0]] - x[self.edges[:, 1]]).sum()
             * self.spatial_regularization_coefficient
         )
 
@@ -258,8 +258,7 @@ class BayesTME_VI:
             )
         else:
             self.n_celltypes = K
-        # TODO: maybe make Delta sparse, but need to change spatial_regularizer as well (double check if sparse grad is supported)
-        self.Delta = torch.kron(torch.eye(self.n_celltypes), self.delta.to_dense())
+
         logger.info("Optimizer: {} {}".format("Adam", self.opt_params))
         logger.info(
             "Deconvolving: {} spots, {} genes, {} cell types".format(
