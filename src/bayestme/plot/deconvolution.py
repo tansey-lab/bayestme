@@ -384,7 +384,17 @@ def plot_deconvolution(
     rank_genes_groups_plot(
         stdata=stdata,
         cell_type_labels=cell_type_names,
+        sharey=False,
         output_path=os.path.join(output_dir, f"rank_genes_groups.{output_format}"),
+    )
+
+    rank_genes_groups_plot(
+        stdata=stdata,
+        cell_type_labels=cell_type_names,
+        sharey=True,
+        output_path=os.path.join(
+            output_dir, f"rank_genes_groups_sharey.{output_format}"
+        ),
     )
 
     plot_cell_num_scatterpie(
