@@ -6,7 +6,7 @@ process BAYESTME_READ_PHENOTYPE_SELECTION_RESULTS {
         ('docker.io/jeffquinnmsk/bayestme:' + params.bayestme_version) }"
 
     input:
-    tuple val(meta), file(fold_results)
+    tuple val(meta), path(fold_results)
 
     output:
     tuple val(meta), env(LAMBDA), emit: lambda
