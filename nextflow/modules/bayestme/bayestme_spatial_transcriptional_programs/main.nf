@@ -7,7 +7,7 @@ process BAYESTME_SPATIAL_TRANSCRIPTIONAL_PROGRAMS {
         ('docker.io/jeffquinnmsk/bayestme:' + params.bayestme_version) }"
 
     input:
-    tuple val(meta), path(adata), val(deconvolution_results), path(expression_truth)
+    tuple val(meta), path(adata), path(deconvolution_results), path(expression_truth)
 
     output:
     tuple val(meta), path("${prefix}/spatial_transcriptional_programs.h5")       , emit: stp
