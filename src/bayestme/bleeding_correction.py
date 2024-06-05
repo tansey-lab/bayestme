@@ -372,9 +372,9 @@ def fit_spot_rates(Reads, tissue_mask, Weights, x_init=None):
         # Calculate the negative log-likelihood of the data
         L = -torch.stack(
             [
-                Multinomial(total_count=int(N[i]), probs=clipped_mu[:, i]).log_prob(
-                    t_Y[i]
-                )
+                Multinomial(
+                    total_count=int(N[i]), probs=clipped_mu[:, i], validate_args=False
+                ).log_prob(t_Y[i])
                 for i in range(Reads.shape[1])
             ],
             dim=0,
