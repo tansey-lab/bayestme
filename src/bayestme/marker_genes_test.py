@@ -363,6 +363,6 @@ def test_create_marker_gene_ranking_csvs():
     )
 
     df = pandas.read_csv(os.path.join(tempdir, "relative_expression.csv"))
-    assert df.shape == (dataset.n_gene, deconvolve_results.n_components)
+    assert df.shape == (dataset.n_gene, deconvolve_results.n_components + 1)
     df = pandas.read_csv(os.path.join(tempdir, "omega.csv"))
-    assert df.shape == (dataset.n_gene, deconvolve_results.n_components)
+    assert df.shape == (dataset.n_gene, deconvolve_results.n_components + 1)
