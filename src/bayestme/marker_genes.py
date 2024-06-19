@@ -243,6 +243,6 @@ def create_marker_gene_ranking_csvs(
         omega_df[k] = deconvolution_result.omega[k]
 
     relative_expression_df.to_csv(
-        os.path.join(output_dir, "relative_expression.csv"), index=False
+        os.path.join(output_dir, "relative_expression.csv"), index=True
     )
-    omega_df.to_csv(os.path.join(output_dir, "omega.csv"), index=False)
+    omega_df.to_csv(os.path.join(output_dir, "omega.csv"), index=True)
