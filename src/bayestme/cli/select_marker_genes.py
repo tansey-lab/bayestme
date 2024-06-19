@@ -33,7 +33,7 @@ def get_parser():
     parser.add_argument(
         "--n-marker-genes",
         type=int,
-        default=5,
+        default=10,
         help="Maximum number of marker genes per cell type.",
     )
     parser.add_argument(
@@ -82,7 +82,7 @@ def main():
     bayestme.marker_genes.create_top_gene_lists(
         stdata=stdata,
         deconvolution_result=deconvolution_result,
-        n_marker_genes=args.n_marker_genes,
+        n_marker_genes=stdata.n_gene,
         alpha=args.alpha,
         marker_gene_method=args.marker_gene_method,
         output_path=os.path.join(output_dir, "marker_genes.csv"),
