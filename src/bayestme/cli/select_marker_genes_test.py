@@ -67,22 +67,11 @@ def test_select_marker_genes():
 
     try:
         with mock.patch("sys.argv", command_line_arguments):
-            with mock.patch(
-                "bayestme.marker_genes.select_marker_genes"
-            ) as select_marker_genes_mock:
-                select_marker_genes_mock.return_value = [
-                    np.array([0, 1, 2, 3, 4], dtype=int),
-                    np.array([0, 1, 2, 3, 4], dtype=int),
-                    np.array([0, 1, 2, 3, 4], dtype=int),
-                    np.array([0, 1, 2, 3, 4], dtype=int),
-                    np.array([0, 1, 2, 3, 4], dtype=int),
-                ]
+            select_marker_genes.main()
 
-                select_marker_genes.main()
+            stdata = data.SpatialExpressionDataset.read_h5(adata_output_fn)
 
-                stdata = data.SpatialExpressionDataset.read_h5(adata_output_fn)
-
-                assert stdata.marker_gene_indices is not None
-                assert stdata.marker_gene_names is not None
+            assert stdata.marker_gene_indices is not None
+            assert stdata.marker_gene_names is not None
     finally:
         shutil.rmtree(tmpdir)
