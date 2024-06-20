@@ -2,4 +2,5 @@
   command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_read_phenotype_selection_results -entry bayestme_read_phenotype_selection_results -c ./nextflow/tests/modules/bayestme/bayestme_read_phenotype_selection_results/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_read_phenotype_selection_results
+    - nextflow
   files: []

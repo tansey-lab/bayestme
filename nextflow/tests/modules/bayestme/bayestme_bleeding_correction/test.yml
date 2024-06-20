@@ -2,6 +2,7 @@
   command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction -entry bayestme_bleeding_correction -c ./nextflow/tests/modules/bayestme/bayestme_bleeding_correction/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_bleeding_correction
+    - nextflow
   files:
     - path: output/test/bleed_correction_results.h5
     - path: output/test/dataset_corrected.h5ad

@@ -2,5 +2,6 @@
   command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_load_spaceranger -entry bayestme_load_spaceranger -c ./nextflow/tests/modules/bayestme/bayestme_load_spaceranger/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_load_spaceranger
+    - nextflow
   files:
     - path: output/test/dataset.h5ad
