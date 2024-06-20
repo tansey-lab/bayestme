@@ -56,4 +56,4 @@ jobs:
         uses: nf-core/setup-nextflow@v1
 
       - name: Run pytest-workflow
-        run: TMPDIR=~ PROFILE=docker pytest --tag nextflow --symlink --kwdof --git-aware --color=yes
+        run: TMPDIR=~ PROFILE=docker pytest --tag nextflow --symlink --kwdof --git-aware --color=yes --ignore src
