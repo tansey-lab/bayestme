@@ -2,5 +2,6 @@
   command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_phenotype_selection -entry bayestme_phenotype_selection -c ./nextflow/tests/modules/bayestme/bayestme_phenotype_selection/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_phenotype_selection
+    - nextflow
   files:
     - path: output/test/fold_0.h5ad

@@ -314,7 +314,17 @@ class SpatialExpressionDataset:
         if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
             raise RuntimeError("Tissue positions list has unexpected columns")
 
-        ad = read_10x_h5(raw_h5_path)
+        ad = read_10x_h5(raw_h5_path, gex_only=False)
+
+        if "feature_types" in ad.var and "Antibody Capture" in ad.var.feature_types:
+            ad.var["id"] = ad.var.index
+            ad.var["id"][ad.var.feature_types == "Antibody Capture"] = ad.var["id"][
+                ad.var.feature_types == "Antibody Capture"
+            ].apply(lambda x: x + "_protein")
+            ad.var_names = ad.var["id"]
+            del ad.var["id"]
+
+        ad.var_names_make_unique()
 
         positions_df = positions_df.set_index("barcode")
 

@@ -2,6 +2,7 @@
   command: nextflow run ./nextflow/tests/modules/bayestme/bayestme_deconvolution -entry bayestme_deconvolution -c ./nextflow/tests/modules/bayestme/bayestme_deconvolution/nextflow.config -c ./nextflow/tests/config/nextflow.config
   tags:
     - bayestme_deconvolution
+    - nextflow
   files:
     - path: output/test/deconvolution_samples.h5
     - path: output/test/dataset_deconvolved_marker_genes.h5ad
