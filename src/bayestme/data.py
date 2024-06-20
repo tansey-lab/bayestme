@@ -10,7 +10,7 @@ import pandas as pd
 import scipy.io as io
 import scipy.sparse.csc
 from scipy.sparse import issparse
-from scanpy import read_10x_h5
+from scanpy import read_10x_h5, read_10x_mtx
 from scipy.sparse import csr_matrix
 
 from bayestme import utils
@@ -278,11 +278,6 @@ class SpatialExpressionDataset:
             3) /spatial for position list
         :return: SpatialExpressionDataset
         """
-        raw_h5_path = os.path.join(data_path, "raw_feature_bc_matrix.h5")
-
-        if not os.path.exists(raw_h5_path) or not os.path.isfile(raw_h5_path):
-            raise RuntimeError("Expected raw count matrix at {}".format(raw_h5_path))
-
         tissue_positions_v1_path = os.path.join(
             data_path, "spatial/tissue_positions_list.csv"
         )
@@ -314,7 +309,19 @@ class SpatialExpressionDataset:
         if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
             raise RuntimeError("Tissue positions list has unexpected columns")
 
-        ad = read_10x_h5(raw_h5_path, gex_only=False)
+        raw_h5_path = os.path.join(data_path, "raw_feature_bc_matrix.h5")
+
+        raw_mtx_path = os.path.join(data_path, "raw_feature_bc_matrix")
+
+        if os.path.exists(raw_h5_path):
+            ad = read_10x_h5(raw_h5_path, gex_only=False)
+        elif os.path.exists(raw_mtx_path):
+            ad = read_10x_mtx(raw_mtx_path, gex_only=False)
+        else:
+            raise RuntimeError(
+                "No raw count matrix found in spaceranger directory"
+                f"expected {raw_h5_path} or {raw_mtx_path}"
+            )
 
         if "feature_types" in ad.var and "Antibody Capture" in ad.var.feature_types:
             ad.var["id"] = ad.var.index
