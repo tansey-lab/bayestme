@@ -323,7 +323,10 @@ class SpatialExpressionDataset:
                 f"expected {raw_h5_path} or {raw_mtx_path}"
             )
 
-        if "feature_types" in ad.var and "Antibody Capture" in ad.var.feature_types:
+        if (
+            "feature_types" in ad.var
+            and "Antibody Capture" in ad.var.feature_types.to_list()
+        ):
             ad.var["id"] = ad.var.index
             ad.var["id"][ad.var.feature_types == "Antibody Capture"] = ad.var["id"][
                 ad.var.feature_types == "Antibody Capture"
