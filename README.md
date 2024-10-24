@@ -12,23 +12,24 @@ This package implements BayesTME, a fully Bayesian method for analyzing ST data 
 
 ## Citation
 
-If you use this code, please cite the [preprint](https://www.biorxiv.org/content/10.1101/2022.07.08.499377):
+If you use this code, please cite the [manuscript](https://doi.org/10.1016/j.cels.2023.06.003):
 
 ```
-BayesTME: A unified statistical framework for spatial transcriptomics
-H. Zhang, M. V. Hunter, J. Chou, J. F. Quinn, M. Zhou, R. White, and W. Tansey
-bioRxiv 2022.07.08.499377.
+Zhang H, Hunter MV, Chou J, Quinn JF, Zhou M, White RM, Tansey W. BayesTME: An end-to-end method for multiscale spatial transcriptional profiling of the tissue microenvironment. Cell Syst. 2023 Jul 19;14(7):605-619.e7. doi: 10.1016/j.cels.2023.06.003. PMID: 37473731; PMCID: PMC10368078.
 ```
 
 Bibtex citation:
 ```
-@article {Zhang2022.07.08.499377,
-	author = {Zhang, Haoran and Hunter, Miranda V and Chou, Jacqueline and Quinn, Jeffrey F and Zhou, Mingyuan and White, Richard and Tansey, Wesley},
-	title = {{BayesTME}: {A} unified statistical framework for spatial transcriptomics},
-	year = {2022},
-	doi = {10.1101/2022.07.08.499377},
-	journal = {bioRxiv}
-}
+@article{Zhang:2023aa,
+	author = {Zhang, Haoran and Hunter, Miranda V and Chou, Jacqueline and Quinn, Jeffrey F and Zhou, Mingyuan and White, Richard M and Tansey, Wesley},
+	journal = {Cell Syst},
+	month = {Jul},
+	number = {7},
+	pages = {605--619},
+	title = {BayesTME: An end-to-end method for multiscale spatial transcriptional profiling of the tissue microenvironment.},
+	volume = {14},
+	year = {2023}}
+
 ```
 
 ## Developer Setup
