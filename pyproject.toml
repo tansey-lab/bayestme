@@ -3,7 +3,7 @@ name = "bayestme"
 version = "1.0.0"
 description = "A reference-free Bayesian method that discovers spatial transcriptional programs in the tissue microenvironment"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = {file = "LICENSE.txt"}
 keywords = ["spatial", "expression", "rna"]
 authors = [
