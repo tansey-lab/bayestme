@@ -16,9 +16,9 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
     filter_genes_input = BAYESTME_LOAD_SPACERANGER.out.adata.map { tuple(
         it[0],
         it[1],
-        true,
-        1000,
-        0.9,
+        params.filter_ribosomal_genes.toBoolean(),
+        params.n_deconvolution_genes,
+        params.spot_threshold
         [])
     }
 

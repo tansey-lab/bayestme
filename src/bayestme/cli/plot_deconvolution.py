@@ -25,9 +25,20 @@ def get_parser():
     )
     parser.add_argument(
         "--expression-truth",
-        help="Use expression ground truth from one or matched samples that have been processed "
-        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
-        " for multiple matched samples.",
+        help="Use expression ground truth from one or matched scRNA datasets.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--matched-scrna-celltype-column",
+        help="The name of the column with celltype id in the matched scRNA anndata.",
+        type=str,
+        action="append",
+        default=None,
+    )
+    parser.add_argument(
+        "--matched-scrna-sample-column",
+        help="The name of the column with sample id in the matched scRNA anndata.",
         type=str,
         action="append",
         default=None,
