@@ -54,29 +54,6 @@ def main():
 
     dataset = data.SpatialExpressionDataset.read_h5(args.adata)
 
-    if args.n_top_by_standard_deviation is not None:
-        logger.info(
-            "Will filter the top {} genes by standard deviation.".format(
-                args.n_top_by_standard_deviation
-            )
-        )
-
-        pre_filtering_genes = dataset.gene_names
-
-        dataset = gene_filtering.select_top_genes_by_standard_deviation(
-            dataset, n_gene=args.n_top_by_standard_deviation
-        )
-
-        post_filtering_genes = dataset.gene_names
-
-        logger.info(
-            "After standard deviation filtering went from {} to {} genes. Filtered genes: {}".format(
-                len(pre_filtering_genes),
-                len(post_filtering_genes),
-                ", ".join(set(pre_filtering_genes) - set(post_filtering_genes)),
-            )
-        )
-
     if args.spot_threshold is not None:
         pre_filtering_genes = dataset.gene_names
 
@@ -127,5 +104,28 @@ def main():
                     ", ".join(set(pre_filtering_genes) - set(post_filtering_genes)),
                 )
             )
+
+    if args.n_top_by_standard_deviation is not None:
+        logger.info(
+            "Will filter the top {} genes by standard deviation.".format(
+                args.n_top_by_standard_deviation
+            )
+        )
+
+        pre_filtering_genes = dataset.gene_names
+
+        dataset = gene_filtering.select_top_genes_by_standard_deviation(
+            dataset, n_gene=args.n_top_by_standard_deviation
+        )
+
+        post_filtering_genes = dataset.gene_names
+
+        logger.info(
+            "After standard deviation filtering went from {} to {} genes. Filtered genes: {}".format(
+                len(pre_filtering_genes),
+                len(post_filtering_genes),
+                ", ".join(set(pre_filtering_genes) - set(post_filtering_genes)),
+            )
+        )
 
     dataset.save(args.output)
