@@ -19,7 +19,7 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
         params.filter_ribosomal_genes.toBoolean(),
         params.n_deconvolution_genes,
         params.spot_threshold)
-    }.join( ch_input.map { tuple(it[0], it[3]) } )
+    }.join( ch_input.map { tuple(it[0], it[3] ? it[3] : []) } )
 
     BAYESTME_FILTER_GENES( filter_genes_input )
 
