@@ -1,5 +1,7 @@
 import argparse
 import logging
+
+import anndata
 import pandas
 import bayestme.log_config
 import bayestme.plot.deconvolution
@@ -30,17 +32,15 @@ def get_parser():
         default=None,
     )
     parser.add_argument(
-        "--matched-scrna-celltype-column",
+        "--reference-scrna-celltype-column",
         help="The name of the column with celltype id in the matched scRNA anndata.",
         type=str,
-        action="append",
         default=None,
     )
     parser.add_argument(
-        "--matched-scrna-sample-column",
+        "--reference-scrna-sample-column",
         help="The name of the column with sample id in the matched scRNA anndata.",
         type=str,
-        action="append",
         default=None,
     )
     bayestme.log_config.add_logging_args(parser)
@@ -60,15 +60,11 @@ def main():
         cell_type_names = None
 
     if args.expression_truth is not None:
-        cell_type_names = pandas.read_csv(
-            args.expression_truth[0], index_col=0
-        ).columns.tolist()
-
-        # pad cell type names up to length stdata.n_cell_types
-        i = 1
-        while len(cell_type_names) < stdata.n_cell_types:
-            cell_type_names.append(f"unknown_{i}")
-            i += 1
+        cell_type_names = sorted(
+            anndata.read_h5ad(args.expression_truth)
+            .obs[args.reference_scrna_celltype_column]
+            .unique()
+        )
 
     bayestme.plot.deconvolution.plot_deconvolution(
         stdata=stdata, output_dir=args.output_dir, cell_type_names=cell_type_names

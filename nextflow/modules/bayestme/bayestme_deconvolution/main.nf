@@ -37,8 +37,8 @@ process BAYESTME_DECONVOLUTION {
     deconvolve --adata ${adata} \
         --adata-output "${prefix}/dataset_deconvolved.h5ad" \
         --output "${prefix}/deconvolution_samples.h5" \
-        --expression-truth-sample-column ${params.reference_scrna_sample_column} \
-        --expression-truth-celltype-column ${params.reference_scrna_gene_column} \
+        --reference-scrna-celltype-column ${params.reference_scrna_sample_column} \
+        --reference-scrna-sample-column ${params.reference_scrna_gene_column} \
         ${spatial_smoothing_parameter_flag} \
         ${n_components_flag} \
         ${expression_truth_flag} \
@@ -52,6 +52,8 @@ process BAYESTME_DECONVOLUTION {
     mkdir plots
     plot_deconvolution --adata "${prefix}/dataset_deconvolved_marker_genes.h5ad" \
         --output-dir "${prefix}/plots" \
+        --reference-scrna-celltype-column ${params.reference_scrna_sample_column} \
+        --reference-scrna-sample-column ${params.reference_scrna_gene_column} \
         ${expression_truth_flag} \
         ${args3}
 

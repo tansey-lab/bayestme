@@ -59,16 +59,15 @@ def main():
     rng = create_rng(args.seed)
 
     if args.expression_truth:
-        ad = anndata.read_h5ad(args.expression_truth)
-
         expression_truth = (
             bayestme.expression_truth.calculate_celltype_profile_prior_from_adata(
-                ad,
+                args.expression_truth,
                 dataset.gene_names,
-                celltype_column=args.expression_truth_celltype_column,
-                sample_column=args.expression_truth_sample_column,
+                celltype_column=args.reference_scrna_celltype_column,
+                sample_column=args.reference_scrna_sample_column,
             )
         )
+        n_components = expression_truth.shape[0]
     else:
         expression_truth = None
         n_components = args.n_components

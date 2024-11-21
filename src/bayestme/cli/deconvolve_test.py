@@ -114,7 +114,7 @@ def test_deconvolve_with_expression_truth():
                 "bayestme.deconvolution.sample_from_posterior"
             ) as deconvolve_mock:
                 with mock.patch(
-                    "bayestme.expression_truth.load_expression_truth"
+                    "bayestme.expression_truth.calculate_celltype_profile_prior_from_adata"
                 ) as load_expression_truth_mock:
                     expression_truth = np.zeros((9, 10))
                     load_expression_truth_mock.return_value = expression_truth

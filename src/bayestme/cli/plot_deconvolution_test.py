@@ -2,6 +2,7 @@ import os
 import tempfile
 from unittest import mock
 
+import anndata
 import numpy as np
 import pandas
 
@@ -153,14 +154,20 @@ def test_plot_deconvolution_with_cell_type_names_from_exp_truth():
         stdata=dataset, result=deconvolve_results
     )
 
-    fake_expression_truth = pandas.DataFrame(np.random.poisson(10, size=(50, 5)))
-    fake_expression_truth.index = np.array(["gene{}".format(x) for x in range(n_genes)])
-    fake_expression_truth.columns = ["type 1", "type 2", "type 3", "type 4", "type 5"]
+    fake_expression_truth = anndata.AnnData(
+        X=np.random.poisson(10, size=(50, 5)),
+        obs=pandas.DataFrame(
+            {
+                "sample": ["sample"] * 50,
+                "celltype": ["type 1", "type 2", "type 3", "type 4", "type 5"] * 10,
+            }
+        ),
+    )
 
     tmpdir = tempfile.mkdtemp()
 
     fake_expression_truth_fn = os.path.join(tmpdir, "expression_truth.csv")
-    fake_expression_truth.to_csv(fake_expression_truth_fn)
+    fake_expression_truth.write_h5ad(fake_expression_truth_fn)
 
     stdata_fn = os.path.join(tmpdir, "data.h5")
     deconvolve_results_fn = os.path.join(tmpdir, "deconvolve.h5")
@@ -175,6 +182,10 @@ def test_plot_deconvolution_with_cell_type_names_from_exp_truth():
         tmpdir,
         "--expression-truth",
         fake_expression_truth_fn,
+        "--reference-scrna-celltype-column",
+        "celltype",
+        "--reference-scrna-sample-column",
+        "sample",
     ]
 
     with mock.patch(

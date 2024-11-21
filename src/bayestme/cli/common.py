@@ -31,14 +31,14 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
         default=None,
     )
     parser.add_argument(
-        "--expression-truth-celltype-column",
-        help="Celltype column name in obs in expression truth h5ad.",
+        "--reference-scrna-celltype-column",
+        help="The name of the column with celltype id in the matched scRNA anndata.",
         type=str,
         default=None,
     )
     parser.add_argument(
-        "--expression-truth-sample-column",
-        help="Patient column name in obs in expression truth h5ad.",
+        "--reference-scrna-sample-column",
+        help="The name of the column with sample id in the matched scRNA anndata.",
         type=str,
         default=None,
     )
