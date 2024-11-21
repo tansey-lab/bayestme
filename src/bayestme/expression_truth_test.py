@@ -1,6 +1,7 @@
 import os
 import tempfile
-
+import anndata
+import shutil
 import numpy as np
 import pandas
 
@@ -125,3 +126,64 @@ def test_load_phi_truth():
     assert result.shape == (9, 3)
 
     np.testing.assert_almost_equal(result.sum(axis=1), np.ones(9))
+
+
+def test_calculate_celltype_profile_prior_from_adata():
+    tmpdir = tempfile.mkdtemp()
+    ad_path = os.path.join(tmpdir, "data.h5")
+
+    ad = anndata.AnnData(
+        X=np.array([[1, 2, 3], [2, 3, 4], [2, 2, 2], [1, 2, 3]]),
+        obs=pandas.DataFrame(
+            {"celltype": ["a", "b", "a", "b"], "sample": ["1", "1", "2", "2"]}
+        ),
+    )
+
+    ad.var_names = ["a", "b", "c"]
+    ad.obs_names = ["1", "2", "3", "4"]
+    ad.write_h5ad(ad_path)
+    result = bayestme.expression_truth.calculate_celltype_profile_prior_from_adata(
+        ad_path,
+        gene_names=["b", "c", "a"],
+        celltype_column="celltype",
+        sample_column="sample",
+    )
+
+    assert result.shape == (2, 3)
+
+    ad = anndata.AnnData(
+        X=np.array([[1, 2, 3], [2, 3, 4], [2, 2, 2], [1, 2, 3]]),
+        obs=pandas.DataFrame(
+            {"celltype": ["a", "b", "a", "b"], "sample": ["1", "1", "1", "1"]}
+        ),
+    )
+
+    ad.var_names = ["a", "b", "c"]
+    ad.obs_names = ["1", "2", "3", "4"]
+    ad.write_h5ad(ad_path)
+    result = bayestme.expression_truth.calculate_celltype_profile_prior_from_adata(
+        ad_path,
+        gene_names=["b", "c", "a"],
+        celltype_column="celltype",
+        sample_column="sample",
+    )
+
+    assert result.shape == (2, 3)
+    np.testing.assert_almost_equal(
+        result,
+        np.array([[0.33333333, 0.4, 0.26666667], [0.33333333, 0.44444444, 0.22222222]]),
+    )
+    ad.write_h5ad(ad_path)
+    result = bayestme.expression_truth.calculate_celltype_profile_prior_from_adata(
+        ad_path,
+        gene_names=["c", "b", "a"],
+        celltype_column="celltype",
+        sample_column="sample",
+    )
+
+    assert result.shape == (2, 3)
+    np.testing.assert_almost_equal(
+        result,
+        np.array([[0.4, 0.33333333, 0.26666667], [0.44444444, 0.33333333, 0.22222222]]),
+    )
+    shutil.rmtree(tmpdir)

@@ -1,5 +1,6 @@
 import os
 import tempfile
+import anndata
 
 import numpy as np
 import pandas
@@ -191,27 +192,21 @@ def test_filter_list_of_genes():
 
 
 def test_filter_stdata_to_match_expression_truth():
-    example_data = {
-        "0": {
-            "LINC01409": 6.20854181530519e-06,
-            "LINC01128": 7.94814125442517e-06,
-            "LINC00115": 4.54911539806641e-06,
-            "FAM41C": 0.0,
-            "SAMD11": 0.0,
-        },
-        "1": {
-            "LINC01409": 1.49995044600798e-05,
-            "LINC01128": 2.35076069675239e-05,
-            "LINC00115": 2.27916942034948e-06,
-            "FAM41C": 0.0,
-            "SAMD11": 1.40427550443168e-06,
-        },
-    }
-    df = pandas.DataFrame(example_data)
+    ad = anndata.AnnData(
+        X=np.random.poisson(10, size=(50, 5)),
+        obs=pandas.DataFrame(
+            {
+                "sample": ["sample"] * 50,
+                "celltype": ["type 1", "type 2", "type 3", "type 4", "type 5"] * 10,
+            }
+        ),
+    )
+
+    ad.var_names = ["LINC01409", "LINC01128", "LINC00115", "FAM41C", "SAMD11"]
 
     tmpdir = tempfile.mkdtemp()
 
-    df.to_csv(os.path.join(tmpdir, "expression_truth.csv"), index=True)
+    ad.write_h5ad(os.path.join(tmpdir, "expression_truth.csv"))
 
     raw_counts = np.array([[7, 1, 2], [8, 2, 3], [9, 3, 4]], dtype=np.int64)
 

@@ -7,7 +7,7 @@ include { BAYESTME_SPATIAL_TRANSCRIPTIONAL_PROGRAMS } from '../../../modules/bay
 workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
 
     take:
-    ch_input  // channel: [ val(meta), path(spaceranger_dir), val(n_cell_types) ]
+    ch_input  // channel: [ val(meta), path(spaceranger_dir), val(n_cell_types), path(reference_scrna) ]
 
     main:
 
@@ -16,11 +16,10 @@ workflow BAYESTME_BASIC_VISIUM_ANALYSIS {
     filter_genes_input = BAYESTME_LOAD_SPACERANGER.out.adata.map { tuple(
         it[0],
         it[1],
-        true,
-        1000,
-        0.9,
-        [])
-    }
+        params.filter_ribosomal_genes.toBoolean(),
+        params.n_deconvolution_genes,
+        params.spot_threshold)
+    }.join( ch_input.map { tuple(it[0], it[3] ? it[3] : []) } )
 
     BAYESTME_FILTER_GENES( filter_genes_input )
 

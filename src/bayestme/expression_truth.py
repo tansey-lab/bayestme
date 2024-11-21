@@ -1,9 +1,12 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas
 import pyro
+import scanpy
 import torch
+import anndata
+from anndata import AnnData
 from pyro import distributions as dist
 from pyro.infer import MCMC, NUTS
 
@@ -93,3 +96,41 @@ def load_expression_truth(stdata: data.SpatialExpressionDataset, seurat_output: 
     expression_truth = phi_k_truth_normalized.T
 
     return expression_truth
+
+
+def calculate_celltype_profile_prior_from_adata(
+    fn, gene_names, celltype_column: str, sample_column: Optional[str] = None
+):
+    ad = anndata.read_h5ad(fn)
+    ad = ad[ad.obs[celltype_column].notnull()].copy()
+    ad = ad[:, gene_names].copy()
+    if sample_column is not None:
+        ad = ad[ad.obs[sample_column].notnull()].copy()
+
+        results = []
+        for sample_id in ad.obs[sample_column].unique():
+            ad_sample = ad[ad.obs[sample_column] == sample_id]
+            mean_expression = scanpy.get.aggregate(ad_sample, celltype_column, "sum")
+            # sort ad on obs names
+            order = np.argsort(mean_expression.obs_names)
+            mean_expression = mean_expression.layers["sum"][order]
+
+            mean_expression = (mean_expression + 1) / (
+                mean_expression.sum(axis=1)[:, None] + mean_expression.shape[1]
+            )
+
+            mean_expression = np.clip(mean_expression, 1e-10, None)
+
+            results.append(mean_expression)
+
+        return combine_multiple_expression_truth(results)
+    else:
+        mean_expression = scanpy.get.aggregate(ad, celltype_column, "sum").layers["sum"]
+
+        mean_expression = (mean_expression + 1) / (
+            mean_expression.sum(axis=1)[:, None] + mean_expression.shape[1]
+        )
+
+        mean_expression = np.clip(mean_expression, 1e-10, None)
+
+        return mean_expression

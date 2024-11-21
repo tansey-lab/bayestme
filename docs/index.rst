@@ -17,7 +17,7 @@ Contents
     nextflow
     data_format
     example_workflow
-    fine_mapping_workflow
+    reference_scrna
     command_line_interface
     api
     Github <https://github.com/tansey-lab/bayestme>

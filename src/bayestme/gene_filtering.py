@@ -2,6 +2,7 @@ import logging
 import re
 from enum import Enum
 
+import anndata
 import numpy as np
 import pandas
 
@@ -67,17 +68,19 @@ def filter_list_of_genes(dataset: data.SpatialExpressionDataset, genes_to_remove
 
 
 def filter_stdata_to_match_expression_truth(
-    stdata: data.SpatialExpressionDataset, seurat_output: str
+    stdata: data.SpatialExpressionDataset, adata_fn: str
 ):
     """
     Filter the stdata down to the intersection of genes between it and the expression truth file.
 
     :param stdata: SpatialExpressionDataset object
-    :param seurat_output: CSV output from seurat fine mapping workflow
+    :param adata_fn: h5ad file with matched scRNA
     :return: Filtered stdata object
     """
-    df = pandas.read_csv(seurat_output, index_col=0)
+    ad = anndata.read_h5ad(adata_fn)
 
-    genes_in_st_but_not_in_scrna = set(stdata.gene_names.tolist()).difference(df.index)
+    genes_in_st_but_not_in_scrna = set(stdata.gene_names.tolist()).difference(
+        ad.var_names
+    )
 
     return filter_list_of_genes(stdata, genes_in_st_but_not_in_scrna)

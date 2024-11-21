@@ -37,7 +37,7 @@ def get_parser():
     )
     parser.add_argument(
         "--expression-truth",
-        help="Filter out genes not found in all expression truth datasets.",
+        help="Anndata h5ad file with reference scRNA data.",
         type=str,
         action="append",
         default=None,

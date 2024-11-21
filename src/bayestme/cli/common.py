@@ -26,11 +26,20 @@ def add_deconvolution_arguments(parser: argparse.ArgumentParser):
     )
     parser.add_argument(
         "--expression-truth",
-        help="Use expression ground truth from one or matched samples that have been processed "
-        "with the seurat companion scRNA fine mapping workflow. This flag can be provided multiple times"
-        " for multiple matched samples.",
+        help="Matched scRNA data in h5ad format, will be used to enforce a prior on celltypes and expression.",
         type=str,
-        action="append",
+        default=None,
+    )
+    parser.add_argument(
+        "--reference-scrna-celltype-column",
+        help="The name of the column with celltype id in the matched scRNA anndata.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--reference-scrna-sample-column",
+        help="The name of the column with sample id in the matched scRNA anndata.",
+        type=str,
         default=None,
     )
     parser.add_argument(

@@ -2,6 +2,8 @@ import argparse
 import logging
 import os
 
+import anndata
+
 import bayestme
 import bayestme.cli.common
 import bayestme.data
@@ -57,22 +59,15 @@ def main():
     rng = create_rng(args.seed)
 
     if args.expression_truth:
-        expression_truth_samples = []
-        for fn in args.expression_truth:
-            expression_truth_samples.append(
-                bayestme.expression_truth.load_expression_truth(dataset, fn)
+        expression_truth = (
+            bayestme.expression_truth.calculate_celltype_profile_prior_from_adata(
+                args.expression_truth,
+                dataset.gene_names,
+                celltype_column=args.reference_scrna_celltype_column,
+                sample_column=args.reference_scrna_sample_column,
             )
-        n_components = expression_truth_samples[0].shape[0]
-
-        if not len(set([x.shape for x in expression_truth_samples])) == 1:
-            raise RuntimeError(
-                "Multiple expression truth arrays were provided, and they have different dimensions. "
-                "Please ensure --expression-truth arguments are correct."
-            )
-
-        expression_truth = bayestme.expression_truth.combine_multiple_expression_truth(
-            expression_truth_samples
         )
+        n_components = expression_truth.shape[0]
     else:
         expression_truth = None
         n_components = args.n_components

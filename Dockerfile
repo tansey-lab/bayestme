@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:latest
+FROM bitnami/pytorch:latest
 
 USER root
 
