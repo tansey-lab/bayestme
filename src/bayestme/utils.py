@@ -1,14 +1,11 @@
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import issparse, csc_matrix, vstack
 from scipy.spatial import KDTree
 from scipy.stats import poisson
 from bayestme.common import Layout
 from sklearn.neighbors import NearestNeighbors
-from anndata import AnnData
-import scanpy
 
 
 def ilogit(x):
@@ -371,16 +368,3 @@ def get_top_gene_names_by_stddev(reads: np.ndarray, gene_names: np.array, n_gene
 def order_reads_by_stddev(reads: np.ndarray):
     ordering = get_stddev_ordering(reads)
     return reads[:, ordering]
-
-
-def calculate_celltype_profile_prior_from_adata(ad: AnnData, celltype_column: str):
-    ad = ad[ad.obs[celltype_column].notnull()]
-    mean_expression = scanpy.get.aggregate(ad, celltype_column, "sum").layers["sum"]
-
-    mean_expression = (mean_expression + 1) / (
-        mean_expression.sum(axis=1)[:, None] + mean_expression.shape[1]
-    )
-
-    mean_expression = np.clip(mean_expression, 1e-10, None)
-
-    return mean_expression
