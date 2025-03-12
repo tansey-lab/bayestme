@@ -10,7 +10,7 @@ process BAYESTME_LOAD_SPACERANGER {
 
     output:
     tuple val(meta), path("${prefix}/dataset.h5ad"), emit: adata
-    tuple val(meta), path("${prefix}/*.pdf")       , emit: plots
+    tuple val(meta), path("${prefix}/*.pdf")       , emit: plots, optional: true
     path  "versions.yml"                           , emit: versions
 
     when:
@@ -24,7 +24,7 @@ process BAYESTME_LOAD_SPACERANGER {
 
     if [[ -f "${spaceranger_dir}" && "${spaceranger_dir}" == *.h5ad ]]; then
         echo "${spaceranger_dir} is already a h5ad file, creating a symlink"
-        ln -s "${spaceranger_dir}" "${prefix}/dataset.h5ad"
+        cp "${spaceranger_dir}" "${prefix}/dataset.h5ad"
     else
         load_spaceranger --input ${spaceranger_dir} \
             --output "${prefix}/dataset.h5ad" \
