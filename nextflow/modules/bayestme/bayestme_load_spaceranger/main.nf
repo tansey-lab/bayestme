@@ -21,9 +21,14 @@ process BAYESTME_LOAD_SPACERANGER {
     def args = task.ext.args ?: ""
     """
     mkdir "${prefix}"
-    load_spaceranger --input ${spaceranger_dir} \
-        --output "${prefix}/dataset.h5ad" \
-        ${args}
+
+    if [[ -f "$filename" && "$filename" == *.h5ad ]]; then
+        ln -s "$filename" "${prefix}/dataset.h5ad"
+    else
+        load_spaceranger --input ${spaceranger_dir} \
+            --output "${prefix}/dataset.h5ad" \
+            ${args}
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
