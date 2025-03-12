@@ -13,10 +13,8 @@ Contents
 
     install
     overview
-    demo_notebooks
-    nextflow
+    pipeline
     data_format
-    example_workflow
     reference_scrna
     command_line_interface
     api

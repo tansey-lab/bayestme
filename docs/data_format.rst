@@ -1,6 +1,8 @@
 Data Format
 ===========
 
+.. _anndata-input-format:
+
 Input Format
 ------------
 
@@ -11,8 +13,8 @@ The input AnnData object is expected to have the following fields:
 - ``adata.X`` - N spots x N markers integer matrix representing read counts.
 - ``adata.obsm['spatial`]`` - spatial coordinates of the reads in the tissue slide.
 - ``adata.obs['in_tissue`]`` - boolean array indicating whether a read comes from a tissue or non tissue spot.
-- ``adata.uns['layout']`` - either SQUARE or HEX, corresponding to the probe layout geometry.
-- ``adata.obsp['connectivities']`` - sparse boolean matrix indicating whether two observations neighbor each other in the probe grid or not.
+- ``adata.uns['layout']`` - either SQUARE, HEX or IRREGULAR, corresponding to the spot layout geometry.
+- ``adata.obsp['connectivities']`` - sparse boolean matrix indicating whether two spots neighbor each other or not.
 
 This AnnData scheme is designed to be compatible with the scheme used by `scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_.
 

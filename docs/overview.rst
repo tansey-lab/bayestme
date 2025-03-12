@@ -16,7 +16,7 @@ but they can also be composed and mixed and matched. For example if bleeding cor
 was not relevant or necessary, it could be skipped and the pipeline started at phenotype selection.
 BayesTME aims to keep these four components modular to allow flexible workflows when necessary.
 
-BayesTME provides a :ref:`nextflow` workflow that can be used
+BayesTME provides a :ref:`pipeline` that can be used
 to run all of the steps, and subsequent creation of figures, but there is also a :ref:`command-line-interface`
 for each step that can be used run the steps in your own script.
 
