@@ -22,8 +22,8 @@ process BAYESTME_LOAD_SPACERANGER {
     """
     mkdir "${prefix}"
 
-    if [[ -f "$filename" && "$filename" == *.h5ad ]]; then
-        ln -s "$filename" "${prefix}/dataset.h5ad"
+    if [[ -f "${spaceranger_dir}" && "${spaceranger_dir}" == *.h5ad ]]; then
+        ln -s "${spaceranger_dir}" "${prefix}/dataset.h5ad"
     else
         load_spaceranger --input ${spaceranger_dir} \
             --output "${prefix}/dataset.h5ad" \
