@@ -278,12 +278,16 @@ class SpatialExpressionDataset:
             3) /spatial for position list
         :return: SpatialExpressionDataset
         """
+        spatial_dir = glob.glob(os.path.join(data_path, "*spatial"))
+        if spatial_dir:
+            spatial_dir = spatial_dir[0]
+        else:
+            raise RuntimeError("No spatial directory found in spaceranger directory")
+
         tissue_positions_v1_path = os.path.join(
-            data_path, "spatial/tissue_positions_list.csv"
+            spatial_dir, "tissue_positions_list.csv"
         )
-        tissue_positions_v2_path = os.path.join(
-            data_path, "spatial/tissue_positions.csv"
-        )
+        tissue_positions_v2_path = os.path.join(spatial_dir, "tissue_positions.csv")
 
         if os.path.exists(tissue_positions_v1_path) and os.path.isfile(
             tissue_positions_v1_path
@@ -309,13 +313,23 @@ class SpatialExpressionDataset:
         if positions_df.columns.tolist() != VISIUM_SPATIAL_COLUMNS:
             raise RuntimeError("Tissue positions list has unexpected columns")
 
-        raw_h5_path = os.path.join(data_path, "raw_feature_bc_matrix.h5")
+        # find any file under data_path named *raw_feature_bc_matrix.h5
+        raw_h5_path = glob.glob(os.path.join(data_path, "*raw_feature_bc_matrix.h5"))
+        if raw_h5_path:
+            raw_h5_path = raw_h5_path[0]
+        else:
+            raw_h5_path = None
 
-        raw_mtx_path = os.path.join(data_path, "raw_feature_bc_matrix")
+        raw_mtx_path = glob.glob(os.path.join(data_path, "*raw_feature_bc_matrix"))
 
-        if os.path.exists(raw_h5_path):
+        if raw_mtx_path:
+            raw_mtx_path = raw_mtx_path[0]
+        else:
+            raw_mtx_path = None
+
+        if raw_h5_path:
             ad = read_10x_h5(raw_h5_path, gex_only=False)
-        elif os.path.exists(raw_mtx_path):
+        elif raw_mtx_path:
             ad = read_10x_mtx(raw_mtx_path, gex_only=False)
         else:
             raise RuntimeError(
