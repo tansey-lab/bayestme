@@ -287,9 +287,7 @@ class SpatialExpressionDataset:
         tissue_positions_v1_path = os.path.join(
             spatial_dir, "tissue_positions_list.csv"
         )
-        tissue_positions_v2_path = os.path.join(
-            spatial_dir, "tissue_positions.csv"
-        )
+        tissue_positions_v2_path = os.path.join(spatial_dir, "tissue_positions.csv")
 
         if os.path.exists(tissue_positions_v1_path) and os.path.isfile(
             tissue_positions_v1_path
