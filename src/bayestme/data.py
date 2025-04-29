@@ -119,7 +119,9 @@ class SpatialExpressionDataset:
 
     @property
     def positions_tissue(self) -> ArrayType:
-        return self.adata[self.adata.obs[IN_TISSUE_ATTR]].obsm[SPATIAL_ATTR]
+        return self.adata[self.adata.obs[IN_TISSUE_ATTR].astype(bool)].obsm[
+            SPATIAL_ATTR
+        ]
 
     @property
     def n_spot_in(self) -> int:
