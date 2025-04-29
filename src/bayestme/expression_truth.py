@@ -112,7 +112,7 @@ def calculate_celltype_profile_prior_from_adata(
     original_celltypes = ad.obs[celltype_column].unique()
 
     common_celltypes = None
-    for sample_id in ad.obs[celltype_column].unique():
+    for sample_id in ad.obs[sample_column].unique():
         ad_sample = ad[ad.obs[sample_column] == sample_id]
         logger.info(
             f"Celltype for sample {sample_id}: "
