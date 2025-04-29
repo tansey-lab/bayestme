@@ -9,8 +9,12 @@ import anndata
 from anndata import AnnData
 from pyro import distributions as dist
 from pyro.infer import MCMC, NUTS
+import logging
 
 from bayestme import data
+
+
+logger = logging.getLogger(__name__)
 
 
 def dirichlet_alpha_model(expression_truth=None, N=None, J=None, K=None):
@@ -104,6 +108,43 @@ def calculate_celltype_profile_prior_from_adata(
     ad = anndata.read_h5ad(fn)
     ad = ad[ad.obs[celltype_column].notnull()].copy()
     ad = ad[:, gene_names].copy()
+
+    original_celltypes = ad.obs[celltype_column].unique()
+
+    common_celltypes = None
+    for sample_id in ad.obs[celltype_column].unique():
+        ad_sample = ad[ad.obs[sample_column] == sample_id]
+        logger.info(
+            f"Celltype for sample {sample_id}: "
+            f"{ad_sample.obs[celltype_column].unique()}"
+        )
+        if common_celltypes is None:
+            common_celltypes = set(ad_sample.obs[celltype_column])
+        else:
+            common_celltypes = common_celltypes.intersection(
+                ad_sample.obs[celltype_column]
+            )
+
+    if len(common_celltypes) == 0:
+        raise ValueError(
+            "No common cell types found, check that celltype "
+            "is consistent across atlas scRNA tables in your SpatialDataset."
+        )
+
+    logger.info(f"Found {len(common_celltypes)} common cell types: {common_celltypes}")
+
+    # remove celltypes not in common_celltypes
+    ad = ad[ad.obs[celltype_column].isin(common_celltypes)].copy()
+
+    logger.info(
+        f"Found {len(ad.obs[celltype_column].unique())} common cell "
+        f"types between samples in the expression truth dataset."
+    )
+    logger.info(
+        f"Dropped {len(original_celltypes) - len(common_celltypes)} "
+        f"celltypes not found in all samples"
+    )
+
     if sample_column is not None:
         ad = ad[ad.obs[sample_column].notnull()].copy()
 
