@@ -1,0 +1,386 @@
+---
+title: "Module - CellTypist"
+author: "SCRATCH"
+execute:
+  freeze: auto
+  cache: false
+  warning: false
+jupyter: python3
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-depth: 2
+    embed-resources: true
+    code-fold: show
+    code-tools: true
+    fig-format: png
+    fig-dpi: 300
+    fig-responsive: true
+    fig-align: center
+lightbox:
+    match: auto
+    effect: zoom
+    loop: true
+---
+
+```{python}
+#| tags: [parameters]
+#| include: False
+
+import os
+
+# Parameters
+project_name   = "project"
+anndata_object = "/Users/affaustino/Projects/SCRATCH-Annotation/data/Ovarian_main_cluster_object.20k_filtered.h5ad"
+cell_database  = "/Users/affaustino/Projects/SCRATCH-Annotation/assets/cell_markers_database.csv"
+cell_model     = ["Immune_All_High.pkl", "Immune_All_Low.pkl"]
+organism       = "Human"
+model_update   = False
+
+# Preparing directories
+work_directory = os.getcwd()
+if not os.path.exists(os.path.join(work_directory, 'data')):
+    os.mkdir(os.path.join(work_directory, 'data'))
+
+# Directory and outputs
+output_object  = "{work_directory}/data/{project_name}_{object_label}".format(work_directory = work_directory, project_name = project_name, object_label = "celltypist_annotation_object.h5ad")
+annot_table    = "{work_directory}/data/{cell_model}".format(work_directory = work_directory, cell_model = "Immune_All")
+
+```
+
+:::{.callout-important collapse="true"}
+Here we will print the parameters. To be constructed.
+:::
+
+## Loading library
+
+```{python}
+
+import pandas as pd
+import scanpy as sc
+import session_info
+
+import celltypist
+from celltypist import models
+
+import matplotlib.pyplot as plt
+
+```
+
+## Loading data {#sec-loading}
+```{python}
+
+try:
+    adata = sc.read_h5ad(anndata_object)
+    print(anndata_object)
+except Exception as e:
+    print(f"Error loading AnnData file: {e}")
+
+```
+
+## Normalizing dataset
+```{python}
+
+sc.pp.normalize_total(adata, target_sum = 1e4)
+sc.pp.log1p(adata)
+
+```
+
+```{python}
+#| label: fig-hvg-plot
+#| fig-cap: 'HVG'
+
+sc.pl.highest_expr_genes(adata, n_top = 20)
+
+```
+
+:::{.callout-tip}
+The @fig-hvg-plot shows highly variable genes on the dataset.
+:::
+
+## Setting models
+
+```{python}
+
+models.download_models(
+    force_update = model_update, model = cell_model
+)
+
+```
+
+```{python}
+
+model_low  = models.Model.load(model = cell_model[0])
+model_high = models.Model.load(model = cell_model[1])
+
+if organism == "Mouse":
+
+    print("Converting model to {organism} markers.")
+
+    model_low.convert()
+    model_high.convert()
+
+```
+
+## Prediction Low-granularity
+
+```{python}
+
+predictions_low = celltypist.annotate(
+    adata, model = cell_model[0], majority_voting = True
+)
+
+```
+
+```{python}
+#| code-fold: true
+
+predictions_low_adata = predictions_low.to_adata()
+
+```
+
+```{python}
+#| code-fold: true
+
+adata.obs["celltypist_cell_label_fine"] = predictions_low_adata.obs.loc[
+    adata.obs.index, "majority_voting"
+]
+adata.obs["celltypist_conf_score_fine"] = predictions_low_adata.obs.loc[
+    adata.obs.index, "conf_score"
+]
+
+```
+
+## Prediction High-granularity
+
+```{python}
+
+predictions_high = celltypist.annotate(
+    adata, model = cell_model[1], majority_voting = True
+)
+
+```
+
+```{python}
+#| code-fold: true
+
+predictions_high_adata = predictions_high.to_adata()
+
+```
+
+```{python}
+#| code-fold: true
+
+adata.obs["celltypist_cell_label_coarse"] = predictions_high_adata.obs.loc[
+    adata.obs.index, "majority_voting"
+]
+adata.obs["celltypist_conf_score_coarse"] = predictions_high_adata.obs.loc[
+    adata.obs.index, "conf_score"
+]
+
+```
+
+## UMAP reduction
+
+```{python}
+#| code-fold: true
+
+sc.tl.umap(adata)
+
+```
+
+```{python}
+#| label: fig-umap-high
+#| fig-cap: 'Celltypist Immune_All_High annotation'
+#| fig-subcap:
+#|  - Low granularity
+#|  - Prediction score
+#| fig-cap-location: top
+
+sc.pl.umap(
+    adata,
+    color = ["celltypist_cell_label_fine"],
+    frameon = False,
+    sort_order = False,
+    wspace = 1
+)
+
+sc.pl.umap(
+    adata,
+    color = ["celltypist_conf_score_fine"],
+    frameon = False,
+    sort_order = False,
+    wspace = 1
+)
+
+```
+
+:::{.callout-tip}
+The @fig-umap-high cell annotation based on Celltypist `Immune_All_High`.
+:::
+
+```{python}
+#| label: fig-umap-low
+#| fig-cap: 'Celltypist Immune_All_Low annotation'
+#| fig-subcap:
+#|  - High granularity
+#|  - Prediction score
+
+sc.pl.umap(
+    adata,
+    color = ["celltypist_cell_label_coarse"],
+    frameon = False,
+    sort_order = False,
+    wspace = 1
+)
+
+sc.pl.umap(
+    adata,
+    color = ["celltypist_conf_score_coarse"],
+    frameon = False,
+    sort_order = False,
+    wspace = 1
+)
+
+```
+
+:::{.callout-tip}
+The @fig-umap-low cell annotation based on Celltypist `Immune_All_Low`.
+:::
+
+## Cell annotation similarity
+
+```{python}
+#| label: fig-dendrogram
+#| fig-cap: 'Dendrogram'
+
+sc.pl.dendrogram(adata, groupby = "celltypist_cell_label_coarse")
+
+```
+
+:::{.callout-tip}
+The @fig-dendrogram displays the hierarchical clustering across the cell types. This is a native function from scanpy, please refer to `scanpy.tl.dendrogram`.
+:::
+
+## ViolinPlot
+
+```{python}
+#| code-fold: true
+
+top_genes = dict()
+
+for cell_type in adata.obs["celltypist_cell_label_coarse"].unique():
+    markers = list(model_high.extract_top_markers(cell_type, 3))
+    for gene in markers:
+        if gene in list(adata.var_names):
+            top_genes.setdefault(cell_type, []).append(gene)
+
+```
+
+```{python}
+#| code-fold: true
+
+all_markers = [item for sublist in top_genes.values() for item in sublist]
+
+```
+
+```{python}
+#| code-fold: true
+
+for cell, genes in top_genes.items():
+    sc.tl.score_genes(adata, gene_list=genes, score_name=cell)
+
+```
+
+```{python}
+#| label: fig-violin-module
+#| fig-cap: 'Celltypist Immune_Low_High annotation'
+#| fig-subcap:
+#|  - High granularity
+#|  - Prediction score
+#| fig-show: hold
+#| warning: false
+
+# Plot each gene score in a subplot
+for cell, genes in top_genes.items():
+    if cell in adata.obs.columns:
+        sc.pl.violin(adata, keys=cell, groupby="ident", rotation=90)
+
+```
+
+:::{.callout-tip}
+The @fig-violin-module displays the overall distribution associated with a specific categorical variable across cell groups, such as gene sets corresponding to cell types or labels.
+:::
+
+```{python}
+#| label: fig-violin-panel
+#| fig-cap: 'ViolinPlot'
+
+sc.pl.stacked_violin(
+    adata,
+    all_markers,
+    groupby = 'celltypist_cell_label_coarse',
+    dendrogram = True
+    )
+
+```
+
+:::{.callout-tip}
+The @fig-violin-panel shows stacked violin plots illustrate gene expression distributions for multiple genes across cell types.
+:::
+
+## Differential Expression
+
+```{python}
+#| code-fold: true
+
+sc.tl.rank_genes_groups(
+    adata,
+    groupby = "celltypist_cell_label_coarse",
+    method = "wilcoxon",
+    key_added = "dea_cell_label"
+    )
+
+```
+
+```{python}
+#| label: fig-dotplot
+#| fig-cap: 'DotPlot'
+#| column: screen-inset-shaded
+
+sc.pl.rank_genes_groups_dotplot(
+    adata,
+    groupby = "celltypist_cell_label_coarse",
+    standard_scale = "var",
+    n_genes = 5,
+    key = "dea_cell_label"
+    )
+
+```
+
+:::{.callout-tip}
+The @fig-dotplot shows the gene expression across cell clusters.
+:::
+
+## Saving Data object
+
+```{python}
+
+adata.write_h5ad(output_object)
+
+```
+
+```{python}
+
+adata.write_csvs(annot_table)
+
+```
+
+## Session info
+
+```{python}
+
+session_info.show()
+
+```
